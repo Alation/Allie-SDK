@@ -1,0 +1,31 @@
+remote_theme: just-the-docs/just-the-docs
+color_scheme: alation
+
+favicon_ico: "/assets/images/favicon.ico"
+# logo: "/assets/images/logo.svg"
+
+# Upper right navigation
+aux_links:
+  "Alation Help Center":
+    - "https://help.alation.com"
+aux_links_new_tab: true
+
+# Callout definitions
+# Example use:
+# {: .warning }
+# Content of warning...
+#
+# Second paragraph of warning...
+callouts:
+  highlight:
+    color: yellow
+  note:
+    title: Note
+    color: grey-lt
+  important:
+    title: Important
+    color: blue
+  warning:
+    title: Warning
+    color: red
+
