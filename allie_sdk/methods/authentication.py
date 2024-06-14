@@ -7,7 +7,7 @@ from ..core.request_handler import RequestHandler
 from ..models.authentication_model import *
 
 LOGGER = logging.getLogger()
-
+ 
 
 class AlationAuthentication(RequestHandler):
     """Alation REST API Authentication Methods."""
