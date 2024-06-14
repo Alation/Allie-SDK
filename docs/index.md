@@ -6,7 +6,7 @@ nav_order: 1
 # Get Started
 {:.no_toc}
 
-The Allie SDK is a Python library that Alation customers and partners can use to increase productivity when interacting with Alation's REST APIs. Using the Allie SDK library, you can manage and change many Alation resources programmatically. You can use this library to create your own custom applications.
+The Allie SDK is a Python library that Alation customers and partners can use to increase productivity when interacting with Alation's [REST APIs](https://developer.alation.com/dev/reference/createtoken). Using the Allie SDK library, you can manage and change many Alation resources programmatically. You can use this library to create your own custom applications.
 
 * TOC
 {:toc}
@@ -15,7 +15,7 @@ The Allie SDK is a Python library that Alation customers and partners can use to
 
 Before installing the Allie SDK, you must have:
 
-* Python. The Allie SDK uses Python 3.0.
+* Python. The Allie SDK support python versions 3.10+.
 * Git. Git is required to clone the Allie SDK repository.
 
 ## Install Allie SDK

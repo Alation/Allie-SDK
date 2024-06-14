@@ -6,8 +6,10 @@ favicon_ico: "/assets/images/favicon.ico"
 
 # Upper right navigation
 aux_links:
-  "Alation Help Center":
-    - "https://help.alation.com"
+  "Alation Developer Portal":
+    - "https://developer.alation.com/dev/reference/createtoken"
+  "GitHub":
+    - "https://github.com/Alation/Allie-SDK"
 aux_links_new_tab: true
 
 # Callout definitions
