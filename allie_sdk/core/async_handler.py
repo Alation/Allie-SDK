@@ -133,18 +133,11 @@ class AsyncHandler(RequestHandler):
                     results = job.check_job_status()
                 else:
                     failed_result = True
-                    results = []
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
                 failed_result = True
-                results = []
-        # OPEN: previously the return type used to be boolean
-        # This is a change of behaviour => Test impact
-        # OPEN: Should the result be mapped to a data class?
-        # return failed_result
-        return results
 
-
+        return failed_result
 
     def async_post_dict_payload(self, url: str, payload: dict) -> bool:
         """POST the Alation Objects via an Async Job Process.
