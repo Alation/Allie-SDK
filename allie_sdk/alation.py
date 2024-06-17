@@ -14,6 +14,7 @@ from .methods import (
     , AlationCustomField
     , AlationCustomTemplate
     , AlationDataQuality
+    , AlationDatasource
     , AlationDocument
     , AlationGlossaryTerm
     , AlationGroup
@@ -78,6 +79,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.data_quality = AlationDataQuality(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.datasource = AlationDatasource(
             access_token=self.access_token, session=session, host=host
         )
         self.document = AlationDocument(
