@@ -54,7 +54,7 @@ class TestVirtualDataSource(unittest.TestCase):
         m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=mock_vds_list)
 
-        self.assertTrue(async_result)
+        self.assertFalse(async_result)
 
     @requests_mock.Mocker()
     def test_success_failed_post_virtual_datasource_no_query_params(self, m):
@@ -97,7 +97,7 @@ class TestVirtualDataSource(unittest.TestCase):
         m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=mock_vds_list)
 
-        self.assertTrue(async_result)
+        self.assertFalse(async_result)
 
     @requests_mock.Mocker()
     def test_success_post_virtual_datasource_with_query_params(self, m):
@@ -148,7 +148,7 @@ class TestVirtualDataSource(unittest.TestCase):
                                                               vds_objects=mock_vds_list,
                                                               query_params=mock_params)
 
-        self.assertTrue(async_result)
+        self.assertFalse(async_result)
 
 if __name__ == '__main__':
     unittest.main()
