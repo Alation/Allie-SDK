@@ -10,7 +10,6 @@ from .models import (
     ColumnIndex,
     ColumnItem,
     ColumnParams,
-    Connector,
     CustomField,
     CustomFieldItem,
     CustomFieldParams,
@@ -50,5 +49,13 @@ from .models import (
     TrustCheckFlagSubject,
     TrustCheckFlagParams,
     User,
-    UserParams
+    UserParams,
+    VirtualDataSource,
+    VirtualDataSourceItem,
+    VirtualDataSourceParams,
+    VirtualDataSourceSchema,
+    VirtualDataSourceTable,
+    VirtualDataSourceView,
+    VirtualDataSourceColumn,
+    VirtualDataSourceIndex
 )

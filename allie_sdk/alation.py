@@ -10,7 +10,6 @@ from .core.logs import LoggingConfigs
 from .methods import (
     AlationAuthentication
     , AlationBusinessPolicy
-    , AlationConnector
     , AlationCustomField
     , AlationCustomTemplate
     , AlationDataQuality
@@ -22,6 +21,7 @@ from .methods import (
     , AlationRDBMS
     , AlationUser
     , AlationTrustChecks
+    , AlationVirtualDataSource
 )
 
 os.makedirs('logs', exist_ok=True)
@@ -68,9 +68,6 @@ class Alation(object):
             self.access_token = self.authentication.create_access_token().api_access_token
 
         # Initialize Remaining Alation API Methods
-        self.connector = AlationConnector(
-            access_token=self.access_token, session=session, host=host
-        )
         self.custom_field = AlationCustomField(
             access_token=self.access_token, session=session, host=host
         )
@@ -105,6 +102,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.virtual_datasource = AlationVirtualDataSource(
             access_token=self.access_token, session=session, host=host
         )
 

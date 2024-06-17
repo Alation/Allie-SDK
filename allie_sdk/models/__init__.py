@@ -1,6 +1,5 @@
 from .authentication_model import *
 from .business_policy_model import *
-from .connector_model import *
 from .custom_field_model import *
 from .custom_template_model import *
 from .data_quality_model import *
@@ -13,3 +12,4 @@ from .rdbms_model import *
 from .trust_check_model import *
 from .user_model import *
 from .policy_group_model import *
+from .virtual_datasource_model import *
