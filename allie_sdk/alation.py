@@ -10,6 +10,7 @@ from .core.logs import LoggingConfigs
 from .methods import (
     AlationAuthentication
     , AlationBusinessPolicy
+    , AlationConnector
     , AlationCustomField
     , AlationCustomTemplate
     , AlationDataQuality
@@ -68,6 +69,9 @@ class Alation(object):
             self.access_token = self.authentication.create_access_token().api_access_token
 
         # Initialize Remaining Alation API Methods
+        self.connector = AlationConnector(
+            access_token=self.access_token, session=session, host=host
+        )
         self.custom_field = AlationCustomField(
             access_token=self.access_token, session=session, host=host
         )

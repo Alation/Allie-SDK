@@ -28,15 +28,24 @@ class AlationVirtualDataSource(AsyncHandler):
 
         self._vds_endpoint = '/api/v1/bulk_metadata/extraction/'
 
-    # def post_remove_not_seen(self, ds_id: int, vds_objects: list):
-    #     return self.post_metadata(ds_id=ds_id, vds_objects=vds_objects,
-    #                               query_params=VirtualDataSourceParams(remove_not_seen='true'))
-
     def post_metadata(self, ds_id: int, vds_objects: list,
-                      query_params: VirtualDataSourceParams = None) -> list:
+                      query_params: VirtualDataSourceParams = None) -> bool:
+        """Post (Create/Update/Delets) Alation Virtual Data source objects
 
-        # print(vds_objects)
-        # print(ds_id)
+        Args:
+            ds_id: (int): Virtual Data Source ID for the metadata objects
+            vds_objects (AlationVirtualDataSourceItem): A list of Alation virtual data source objects to
+                    be added/updated or deleted.
+            query_params: (VirtualDataSourceParams): a VirtualDataSourceParams object
+                    query_params.set_title_descs = "true" - use to enable Title and Description updates
+                    query_params.remove_not_seen = "false" - set to true to remove the metadata objects that are not
+                                                            specified in the list of vds objects (delete)
+
+        Returns:
+            boolean: Alation job execution status
+
+        """
+
         validate_query_params(query_params, VirtualDataSourceParams)
         params = query_params.generate_params_dict() if query_params else None
         validate_rest_payload(vds_objects,
@@ -50,7 +59,6 @@ class AlationVirtualDataSource(AsyncHandler):
         payload_d = [item.generate_api_post_payload() for item in vds_objects]
         # add line feeds between json payload dicts for jsonl format
         payload_jsonl = '\n'.join(json.dumps(p) for p in payload_d)
-        print(payload_jsonl)
         LOGGER.debug(payload_jsonl)
         async_results = self.async_post(f'{self._vds_endpoint}{ds_id}', payload=payload_jsonl, query_params=params)
 
@@ -58,6 +66,20 @@ class AlationVirtualDataSource(AsyncHandler):
 
     def post_metadata_jsonl(self, ds_id: int, payload: str,
                            query_params: VirtualDataSourceParams = None) -> list:
+        """Post (Create/Update/Delets) Alation Virtual Data source objects
+
+        Args:
+            ds_id: (int): Virtual Data Source ID for the metadata objects
+            payload (str): A list of Alation virtual data source object definitions as a jsonl payload
+            query_params: (VirtualDataSourceParams): a VirtualDataSourceParams object
+                    query_params.set_title_descs = "true" - use to enable Title and Description updates
+                    query_params.remove_not_seen = "false" - set to true to remove the metadata objects that are not
+                                                            specified in the list of vds objects (delete)
+
+        Returns:
+            boolean: Alation job execution status
+
+        """
 
         validate_query_params(query_params, VirtualDataSourceParams)
         params = query_params.generate_params_dict() if query_params else None
