@@ -31,6 +31,8 @@ from .models import (
     DocumentPostItem,
     DocumentPutItem,
     DocumentParams,
+    Domain,
+    DomainMembership,
     GlossaryTerm,
     GlossaryTermItem,
     GlossaryTermParams,
