@@ -34,16 +34,24 @@ class AlationJob(RequestHandler):
     def check_job_status(self):
         """Query the Alation Background Job and Log Status until Job has completed."""
 
+        job_details = []
+
         while True:
             job = self._get_job()
             self._log_job(job)
 
-            if job.status.lower() in ['successful', 'failed']:
+            if job.status.lower() == 'failed':
+                job_details.append(job)
+                break
+            elif job.status.lower() == 'successful':
+                job_details.append(job)
                 break
             else:
                 sleep(3)
 
         sleep(1)
+
+        return job_details
 
     def _get_job(self) -> JobDetails:
         """Query the Alation Job.

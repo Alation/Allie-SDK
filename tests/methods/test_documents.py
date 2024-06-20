@@ -71,7 +71,7 @@ def test_create_documents(requests_mock):
         }    
     }
 
-    # Override the policy API call
+    # Override the document API call
     requests_mock.register_uri(
         method='POST'
         , url='/integration/v2/document/'
@@ -82,27 +82,22 @@ def test_create_documents(requests_mock):
     # What does the response look like for the Job?
     job_api_response = {
         'status': 'successful'
-        , 'msg': 'Job finished in 2.171085 seconds at 2023-12-08 17:20:53.735123+00:00'
-        , 'result': [
-            'Successfully processed 2 items (index range: [0, 1])'
-            , 'All total 1 batches with a limit of 250 items attempted. [Succeeded: 2, Failed: 0, Total: 2]'
-        ]
+        , 'msg': 'Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
+        , 'result': {
+            'created_term_count': 2
+            , 'created_terms': [
+                {'id': 1325, 'title': 'My KPI 1'}
+                , {'id': 1326, 'title': 'My KPI 2'}
+            ]
+        }
     }
-    
-    """
-    OPEN/CONCERN: Here we don't get any details about the created documents back.
-    With terms in example the job response includes details about the created terms within
-    the result section.
-    With documents there's no point really testing this bit of code since we don't really
-    have something proper to validate against.
-    """
 
     # Override the job API call
-    # Note: The id in the job URL correspondes to the task id in policy_api_response defined above
+    # Note: The id in the job URL corresponds to the task id in document_api_response defined above
     requests_mock.register_uri(
         method = 'GET'
         , url = '/api/v1/bulk_metadata/job/?id=23739'
-        , json=job_api_response
+        , json = job_api_response
     )
 
     # --- TEST THE FUNCTION --- #
@@ -147,16 +142,30 @@ def test_create_documents(requests_mock):
         ]
     )
 
-    """
-    OPEN/CONCERN: Here we don't get any details about the created documents back.
-    With terms in example the job response includes details about the created terms within
-    the result section.
-    With documents there's no point really testing this bit of code since we don't really
-    have something proper to validate against.
-    """
-
-    # OPEN: See concern mentioned further up
-    function_expected_result = True
+    function_expected_result = [
+        # MOCK_USER.JobDetails(
+        #     status='successful'
+        #     , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
+        #     , result={
+        #         'created_term_count': 2
+        #         , 'created_terms': [
+        #             {'id': 1325, 'title': 'My KPI 1'}
+        #             , {'id': 1326, 'title': 'My KPI 2'}
+        #         ]
+        #     }
+        # )
+        JobDetails(
+            status='successful'
+            , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
+            , result=JobDetailsResult(
+                created_term_count=2
+                , created_terms=[
+                    JobDetailsResultCreatedObjects(id=1325, title='My KPI 1')
+                    , JobDetailsResultCreatedObjects(id=1326, title='My KPI 2')
+                ]
+            )
+        )
+    ]
     assert function_expected_result == create_documents_result
 
 def test_update_documents(requests_mock):

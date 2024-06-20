@@ -120,7 +120,6 @@ class AsyncHandler(RequestHandler):
             bool: Returns True if a batch fails
 
         """
-        failed_result = None
         batches = self._batch_objects(payload, batch_size)
 
         for batch in batches:
@@ -129,14 +128,13 @@ class AsyncHandler(RequestHandler):
                 async_response = self.post(url, body=batch)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    job.check_job_status()
+                    results = job.check_job_status()
                 else:
-                    failed_result = True
+                    results = []
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
-
-        return failed_result
+                results = []
+        return results
 
     def async_post_dict_payload(self, url: str, payload: dict) -> bool:
         """POST the Alation Objects via an Async Job Process.
@@ -171,7 +169,6 @@ class AsyncHandler(RequestHandler):
             bool: Returns True if a batch fails
 
         """
-        failed_result = None
         batches = self._batch_objects(payload, batch_size)
 
         for batch in batches:
@@ -180,14 +177,14 @@ class AsyncHandler(RequestHandler):
                 async_response = self.put(url, body=batch)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    job.check_job_status()
+                    results = job.check_job_status()
                 else:
-                    failed_result = True
+                    results = []
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
+                results = []
 
-        return failed_result
+        return results
 
     def _batch_objects(self, objects: list, batch_size: int = None) -> list:
         """Batch the Alation Objects into Acceptable Payload Sizes.

@@ -7,6 +7,7 @@ from ..core.custom_exceptions import *
 from ..models.document_model import *
 from ..models.custom_field_model import *
 from ..models.custom_template_model import *
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -42,7 +43,7 @@ class AlationDocument(AsyncHandler):
     def create_documents (
         self
         , documents: list[DocumentPostItem]
-    ):
+    )->list[JobDetails]:
 
         """Create documents in Bulk
         Args:
@@ -66,12 +67,12 @@ class AlationDocument(AsyncHandler):
             , payload = payload
         )
         
-        return True if not async_results else False
+        return async_results
     
     def update_documents (
             self
             , documents: list[DocumentPutItem]
-        ):
+        )->list[JobDetails]:
 
         """Bulk Update Documents in Bulk
         Args:
@@ -93,7 +94,7 @@ class AlationDocument(AsyncHandler):
             url = '/integration/v2/document/'
             , payload = payload
         )
-        return True if not async_results else False
+        return async_results
 
 
     def delete_documents(
