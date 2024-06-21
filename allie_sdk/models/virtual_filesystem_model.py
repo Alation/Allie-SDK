@@ -34,10 +34,3 @@ class VirtualFileSystemItem(BaseClass):
         return dataclasses.asdict(self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
 
 
-    def __post_init__(self):
-        if isinstance(self.ts_last_modified, str):
-            self.ts_last_modified = self.convert_timestamp(self.ts_last_modified)
-        if isinstance(self.ts_last_accessed, str):
-            self.ts_last_accessed = self.convert_timestamp(self.ts_last_accessed)
-
-
