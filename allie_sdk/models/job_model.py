@@ -34,10 +34,18 @@ class JobDetailsResult(BaseClass):
                 # self.created_terms = [JobDetailsResultCreatedObjects.from_api_response(value) for value in self.created_terms]
                 # we can't use above approach since when we create a JobDetails object for testing (in example)
                 # we'd define nested classes as well. We only want to convert if it is a dict and not if it is a class already.
-                self.created_terms = []
+                created_terms_out = []
+                created_objects_dict_counter = 0
                 for value in self.created_terms:
                     if isinstance(value, dict):
-                        self.created_terms.append(JobDetailsResultCreatedObjects.from_api_response(value))
+                        created_objects_dict_counter += 1
+                        created_terms_out.append(JobDetailsResultCreatedObjects.from_api_response(value))
+
+                # we only want to override self.created_terms if we found nested dict objects
+                # otherwise we want to keep the class based objects (say we create nested class based objects for tests
+                # in example)
+                if created_objects_dict_counter > 0:
+                    self.created_terms = created_terms_out
         # TODO: Catering for other endpoint results
 @dataclass
 class JobDetails(BaseClass):
