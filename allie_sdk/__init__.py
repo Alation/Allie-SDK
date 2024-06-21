@@ -38,7 +38,7 @@ from .models import (
     GroupParams,
     JobDetails,
     JobDetailsResult,
-    JobDetailsResultCreatedObjects,
+    JobDetailsResultDetails,
     Otype,
     PolicyGroup,
     PolicyGroupParams,

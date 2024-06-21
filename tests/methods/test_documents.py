@@ -201,17 +201,9 @@ def test_update_documents(requests_mock):
             , 'All total 1 batches with a limit of 250 items attempted. [Succeeded: 2, Failed: 0, Total: 2]'
         ]
     }
-    
-    """
-    OPEN/CONCERN: Here we don't get any details about the created documents back.
-    With terms in example the job response includes details about the created terms within
-    the result section.
-    With documents there's no point really testing this bit of code since we don't really
-    have something proper to validate against.
-    """
 
     # Override the job API call
-    # Note: The id in the job URL correspondes to the task id in policy_api_response defined above
+    # Note: The id in the job URL corresponds to the task id in document_response defined above
     requests_mock.register_uri(
         method = 'GET'
         , url = '/api/v1/bulk_metadata/job/?id=23739'
@@ -262,14 +254,6 @@ def test_update_documents(requests_mock):
         ]
     )
 
-    """
-    OPEN/CONCERN: Here we don't get any details about the created documents back.
-    With terms in example the job response includes details about the created terms within
-    the result section.
-    With documents there's no point really testing this bit of code since we don't really
-    have something proper to validate against.
-    """
-
     # OPEN: See concern mentioned further up
     function_expected_result = True
     assert function_expected_result == create_documents_result
@@ -302,6 +286,5 @@ def test_delete_documents(requests_mock):
         ]
     )
 
-    # OPEN: See concern mentioned further up
     function_expected_result = True
     assert function_expected_result == delete_document_result

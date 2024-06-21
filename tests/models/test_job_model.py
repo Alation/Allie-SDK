@@ -4,7 +4,7 @@ from allie_sdk.methods.job import *
 
 class TestGroupModels(unittest.TestCase):
     # check if we can map the job result output for a document creation to our data class
-    def test_job_model_for_post_documents(self):
+    def test_job_model_for_document_post(self):
 
         # Expected input
         input = {
@@ -29,10 +29,42 @@ class TestGroupModels(unittest.TestCase):
                 , result = JobDetailsResult(
                     created_term_count = 2
                     , created_terms = [
-                        JobDetailsResultCreatedObjects(id = 1325, title = 'My KPI 1')
-                        , JobDetailsResultCreatedObjects(id = 1326, title = 'My KPI 2')
+                        JobDetailsResultDetails(id = 1325, title = 'My KPI 1')
+                        , JobDetailsResultDetails(id = 1326, title = 'My KPI 2')
                     ]
                 )
             )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_put(self):
+        # Expected input
+        input =  {
+            'msg': 'Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
+            , 'result': {
+                'updated_term_count': 2
+                , 'updated_terms': [
+                    {'id': 1334}
+                    , {'id': 1335}
+                ]
+            }
+            , 'status': 'successful'
+        }
+
+        # Transformation
+        input_transformed = JobDetails(**input)
+
+        # Expected Output
+        output = JobDetails(
+            status='successful'
+            , msg='Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
+            , result=JobDetailsResult(
+                updated_term_count=2
+                , updated_terms=[
+                    JobDetailsResultDetails(id=1334)
+                    , JobDetailsResultDetails(id=1335)
+                ]
+            )
+        )
 
         self.assertEqual(input_transformed, output)
