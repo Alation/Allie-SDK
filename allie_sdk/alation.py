@@ -21,6 +21,7 @@ from .methods import (
     , AlationPolicyGroup
     , AlationRDBMS
     , AlationUser
+    , AlationVirtualFileSystem
     , AlationTrustChecks
 )
 
@@ -105,6 +106,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.virtual_filesystem = AlationVirtualFileSystem(
             access_token=self.access_token, session=session, host=host
         )
 

@@ -12,4 +12,5 @@ from .otype_model import *
 from .rdbms_model import *
 from .trust_check_model import *
 from .user_model import *
+from .virtual_filesystem_model import *
 from .policy_group_model import *
