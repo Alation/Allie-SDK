@@ -50,12 +50,6 @@ class VirtualDataSourceTable(VirtualDataSourceItem):
     skews_info: dict = field(default=None)
     table_comment: str = field(default=None)
 
-    def __post_init__(self):
-        if isinstance(self.ts_created, str):
-            self.ts_created = self.convert_timestamp(self.ts_created)
-        if isinstance(self.ts_last_altered, str):
-            self.ts_last_altered = self.convert_timestamp(self.ts_last_altered)
-
     def generate_api_post_payload(self) -> dict:
         return_dict = dataclasses.asdict(self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
         return_dict["table_type"] = self._table_type
@@ -76,12 +70,6 @@ class VirtualDataSourceView(VirtualDataSourceItem):
     synonyms: list = field(default=None)
     skews_info: dict = field(default=None)
     table_comment: str = field(default=None)
-
-    def __post_init__(self):
-        if isinstance(self.ts_created, str):
-            self.ts_created = self.convert_timestamp(self.ts_created)
-        if isinstance(self.ts_last_altered, str):
-            self.ts_last_altered = self.convert_timestamp(self.ts_last_altered)
 
     def generate_api_post_payload(self) -> dict:
         return_dict = dataclasses.asdict(self, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
