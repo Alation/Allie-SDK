@@ -88,7 +88,7 @@ Args:
 * documents: list of `DocumentPostItem` objects
 
 Returns:
-* bool: Success of the API POST Call(s)
+* List of JobDetails: Status report of the executed background jobs.
 
 ### update_documents
 
@@ -102,7 +102,7 @@ Args:
 * documents: list of `DocumentPutItem` objects
 
 Returns:
-* bool: Success of the API PUT Call(s)
+* List of JobDetails: Status report of the executed background jobs.
 
 ### delete_documents
 

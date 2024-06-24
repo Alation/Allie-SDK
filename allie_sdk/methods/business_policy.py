@@ -9,6 +9,7 @@ from ..core.custom_exceptions import *
 from ..models.business_policy_model import *
 from ..models.custom_field_model import *
 from ..models.custom_template_model import *
+from ..models.job_model import *
 
 
 LOGGER = logging.getLogger()
@@ -46,7 +47,7 @@ class AlationBusinessPolicy(AsyncHandler):
     def create_business_policies (
             self
             , business_policies: list[BusinessPolicyPostItem]
-        ):
+        ) -> list[JobDetails]:
 
         """Create Business Policies in Bulk
         Args:
@@ -54,13 +55,16 @@ class AlationBusinessPolicy(AsyncHandler):
             https://developer.alation.com/dev/reference/createpoliciesinbulk
 
         Returns:
-            Nothing
+            List of JobDetails: Status report of the executed background jobs.
         """
 
 
         # make sure input data matches expected structure
         item: BusinessPolicyPostItem
-        validate_rest_payload(business_policies, (BusinessPolicyPostItem,))
+        validate_rest_payload(
+            payload = business_policies,
+            expected_types = (BusinessPolicyPostItem,)
+        )
         # make sure we only include fields with values in the payload
         payload = [item.generate_api_post_payload() for item in business_policies]
 
@@ -70,12 +74,12 @@ class AlationBusinessPolicy(AsyncHandler):
             , payload = payload
         )
         
-        return True if not async_results else False
+        return async_results
 
     def update_business_policies (
             self
             , business_policies: list[BusinessPolicyPutItem]
-        ):
+        ) -> list[JobDetails]:
 
         """Bulk Update Business Policies in Bulk
         Args:
@@ -83,14 +87,25 @@ class AlationBusinessPolicy(AsyncHandler):
             https://developer.alation.com/dev/reference/updatepoliciesinbulk
 
         Returns:
-            Nothing
+            List of JobDetails: Status report of the executed background jobs.
         """
 
         # make sure input data matches expected structure
         item: BusinessPolicyPutItem
-        validate_rest_payload(business_policies, (BusinessPolicyPutItem,))
+        validate_rest_payload(
+            payload = business_policies,
+            expected_types = (BusinessPolicyPutItem,)
+        )
         # make sure we only include fields with values in the payload
-        async_results = [item.generate_api_put_payload() for item in business_policies]
+        payload = [item.generate_api_put_payload() for item in business_policies]
+
+        # The policys APIs returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
+        async_results = self.async_put(
+            url = '/integration/v1/business_policies/'
+            , payload = payload
+        )
+
+        return async_results
 
          
 

@@ -92,6 +92,7 @@ def test_create_documents(requests_mock):
         }
     }
 
+
     # Override the job API call
     # Note: The id in the job URL corresponds to the task id in document_api_response defined above
     requests_mock.register_uri(
@@ -160,8 +161,8 @@ def test_create_documents(requests_mock):
             , result=JobDetailsResult(
                 created_term_count=2
                 , created_terms=[
-                    JobDetailsResultCreatedObjects(id=1325, title='My KPI 1')
-                    , JobDetailsResultCreatedObjects(id=1326, title='My KPI 2')
+                    JobDetailsResultDetails(id=1325, title='My KPI 1')
+                    , JobDetailsResultDetails(id=1326, title='My KPI 2')
                 ]
             )
         )
@@ -194,13 +195,17 @@ def test_update_documents(requests_mock):
 
     # What does the response look like for the Job?
     job_api_response = {
-        'status': 'successful'
-        , 'msg': 'Job finished in 2.171085 seconds at 2023-12-08 17:20:53.735123+00:00'
-        , 'result': [
-            'Successfully processed 2 items (index range: [0, 1])'
-            , 'All total 1 batches with a limit of 250 items attempted. [Succeeded: 2, Failed: 0, Total: 2]'
-        ]
+        'msg': 'Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
+        , 'result': {
+            'updated_term_count': 2
+            , 'updated_terms': [
+                {'id': 1334}
+                , {'id': 1335}
+            ]
+        }
+        , 'status': 'successful'
     }
+
 
     # Override the job API call
     # Note: The id in the job URL corresponds to the task id in document_response defined above
@@ -214,7 +219,7 @@ def test_update_documents(requests_mock):
     create_documents_result = MOCK_USER.update_documents(
         [
             DocumentPutItem(
-                id = 221
+                id = 1334
                 , title = "My KPI 1"
                 , description = "This is the description for KPI 1"
                 , template_id = 12
@@ -233,7 +238,7 @@ def test_update_documents(requests_mock):
                 ]
             )
             , DocumentPutItem(
-                id = 222
+                id = 1335
                 , title = "My KPI 2"
                 , description = "This is the description for KPI 2"
                 , template_id = 12
@@ -254,8 +259,20 @@ def test_update_documents(requests_mock):
         ]
     )
 
-    # OPEN: See concern mentioned further up
-    function_expected_result = True
+    function_expected_result = [
+        JobDetails(
+            status='successful'
+            , msg='Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
+            , result=JobDetailsResult(
+                updated_term_count=2
+                , updated_terms=[
+                    JobDetailsResultDetails(id=1334)
+                    , JobDetailsResultDetails(id=1335)
+                ]
+            )
+        )
+    ]
+
     assert function_expected_result == create_documents_result
 
 def test_delete_documents(requests_mock):
