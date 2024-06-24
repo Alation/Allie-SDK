@@ -6,6 +6,7 @@ import requests
 from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.glossary_term_model import GlossaryTerm, GlossaryTermItem, GlossaryTermParams
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -41,39 +42,43 @@ class AlationGlossaryTerm(AsyncHandler):
         if glossary_terms:
             return [GlossaryTerm.from_api_response(term) for term in glossary_terms]
 
-    def post_glossary_terms(self, glossary_terms: list) -> bool:
+    def post_glossary_terms(self, glossary_terms: list) -> list[JobDetails]:
         """Post (Create) Alation Glossary Terms.
 
         Args:
             glossary_terms (list): Alation Glossary Terms to be created.
  
         Returns:
-            bool: Success of the API POST Call(s).
+            List of JobDetails: Status report of the executed background jobs.
 
         """
         item: GlossaryTermItem
-        validate_rest_payload(glossary_terms, (GlossaryTermItem,))
+        validate_rest_payload(
+            payload = glossary_terms,
+            expected_types = (GlossaryTermItem,)
+        )
         payload = [item.generate_api_post_payload() for item in glossary_terms]
+
         async_result = self.async_post('/integration/v2/term/', payload)
 
-        return True if not async_result else False
+        return async_result
 
-    def put_glossary_terms(self, glossary_terms: list) -> bool:
+    def put_glossary_terms(self, glossary_terms: list) -> list[JobDetails]:
         """Put (Update) Alation Glossary Terms.
 
         Args:
             glossary_terms (list): Alation Glossary Terms to be updated.
 
         Returns:
-            bool: Success of the API PUT Call(s),
+            List of JobDetails: Status report of the executed background jobs.
 
         """
         item: GlossaryTermItem
         validate_rest_payload(glossary_terms, (GlossaryTerm, GlossaryTermItem))
-        payload = [item.generate_api_post_payload() for item in glossary_terms]
+        payload = [item.generate_api_put_payload() for item in glossary_terms]
         async_result = self.async_put('/integration/v2/term/', payload)
 
-        return True if not async_result else False
+        return async_result
 
     def delete_glossary_terms(self, glossary_terms: list) -> bool:
         """Delete Alation Glossary Terms.
