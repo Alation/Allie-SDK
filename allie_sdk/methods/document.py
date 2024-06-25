@@ -28,7 +28,7 @@ class AlationDocument(AsyncHandler):
         Args:
             query_params (DocumentParams): REST API Documents Query Parameters.
         Returns:
-            list: Alation Business Policies
+            list: Alation Documents
         """
 
         validate_query_params(query_params, DocumentParams)
@@ -51,7 +51,7 @@ class AlationDocument(AsyncHandler):
             https://developer.alation.com/dev/reference/postdocuments
 
         Returns:
-            Nothing
+            List of JobDetails: Status report of the executed background jobs.
         """
 
 
@@ -80,7 +80,7 @@ class AlationDocument(AsyncHandler):
             https://developer.alation.com/dev/reference/updatedocuments
 
         Returns:
-            Nothing
+            List of JobDetails: Status report of the executed background jobs.
         """
 
         # make sure input data matches expected structure
