@@ -77,6 +77,32 @@ class AlationUser(RequestHandler):
         if details:
             return User.from_api_response(details)
 
+    def post_remove_dup_users_accts(self, csv_file: str) -> str:
+        """Post CSV to remove duplicate Alation Users.
+
+        Returns:
+            status: Confirmation of the removal of duplicate users
+
+        """
+        files = {"csv_file": (csv_file, open(csv_file, "rb"), "text/plain")}
+        result = self.post('/integration/v1/remove_dup_users_accts/', files=files, body=None,
+                           headers={"accept": "application/json"})
+
+        if result:
+            return User.from_api_response(result)
+
+    def get_generate_dup_users_accts_csv(self) -> str:
+        """Get duplicate Alation Users as CSV.
+
+        Returns:
+            list: CSV of duplicate Alation Users With headings
+
+        """
+        result = self.get('/integration/v1/generate_dup_users_accts_csv_file/')
+
+        return result
+
+
     @property
     def use_v2_endpoint(self) -> bool:
         """Return the Bool Config to use the Alation REST API V2 User Endpoint.
