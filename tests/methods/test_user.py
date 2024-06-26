@@ -45,6 +45,48 @@ class TestUser(unittest.TestCase):
         self.assertEqual(success_users, users)
 
     @requests_mock.Mocker()
+    def test_success_get_generate_dup_users_accts_csv(self, m):
+
+        # MOCK_USER.use_v2_endpoint = False
+        success_response = "SN,Username,email,Action,Group\r\n1," \
+                           "APIUser1,apiuser@alation.com,RETAIN/SUSPEND,1\r\n" \
+                           "2,APIUSER1,apiuser1@alation.com,RETAIN/SUSPEND,1\r\n"
+
+        m.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
+        users = MOCK_USER.get_generate_dup_users_accts_csv()
+
+        self.assertEqual(success_response, users)
+    @requests_mock.Mocker()
+
+    def test_success_get_generate_dup_users_accts_csv_no_duplicates(self, m):
+
+        # MOCK_USER.use_v2_endpoint = False
+        success_response = {"Success": "No duplicate user accounts with mixed case usernames."}
+
+        m.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
+        users = MOCK_USER.get_generate_dup_users_accts_csv()
+
+        self.assertEqual(success_response, users)
+
+    @requests_mock.Mocker()
+    def test_success_post_remove_dup_users_accts(self, m):
+        # MOCK_USER.use_v2_endpoint = False
+
+        csv_content = "SN,Username,email,Action,Group\r\n" \
+                      "1,APIUser1,apiuser@alation.com,RETAIN,1\r\n" \
+                      "2,APIUSER1,apiuser1@alation.com,SUSPEND,1\r\n"
+
+        with open("/tmp/temp.csv", "w") as temp_csv:
+            temp_csv.write(csv_content)
+
+        success_response = {"Success": "Total number of users got updated with temp username and suspended: 1"}
+
+        m.register_uri('POST', '/integration/v1/remove_dup_users_accts/', json=success_response)
+        users = MOCK_USER.post_remove_dup_users_accts("/tmp/temp.csv")
+
+        self.assertEqual(success_response, users)
+
+    @requests_mock.Mocker()
     def test_failed_get_users_v1(self, m):
 
         MOCK_USER.use_v2_endpoint = False

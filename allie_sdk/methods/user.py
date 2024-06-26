@@ -88,8 +88,7 @@ class AlationUser(RequestHandler):
         result = self.post('/integration/v1/remove_dup_users_accts/', files=files, body=None,
                            headers={"accept": "application/json"})
 
-        if result:
-            return User.from_api_response(result)
+        return result
 
     def get_generate_dup_users_accts_csv(self) -> str:
         """Get duplicate Alation Users as CSV.
