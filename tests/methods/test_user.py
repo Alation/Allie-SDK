@@ -1,6 +1,7 @@
 """Test the Alation REST API User Methods."""
 
 import requests_mock
+import os
 import unittest
 from allie_sdk.methods.user import *
 
@@ -83,6 +84,7 @@ class TestUser(unittest.TestCase):
 
         m.register_uri('POST', '/integration/v1/remove_dup_users_accts/', json=success_response)
         users = MOCK_USER.post_remove_dup_users_accts("/tmp/temp.csv")
+        os.remove("/tmp/temp.csv")
 
         self.assertEqual(success_response, users)
 
