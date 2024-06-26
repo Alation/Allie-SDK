@@ -164,7 +164,8 @@ class RequestHandler(object):
 
             return response_data
 
-    def post(self, url: str, body: any, query_params: dict = None, headers: dict = None) -> dict | list:
+    def post(self, url: str, body: any, query_params: dict = None, headers: dict = None,
+             files: dict = None) -> dict | list:
         """API Post Request.
 
         Args:
@@ -172,6 +173,7 @@ class RequestHandler(object):
             body (any): POST API Body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
+            files: (dict) POST API Call upload files
 
         Returns:
             dict | list: API Response Body.
@@ -188,7 +190,7 @@ class RequestHandler(object):
         if isinstance(body, dict) or isinstance(body, list):
             body = json.dumps(body, default=str)
 
-        api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers)
+        api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers, files=files)
 
         try:
             response_data = api_response.json()
