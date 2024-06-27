@@ -144,15 +144,20 @@ class BaseCustomFieldValue(BaseClass):
     ts_updated: datetime = field(default=None)
     otype: str = field(default=None)
     oid: int = field(default=None)
-    value: list = field(default_factory=list)
+    value: CustomFieldStringValueItem | list[CustomFieldStringValueItem | CustomFieldDictValueItem] = field(default_factory=list)
 
     def generate_api_put_payload(self) -> dict:
         for item in [self.field_id, self.otype, self.oid, self.value]:
             if not item:
                 raise InvalidPostBody("'field_id', 'otype', 'oid', and 'value' are all "
                                       "required fields for Custom Field Values PUT payload body")
-        payload = {'field_id': self.field_id, 'otype': self.otype.lower(),
-                   'oid': self.oid, 'value': self.get_field_values()}
+        payload = {
+            'field_id': self.field_id
+            , 'otype': self.otype.lower()
+            , 'oid': self.oid
+            , 'value': self.get_field_values()
+        }
+
         if self.ts_updated:
             if isinstance(self.ts_updated, str):
                 payload['ts_updated'] = parse(self.ts_updated).isoformat()
@@ -166,17 +171,16 @@ class BaseCustomFieldValue(BaseClass):
             return self.value.return_value()
 
         if isinstance(self.value, list):
-            if len(self.value) == 1:
-                if isinstance(self.value[0], CustomFieldStringValueItem):
-                    return self.value[0].return_value()
 
-            if len(self.value) >= 1:
-                field_values = []
-                for item in self.value:
-                    if isinstance(item, CustomFieldDictValueItem):
-                        field_values.append(item.return_value())
+            field_values = []
+            for item in self.value:
+                if isinstance(item, CustomFieldDictValueItem):
+                    field_values.append(item.return_value())
+                # for multi-picker values
+                elif isinstance(item, CustomFieldStringValueItem):
+                    field_values.append(item.return_value())
 
-                return field_values
+            return field_values
 
 
 @dataclass
