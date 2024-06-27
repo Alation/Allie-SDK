@@ -155,14 +155,14 @@ def test_create_documents(requests_mock):
         #         ]
         #     }
         # )
-        JobDetails(
+        JobDetailsDocumentPost(
             status='successful'
             , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
-            , result=JobDetailsResult(
+            , result=JobDetailsDocumentPostResult(
                 created_term_count=2
                 , created_terms=[
-                    JobDetailsResultDetails(id=1325, title='My KPI 1')
-                    , JobDetailsResultDetails(id=1326, title='My KPI 2')
+                    JobDetailsDocumentPostResultDetails(id=1325, title='My KPI 1')
+                    , JobDetailsDocumentPostResultDetails(id=1326, title='My KPI 2')
                 ]
             )
         )
@@ -216,7 +216,7 @@ def test_update_documents(requests_mock):
     )
 
     # --- TEST THE FUNCTION --- #
-    create_documents_result = MOCK_USER.update_documents(
+    update_documents_result = MOCK_USER.update_documents(
         [
             DocumentPutItem(
                 id = 1334
@@ -260,20 +260,20 @@ def test_update_documents(requests_mock):
     )
 
     function_expected_result = [
-        JobDetails(
+        JobDetailsDocumentPut(
             status='successful'
             , msg='Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
-            , result=JobDetailsResult(
+            , result=JobDetailsDocumentPutResult(
                 updated_term_count=2
                 , updated_terms=[
-                    JobDetailsResultDetails(id=1334)
-                    , JobDetailsResultDetails(id=1335)
+                    JobDetailsDocumentPutResultDetails(id=1334)
+                    , JobDetailsDocumentPutResultDetails(id=1335)
                 ]
             )
         )
     ]
 
-    assert function_expected_result == create_documents_result
+    assert function_expected_result == update_documents_result
 
 def test_delete_documents(requests_mock):
 
