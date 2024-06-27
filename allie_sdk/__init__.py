@@ -39,6 +39,7 @@ from .models import (
     JobDetails,
     JobDetailsResult,
     JobDetailsResultDetails,
+    JobDetailsCustomFieldData,
     Otype,
     PolicyGroup,
     PolicyGroupParams,

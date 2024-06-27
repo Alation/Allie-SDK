@@ -185,3 +185,87 @@ class TestGroupModels(unittest.TestCase):
         )
 
         self.assertEqual(input_transformed, output)
+
+    # CUSTOM FIELDS
+
+    # Custom Field POST
+
+    """
+    For custom field post no status is returned.
+    On the plus side, it returns the field IDs once finished successfully.
+    
+    '{"msg": "Starting bulk creation of Custom Fields...", "data": {}}'
+    '{"msg": "Finished bulk creation of Custom Fields", "data": {"field_ids": [10314]}}'
+    """
+
+    def test_job_model_for_custom_field_post(self):
+        # Expected input
+        input = {
+            "status": "successful"
+            , "msg": "Job finished in 0.011206 seconds at 2024-06-27 10:38:42.197271+00:00"
+            , "result": [
+                {
+                    "msg": "Starting bulk creation of Custom Fields..."
+                    , "data": {}
+                }
+                , {
+                    "msg": "Finished bulk creation of Custom Fields"
+                    , "data": {
+                        "field_ids": [10314]
+                    }
+                }
+            ]
+
+        }
+
+        JobDetails(status='successful', msg='Job finished in 0.011206 seconds at 2024-06-27 10:38:42.197271+00:00',
+                   result=['{"msg": "Starting bulk creation of Custom Fields...", "data": {}}',
+                           '{"msg": "Finished bulk creation of Custom Fields", "data": {"field_ids": [10317]}}'],
+                   data=JobDetailsCustomFieldData(field_ids=[]))
+
+        # Transformation
+        input_transformed = JobDetails(**input)
+
+        # Expected Output
+        output = JobDetails(
+            msg='Finished bulk creation of Custom Fields'
+            , data = JobDetailsCustomFieldData(
+                field_ids = [10314]
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    # Custom Field Value PUT
+
+    """
+    "When updating custom field values, this API runs two background jobs. The API response returns the ID of the first job. Use that ID to query the Jobs API. The response from the Jobs API returns the ID of the second job.
+    If either job fails, you must retry the API request." (Source: Official API Doc) 
+    DS: This applies to ACS instances only it seems
+    """
+
+    def test_job_model_for_custom_field_value_put(self):
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 0.147134 seconds at 2024-06-27 10:01:45.113414+00:00",
+            "result": [
+                "Start bulk upsert public annotation field values...",
+                "Finished bulk upsert public annotation field values. Updated objects: 0, created objects: 1"
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetails(**input)
+
+        # Expected Output
+        output = JobDetails(
+            status='successful'
+            , msg='Job finished in 0.147134 seconds at 2024-06-27 10:01:45.113414+00:00'
+            , result=[
+                'Start bulk upsert public annotation field values...'
+                , 'Finished bulk upsert public annotation field values. Updated objects: 0, created objects: 1'
+                ]
+            )
+
+        self.assertEqual(input_transformed, output)

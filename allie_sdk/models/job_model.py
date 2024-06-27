@@ -31,6 +31,7 @@ class JobDetailsResult(BaseClass):
     # for document put request
     updated_term_count: int = field(default = None)
     updated_terms: list[JobDetailsResultDetails] = field(default_factory = list)
+    #
     def __post_init__(self):
         # Make sure the nested details gets converted to the proper data class
         # Since there is no consistent structure we need to cater for the various API endpoints
@@ -65,13 +66,44 @@ class JobDetailsResult(BaseClass):
                 if updated_objects_dict_counter > 0:
                     self.updated_terms = updated_terms_out
         # TODO: Catering for other endpoint results
-@dataclass
+
+# required for custom field POST
+@dataclass(kw_only = True)
+class JobDetailsCustomFieldResultData(BaseClass):
+    field_ids: list[int] = field(default_factory = list)
+
+@dataclass(kw_only = True)
+class JobDetailsCustomFieldResult(BaseClass):
+    msg: str = field(default = None)
+    data: dict = field(default_factory = dict)
+    def __post_init__(self):
+        if isinstance(self.data, dict):
+            self.data = JobDetailsCustomFieldResultData.from_api_response(self.data)
+
+@dataclass(kw_only = True)
 class JobDetails(BaseClass):
     status: str = field(default = None)
     msg: str = field(default = None)
-    result: str | JobDetailsResult = field(default = None)
+    result: str | dict | list = field(default = None)
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
             self.result = JobDetailsResult.from_api_response(self.result)
+        if isinstance(self.result, list):
+            self.result = JobDetailsCustomFieldResult.from_api_response(self.result)
 
+"""
+TODO:
+The problem is we don't have a context: Ideally we create specific data classes for the API endpoints.
+Currently the transformation to data classes is done in a global/core module - hence no context.
+Solution: We could move this logic to the actual methods so that we have better control over the
+transformation to data classes.
+
+Actually, this wouldn't really help, since how to apply the classes to the nested elements is defined here?
+
+=> make dedicated models per API endpoint. But inherit from a base model.
+
+JobDetailsBase
+
+JobDetailsDocumentPut(JobDetailsBase)
+"""
