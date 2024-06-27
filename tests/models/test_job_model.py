@@ -20,17 +20,17 @@ class TestGroupModels(unittest.TestCase):
         }
 
         # Transformation
-        input_transformed = JobDetails(**input)
+        input_transformed = JobDetailsDocumentPost(**input)
 
         # Expected Output
-        output = JobDetails(
+        output = JobDetailsDocumentPost(
                 status='successful'
                 , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
-                , result = JobDetailsResult(
+                , result = JobDetailsDocumentPostResult(
                     created_term_count = 2
                     , created_terms = [
-                        JobDetailsResultDetails(id = 1325, title = 'My KPI 1')
-                        , JobDetailsResultDetails(id = 1326, title = 'My KPI 2')
+                        JobDetailsDocumentPostResultDetails(id = 1325, title = 'My KPI 1')
+                        , JobDetailsDocumentPostResultDetails(id = 1326, title = 'My KPI 2')
                     ]
                 )
             )
@@ -52,17 +52,17 @@ class TestGroupModels(unittest.TestCase):
         }
 
         # Transformation
-        input_transformed = JobDetails(**input)
+        input_transformed = JobDetailsDocumentPut(**input)
 
         # Expected Output
-        output = JobDetails(
+        output = JobDetailsDocumentPut(
             status='successful'
             , msg='Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
-            , result=JobDetailsResult(
+            , result=JobDetailsDocumentPutResult(
                 updated_term_count=2
                 , updated_terms=[
-                    JobDetailsResultDetails(id=1334)
-                    , JobDetailsResultDetails(id=1335)
+                    JobDetailsDocumentPutResultDetails(id=1334)
+                    , JobDetailsDocumentPutResultDetails(id=1335)
                 ]
             )
         )
@@ -86,17 +86,17 @@ class TestGroupModels(unittest.TestCase):
         }
 
         # Transformation
-        input_transformed = JobDetails(**input)
+        input_transformed = JobDetailsDocumentPost(**input)
 
         # Expected Output
-        output = JobDetails(
+        output = JobDetailsDocumentPost(
                 status='successful'
                 , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
-                , result = JobDetailsResult(
+                , result = JobDetailsDocumentPostResult(
                     created_term_count = 2
                     , created_terms = [
-                        JobDetailsResultDetails(id = 1325, title = 'My Term 1')
-                        , JobDetailsResultDetails(id = 1326, title = 'My Term 2')
+                        JobDetailsDocumentPostResultDetails(id = 1325, title = 'My Term 1')
+                        , JobDetailsDocumentPostResultDetails(id = 1326, title = 'My Term 2')
                     ]
                 )
             )
@@ -118,17 +118,17 @@ class TestGroupModels(unittest.TestCase):
         }
 
         # Transformation
-        input_transformed = JobDetails(**input)
+        input_transformed = JobDetailsDocumentPut(**input)
 
         # Expected Output
-        output = JobDetails(
+        output = JobDetailsDocumentPut(
             status='successful'
             , msg='Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
-            , result=JobDetailsResult(
+            , result=JobDetailsDocumentPutResult(
                 updated_term_count=2
                 , updated_terms=[
-                    JobDetailsResultDetails(id=1334)
-                    , JobDetailsResultDetails(id=1335)
+                    JobDetailsDocumentPutResultDetails(id=1334)
+                    , JobDetailsDocumentPutResultDetails(id=1335)
                 ]
             )
         )
@@ -190,14 +190,6 @@ class TestGroupModels(unittest.TestCase):
 
     # Custom Field POST
 
-    """
-    For custom field post no status is returned.
-    On the plus side, it returns the field IDs once finished successfully.
-    
-    '{"msg": "Starting bulk creation of Custom Fields...", "data": {}}'
-    '{"msg": "Finished bulk creation of Custom Fields", "data": {"field_ids": [10314]}}'
-    """
-
     def test_job_model_for_custom_field_post(self):
         # Expected input
         input = {
@@ -218,20 +210,26 @@ class TestGroupModels(unittest.TestCase):
 
         }
 
-        JobDetails(status='successful', msg='Job finished in 0.011206 seconds at 2024-06-27 10:38:42.197271+00:00',
-                   result=['{"msg": "Starting bulk creation of Custom Fields...", "data": {}}',
-                           '{"msg": "Finished bulk creation of Custom Fields", "data": {"field_ids": [10317]}}'],
-                   data=JobDetailsCustomFieldData(field_ids=[]))
 
         # Transformation
-        input_transformed = JobDetails(**input)
+        input_transformed = JobDetailsCustomFieldPost(**input)
 
         # Expected Output
-        output = JobDetails(
-            msg='Finished bulk creation of Custom Fields'
-            , data = JobDetailsCustomFieldData(
-                field_ids = [10314]
-            )
+        output = JobDetailsCustomFieldPost(
+            status='successful'
+            , msg='Job finished in 0.011206 seconds at 2024-06-27 10:38:42.197271+00:00'
+            , result = [
+                JobDetailsCustomFieldPostResult(
+                    msg='Starting bulk creation of Custom Fields...'
+                    , data = None
+                )
+                , JobDetailsCustomFieldPostResult(
+                    msg='Finished bulk creation of Custom Fields'
+                    , data = JobDetailsCustomFieldPostResultData(
+                        field_ids = [10314]
+                    )
+                )
+            ]
         )
 
         self.assertEqual(input_transformed, output)

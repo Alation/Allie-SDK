@@ -73,8 +73,9 @@ class AlationBusinessPolicy(AsyncHandler):
             url = '/integration/v1/business_policies/'
             , payload = payload
         )
-        
-        return async_results
+
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]
 
     def update_business_policies (
             self
@@ -105,7 +106,8 @@ class AlationBusinessPolicy(AsyncHandler):
             , payload = payload
         )
 
-        return async_results
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]
 
          
 

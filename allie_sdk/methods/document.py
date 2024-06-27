@@ -43,7 +43,7 @@ class AlationDocument(AsyncHandler):
     def create_documents (
         self
         , documents: list[DocumentPostItem]
-    )->list[JobDetails]:
+    )->list[JobDetailsDocumentPost]:
 
         """Create documents in Bulk
         Args:
@@ -51,7 +51,7 @@ class AlationDocument(AsyncHandler):
             https://developer.alation.com/dev/reference/postdocuments
 
         Returns:
-            List of JobDetails: Status report of the executed background jobs.
+            List of JobDetailsDocumentPost: Status report of the executed background jobs.
         """
 
 
@@ -66,13 +66,15 @@ class AlationDocument(AsyncHandler):
             url = '/integration/v2/document/'
             , payload = payload
         )
-        
-        return async_results
+
+        if async_results:
+            return [JobDetailsDocumentPost.from_api_response(item) for item in async_results]
+
     
     def update_documents (
             self
             , documents: list[DocumentPutItem]
-        )->list[JobDetails]:
+        )->list[JobDetailsDocumentPut]:
 
         """Bulk Update Documents in Bulk
         Args:
@@ -80,7 +82,7 @@ class AlationDocument(AsyncHandler):
             https://developer.alation.com/dev/reference/updatedocuments
 
         Returns:
-            List of JobDetails: Status report of the executed background jobs.
+            List of JobDetailsDocumentPut: Status report of the executed background jobs.
         """
 
         # make sure input data matches expected structure
@@ -94,7 +96,8 @@ class AlationDocument(AsyncHandler):
             url = '/integration/v2/document/'
             , payload = payload
         )
-        return async_results
+        if async_results:
+            return [JobDetailsDocumentPut.from_api_response(item) for item in async_results]
 
 
     def delete_documents(

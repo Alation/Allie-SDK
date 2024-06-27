@@ -42,14 +42,14 @@ class AlationGlossaryTerm(AsyncHandler):
         if glossary_terms:
             return [GlossaryTerm.from_api_response(term) for term in glossary_terms]
 
-    def post_glossary_terms(self, glossary_terms: list) -> list[JobDetails]:
+    def post_glossary_terms(self, glossary_terms: list) -> list[JobDetailsDocumentPost]:
         """Post (Create) Alation Glossary Terms.
 
         Args:
             glossary_terms (list): Alation Glossary Terms to be created.
  
         Returns:
-            List of JobDetails: Status report of the executed background jobs.
+            List of JobDetailsDocumentPost: Status report of the executed background jobs.
 
         """
         item: GlossaryTermItem
@@ -59,26 +59,28 @@ class AlationGlossaryTerm(AsyncHandler):
         )
         payload = [item.generate_api_post_payload() for item in glossary_terms]
 
-        async_result = self.async_post('/integration/v2/term/', payload)
+        async_results = self.async_post('/integration/v2/term/', payload)
 
-        return async_result
+        if async_results:
+            return [JobDetailsDocumentPost.from_api_response(item) for item in async_results]
 
-    def put_glossary_terms(self, glossary_terms: list) -> list[JobDetails]:
+    def put_glossary_terms(self, glossary_terms: list) -> list[JobDetailsDocumentPut]:
         """Put (Update) Alation Glossary Terms.
 
         Args:
             glossary_terms (list): Alation Glossary Terms to be updated.
 
         Returns:
-            List of JobDetails: Status report of the executed background jobs.
+            List of JobDetailsDocumentPut: Status report of the executed background jobs.
 
         """
         item: GlossaryTermItem
         validate_rest_payload(glossary_terms, (GlossaryTerm, GlossaryTermItem))
         payload = [item.generate_api_put_payload() for item in glossary_terms]
-        async_result = self.async_put('/integration/v2/term/', payload)
+        async_results = self.async_put('/integration/v2/term/', payload)
 
-        return async_result
+        if async_results:
+            return [JobDetailsDocumentPut.from_api_response(item) for item in async_results]
 
     def delete_glossary_terms(self, glossary_terms: list) -> bool:
         """Delete Alation Glossary Terms.
