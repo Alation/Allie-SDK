@@ -57,7 +57,7 @@ class TestRDBMSModels(unittest.TestCase):
             description='Very Nice!',
             db_comment="A schema for testing",
             custom_fields=[
-                CustomFieldValueItem(field_id=1, value=[CustomFieldStringValueItem(value="Testing")]),
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
                 CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
             ]
         )
@@ -153,7 +153,7 @@ class TestRDBMSModels(unittest.TestCase):
             owner='Alation_PS',
             sql="select * from test.test",
             custom_fields=[
-                CustomFieldValueItem(field_id=1, value=[CustomFieldStringValueItem(value="Testing")]),
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
                 CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
             ]
         )
@@ -266,7 +266,7 @@ class TestRDBMSModels(unittest.TestCase):
             description="<p>This is the customer name</p>",
             key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.CUSTOMER_NAME",
             custom_fields=[
-                CustomFieldValueItem(field_id=1, value=[CustomFieldStringValueItem(value="Testing")]),
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
                 CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
             ],
             column_type="VARCHAR(100)",
@@ -299,7 +299,7 @@ class TestRDBMSModels(unittest.TestCase):
             title="Customer Name",
             description="<p>This is the customer name</p>",
             custom_fields=[
-                CustomFieldValueItem(field_id=1, value=[CustomFieldStringValueItem(value="Testing")]),
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
                 CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
             ],
             column_type="VARCHAR(100)",
@@ -322,7 +322,7 @@ class TestRDBMSModels(unittest.TestCase):
             description="<p>This is the customer name</p>",
             key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.CUSTOMER_NAME",
             custom_fields=[
-                CustomFieldValueItem(field_id=1, value=[CustomFieldStringValueItem(value="Testing")]),
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
                 CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
             ],
             index=ColumnIndex(

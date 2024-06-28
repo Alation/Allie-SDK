@@ -73,7 +73,7 @@ Query multiple Alation Documents and return their details
 Args:
 * query_params (`DocumentParams`): REST API Documents Query Parameters.
 Returns:
-* list: Alation Business Policies
+* list: Alation Documents
 
 ### create_documents
 
