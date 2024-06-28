@@ -221,7 +221,7 @@ class TestGroupModels(unittest.TestCase):
             , result = [
                 JobDetailsCustomFieldPostResult(
                     msg='Starting bulk creation of Custom Fields...'
-                    , data = None
+                    , data = {}
                 )
                 , JobDetailsCustomFieldPostResult(
                     msg='Finished bulk creation of Custom Fields'
@@ -265,5 +265,118 @@ class TestGroupModels(unittest.TestCase):
                 , 'Finished bulk upsert public annotation field values. Updated objects: 0, created objects: 1'
                 ]
             )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_rdbms_schema_post(self):
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00",
+            "result": [
+                {
+                    "response": "Upserted 2 column objects.",
+                    "mapping": [
+                        {"id": 1049, "key": "9.sales"},
+                        {"id": 1048, "key": "9.orders"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsRdbms(**input)
+
+        # Expected Output
+        output = JobDetailsRdbms(
+            status='successful'
+            , msg='Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00'
+            , result = [
+                JobDetailsRdbmsResult(
+                    response = "Upserted 2 column objects."
+                    , mapping = [
+                        JobDetailsRdbmsResultMapping(id = 1049, key = "9.sales")
+                        , JobDetailsRdbmsResultMapping(id = 1048, key = "9.orders")
+                    ]
+                    , errors = []
+                )
+            ]
+        )
+
+        self.assertEqual(input_transformed, output)
+    def test_job_model_for_rdbms_table_post(self):
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00",
+            "result": [
+                {
+                    "response": "Upserted 2 table objects.",
+                    "mapping": [
+                        {"id": 1049, "key": "9.sales.returns"},
+                        {"id": 1048, "key": "9.sales.sales_commissions"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsRdbms(**input)
+
+        # Expected Output
+        output = JobDetailsRdbms(
+            status='successful'
+            , msg='Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00'
+            , result = [
+                JobDetailsRdbmsResult(
+                    response = "Upserted 2 table objects."
+                    , mapping = [
+                        JobDetailsRdbmsResultMapping(id = 1049, key = "9.sales.returns")
+                        , JobDetailsRdbmsResultMapping(id = 1048, key = "9.sales.sales_commissions")
+                    ]
+                    , errors = []
+                )
+            ]
+        )
+
+        self.assertEqual(input_transformed, output)
+    
+    def test_job_model_for_rdbms_column_post(self):
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00",
+            "result": [
+                {
+                    "response": "Upserted 2 column objects.",
+                    "mapping": [
+                        {"id": 1049, "key": "9.sales.returns.id"},
+                        {"id": 1048, "key": "9.sales.sales_commissions.id"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsRdbms(**input)
+
+        # Expected Output
+        output = JobDetailsRdbms(
+            status='successful'
+            , msg='Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00'
+            , result = [
+                JobDetailsRdbmsResult(
+                    response = "Upserted 2 column objects."
+                    , mapping = [
+                        JobDetailsRdbmsResultMapping(id = 1049, key = "9.sales.returns.id")
+                        , JobDetailsRdbmsResultMapping(id = 1048, key = "9.sales.sales_commissions.id")
+                    ]
+                    , errors = []
+                )
+            ]
+        )
 
         self.assertEqual(input_transformed, output)

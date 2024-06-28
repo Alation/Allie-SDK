@@ -106,13 +106,14 @@ class JobDetailsDocumentPut(JobDetails):
 @dataclass(kw_only = True)
 class JobDetailsCustomFieldPostResultData(BaseClass):
     field_ids: list[int] = field(default_factory = list)
+
 @dataclass(kw_only = True)
 class JobDetailsCustomFieldPostResult(BaseClass):
     msg: str = field(default = None)
     data: dict = field(default_factory = dict)
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
-        if isinstance(self.data, list):
+        if isinstance(self.data, dict):
             self.data = JobDetailsCustomFieldPostResultData.from_api_response(self.data)
 
 @dataclass(kw_only = True)
@@ -128,3 +129,40 @@ class JobDetailsCustomFieldPost(JobDetails):
                     result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
             if result_counter > 0:
                 self.result = result_out
+
+@dataclass(kw_only = True)
+class JobDetailsRdbmsResultMapping(BaseClass):
+    id: int = field(default = None)
+    key: str = field(default = None)
+@dataclass(kw_only = True)
+class JobDetailsRdbmsResult(BaseClass):
+    response: str = field(default = None)
+    mapping: list[dict] = field(default_factory = list)
+    errors: list = field(default_factory = list)
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.mapping, list):
+            mapping_out = []
+            mapping_counter = 0
+            for value in self.mapping:
+                if isinstance(value, dict):
+                    mapping_counter += 1
+                    mapping_out.append(JobDetailsRdbmsResultMapping.from_api_response(value))
+            if mapping_counter > 0:
+                self.mapping = mapping_out
+@dataclass(kw_only = True)
+class JobDetailsRdbms(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, list):
+            result_out = []
+            result_counter = 0
+            for value in self.result:
+                if isinstance(value, dict):
+                    result_counter += 1
+                    result_out.append(JobDetailsRdbmsResult.from_api_response(value))
+            if result_counter > 0:
+                self.result = result_out
+
+
+

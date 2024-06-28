@@ -89,7 +89,9 @@ class TestRDBMS(unittest.TestCase):
         m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
         async_result = MOCK_RDBMS.post_schemas(1, mock_schema_list)
 
-        self.assertTrue(async_result)
+        input_transformed = [JobDetailsRdbms(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_schemas(self, m):
@@ -183,6 +185,7 @@ class TestRDBMS(unittest.TestCase):
         async_response = {
             "job_id": 1
         }
+
         job_response = {
             "status": "successful",
             "msg": "Job finished in 1.94582 seconds at 2023-11-30 16:09:48.515164+00:00",
@@ -208,7 +211,9 @@ class TestRDBMS(unittest.TestCase):
         m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
         async_result = MOCK_RDBMS.post_tables(1, mock_table_list)
 
-        self.assertTrue(async_result)
+        input_transformed = [JobDetailsRdbms(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_tables(self, m):
@@ -338,7 +343,9 @@ class TestRDBMS(unittest.TestCase):
         m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
         async_result = MOCK_RDBMS.post_columns(1, mock_column_list)
 
-        self.assertTrue(async_result)
+        input_transformed = [JobDetailsRdbms(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_columns(self, m):
