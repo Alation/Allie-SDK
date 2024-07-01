@@ -24,6 +24,7 @@ from .methods import (
     , AlationRDBMS
     , AlationUser
     , AlationTrustChecks
+    , AlationVirtualDataSource
 )
 
 os.makedirs('logs', exist_ok=True)
@@ -113,6 +114,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.virtual_datasource = AlationVirtualDataSource(
             access_token=self.access_token, session=session, host=host
         )
 

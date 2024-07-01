@@ -56,5 +56,13 @@ from .models import (
     TrustCheckFlagSubject,
     TrustCheckFlagParams,
     User,
-    UserParams
+    UserParams,
+    VirtualDataSource,
+    VirtualDataSourceItem,
+    VirtualDataSourceParams,
+    VirtualDataSourceSchema,
+    VirtualDataSourceTable,
+    VirtualDataSourceView,
+    VirtualDataSourceColumn,
+    VirtualDataSourceIndex
 )
