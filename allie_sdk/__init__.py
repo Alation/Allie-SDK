@@ -56,5 +56,7 @@ from .models import (
     TrustCheckFlagSubject,
     TrustCheckFlagParams,
     User,
-    UserParams
+    UserParams,
+    VirtualFileSystem,
+    VirtualFileSystemItem,
 )

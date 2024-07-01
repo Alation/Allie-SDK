@@ -13,4 +13,5 @@ from .otype import AlationOtype
 from .policy_group import AlationPolicyGroup
 from .rdbms import AlationRDBMS
 from .user import AlationUser
+from .virtual_filesystem import AlationVirtualFileSystem
 from .trust_check import AlationTrustChecks
