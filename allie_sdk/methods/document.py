@@ -95,21 +95,24 @@ class AlationDocument(AsyncHandler):
         )
         return True if not async_results else False
 
-
     def delete_documents(
             self
-            , documents:list[Document]
-        ):
+            , documents: list[Document]
+    ):
         """Bulk delete documents
 
         Args:
             documents (list): List of Document
         """
 
-        item: Document
-        validate_rest_payload(documents, (Document,))
-        payload = {'id': [item.id for item in documents]}
-        # The policys APIs returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
-        delete_result = self.delete('/integration/v2/document/', payload)
-        # There's no job ID or result returned here
-        return True if delete_result else False
+        if documents:
+
+            item: Document
+            validate_rest_payload(documents, (Document,))
+            payload = {'id': [item.id for item in documents]}
+            # The policys APIs returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
+            delete_result = self.delete('/integration/v2/document/', payload)
+            # There's no job ID or result returned here
+            return True if delete_result else False
+        else:
+            return True
