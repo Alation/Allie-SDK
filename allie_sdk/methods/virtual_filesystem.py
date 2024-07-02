@@ -40,13 +40,14 @@ class AlationVirtualFileSystem(AsyncHandler):
 
         """
 
-        # validate_query_params(query_params, VirtualDataSourceParams)
-        # params = query_params.generate_params_dict() if query_params else None
-        validate_rest_payload(vfs_objects, (VirtualFileSystemItem,))
+        # allow a list object for empty payloads
+        validate_rest_payload(vfs_objects, (VirtualFileSystemItem, list))
         item: VirtualFileSystemItem
         payload_d = [item.generate_api_post_payload() for item in vfs_objects]
         # add line feeds between json payload dicts for jsonl format
-        payload_jsonl = '\n'.join(json.dumps(p) for p in payload_d)
+        # add a preceding \n to force an empty payload if vds_objects is empty for delete operations
+        payload_jsonl = '\n' + '\n'.join(json.dumps(p) for p in payload_d)
+
         LOGGER.debug(payload_jsonl)
         async_results = self.async_post(f'{self._vfs_endpoint}{fs_id}/', payload=payload_jsonl)
 

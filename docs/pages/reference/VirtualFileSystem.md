@@ -68,7 +68,7 @@ vfs4 = allie.VirtualFileSystemItem(path="/var/log", name="boot.log", is_director
 vfs_response = alation.virtual_filesystem.post_metadata(fs_id=fs_id, vfs_objects=[vfs1, vfs2, vfs3, vfs4])
 ```
 
-### Remove Virtual Data Source Objects
+### Post/Remove All Virtual File System Objects
 ```python
 # Remove All Objects   
 import allie_sdk as allie
@@ -79,6 +79,22 @@ alation = allie.Alation(
     refresh_token='<REFRESH_TOKEN>')
 
 fs_id = 42
-vds_response = alation.virtual_datasource.post_metadata(fs_id=fs_id, vfs_objects=[])
+vds_response = alation.virtual_filesystem.post_metadata(fs_id=fs_id, vfs_objects=[])
+
+```
+### Post/Remove Unmentioned Virtual File System Objects
+```python
+# Remove All Objects   
+import allie_sdk as allie
+
+alation = allie.Alation(
+    host='<HOST>',
+    user_id=<USER_ID>,
+    refresh_token='<REFRESH_TOKEN>')
+
+fs_id = 42
+vfs1 = allie.VirtualFileSystemItem(path="/", name="var", is_directory=True)
+# All other file objects that are not part of the vfs_objects list will be deleted 
+vds_response = alation.virtual_filesystem.post_metadata(fs_id=fs_id, vfs_objects=[vfs1])
 
 ```
