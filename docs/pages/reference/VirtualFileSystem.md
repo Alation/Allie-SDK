@@ -57,15 +57,26 @@ alation = allie.Alation(
 
 # Add/Update Objects   
 fs_id = 42
-vfs1 = allie.VirtualFileSystemItem(path="/", name="var", is_directory=True)
-vfs2 = allie.VirtualFileSystemItem(path="/var", name="log", is_directory=True)
-vfs3 = allie.VirtualFileSystemItem(path="/var", name="File 2", is_directory=False)
-vfs4 = allie.VirtualFileSystemItem(path="/var/log", name="boot.log", is_directory=False, size_in_bytes=98800,
-                                  ts_last_modified="2024-06-20T18:26:54.663432Z",
-                                  ts_last_accessed="2024-06-20T18:26:54.663432Z", owner="root", group="root",
-                                  permission_bits=755)
+vfs_objects = []
+vfs_objects.append(allie.VirtualFileSystemItem(path="/", name="var", is_directory=True))
+vfs_objects.append(allie.VirtualFileSystemItem(path="/var", name="log", is_directory=True,  size_in_bytes=8800,
+                                               owner="root", group="root",
+                                               permission_bits=755))
+vfs_objects.append(allie.VirtualFileSystemItem(path="/var", name="File 2", is_directory=False, size_in_bytes=120))
+vfs_objects.append(allie.VirtualFileSystemItem(path="/var/log", name="boot.log", is_directory=False, 
+                                               size_in_bytes=600,
+                                               ts_last_modified="2024-06-20T18:26:54.663432Z",
+                                               ts_last_accessed="2024-06-20T18:26:54.663432Z", 
+                                               owner="root", group="root",
+                                               permission_bits=755))
+vfs_objects.append(allie.VirtualFileSystemItem(path="/var/log", name="access.log", is_directory=False, 
+                                               size_in_bytes=280,
+                                               ts_last_modified="2024-06-20T18:26:54.663432Z",
+                                               ts_last_accessed="2024-06-20T18:26:54.663432Z", 
+                                               owner="root", group="root",
+                                               permission_bits=755))
 
-vfs_response = alation.virtual_filesystem.post_metadata(fs_id=fs_id, vfs_objects=[vfs1, vfs2, vfs3, vfs4])
+vfs_response = alation.virtual_filesystem.post_metadata(fs_id=fs_id, vfs_objects=vfs_objects)
 ```
 
 ### Post/Remove All Virtual File System Objects
