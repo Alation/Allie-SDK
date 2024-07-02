@@ -11,6 +11,7 @@ class AsyncJobDetails(BaseClass):
     job_id: int = field(default = None)
     id: int = field(default = None)
     href: str = field(default = None)
+    job_name: str = field(default = None)
 
     def __post_init__(self):
         if self.id and self.job_id is None:

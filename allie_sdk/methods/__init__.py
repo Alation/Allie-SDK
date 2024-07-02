@@ -14,3 +14,4 @@ from .policy_group import AlationPolicyGroup
 from .rdbms import AlationRDBMS
 from .user import AlationUser
 from .trust_check import AlationTrustChecks
+from .virtual_datasource import AlationVirtualDataSource

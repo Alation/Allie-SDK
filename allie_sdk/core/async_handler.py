@@ -108,13 +108,14 @@ class AsyncHandler(RequestHandler):
 
         return failed_result
 
-    def async_post(self, url: str, payload: list, batch_size: int = None) -> bool:
+    def async_post(self, url: str, payload: list, batch_size: int = None, query_params: dict = None) -> bool:
         """Post Alation Objects via an Async Job Process.
 
         Args:
             url (str): POST API Call URL.
             payload (list): REST API POST Body.
             batch_size (int): REST API POST Body Size Limit.
+            query_params (dict): REST API POST Query Parameters
 
         Returns:
             bool: Returns True if a batch fails
@@ -125,7 +126,7 @@ class AsyncHandler(RequestHandler):
         for batch in batches:
             try:
                 LOGGER.debug(batch)
-                async_response = self.post(url, body=batch)
+                async_response = self.post(url, body=batch, query_params=query_params)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
                     results = job.check_job_status()
