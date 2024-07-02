@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 
 from ..core.data_structures import BaseClass
-
+import json
 
 @dataclass
 class AsyncJobDetails(BaseClass):
@@ -166,4 +166,16 @@ class JobDetailsRdbms(JobDetails):
                 self.result = result_out
 
 
-
+@dataclass(kw_only = True)
+class JobDetailsVirtualDatasourcePostResult(BaseClass):
+    number_received:int = field(default = None)
+    updated_objects:int = field(default = None)
+    error_objects:list = field(default_factory = list)
+    error: str = field(default = None)
+@dataclass(kw_only = True)
+class JobDetailsVirtualDatasourcePost(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, str):
+            result_tmp = json.loads(self.result)
+            self.result = JobDetailsVirtualDatasourcePostResult.from_api_response(result_tmp)

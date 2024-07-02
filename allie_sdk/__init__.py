@@ -55,6 +55,8 @@ from .models import (
     JobDetailsRdbms,
     JobDetailsRdbmsResult,
     JobDetailsRdbmsResultMapping,
+    JobDetailsVirtualDatasourcePost,
+    JobDetailsVirtualDatasourcePostResult,
     Otype,
     PolicyGroup,
     PolicyGroupParams,

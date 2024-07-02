@@ -145,7 +145,7 @@ Args:
 * query_params: (VirtualDataSourceParams): Query Params for the POST request.
 
 Returns:
-* boolean: Success/Failure of the API POST Call(s).
+* List of JobDetailsVirtualDatasourcePost: Status report of the executed background jobs.
 
 
 

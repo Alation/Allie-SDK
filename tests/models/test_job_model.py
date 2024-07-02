@@ -380,3 +380,28 @@ class TestGroupModels(unittest.TestCase):
         )
 
         self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_virtual_datasource_post(self):
+        # Expected input
+        input = {
+            'status': 'successful'
+            , 'msg': 'Job finished in 1.0 seconds at 2024-07-02 13:45:23.994057+00:00'
+            , 'result': '{"number_received": 5, "updated_objects": 0, "error_objects": ["Failed to import the uploaded file at line 4. Data may be malformed."], "error": "1 errors were ignored"}'
+        }
+
+        # Transformation
+        input_transformed = JobDetailsRdbms(**input)
+
+        # Expected Output
+        output = JobDetailsVirtualDatasourcePost(
+            status='successful'
+            , msg='Job finished in 1.0 seconds at 2024-07-02 13:45:23.994057+00:00'
+            , result= JobDetailsVirtualDatasourcePost(
+                number_received = 5
+                , updated_objects = 0
+                , error_objects = ["Failed to import the uploaded file at line 4. Data may be malformed."]
+                , error = "1 errors were ignored"
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
