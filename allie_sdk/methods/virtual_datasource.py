@@ -30,7 +30,7 @@ class AlationVirtualDataSource(AsyncHandler):
         self._vds_endpoint = '/api/v1/bulk_metadata/extraction/'
 
     def post_metadata(self, ds_id: int, vds_objects: list,
-                      query_params: VirtualDataSourceParams = None) -> bool:
+                      query_params: VirtualDataSourceParams = None) -> list[JobDetailsVirtualDatasourcePost]:
         """Post (Create/Update/Delets) Alation Virtual Data source objects
 
         Args:
@@ -67,7 +67,7 @@ class AlationVirtualDataSource(AsyncHandler):
             return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
 
     def post_metadata_jsonl(self, ds_id: int, payload: str,
-                           query_params: VirtualDataSourceParams = None) -> list:
+                           query_params: VirtualDataSourceParams = None) -> list[JobDetailsVirtualDatasourcePost]:
         """Post (Create/Update/Delets) Alation Virtual Data source objects
 
         Args:

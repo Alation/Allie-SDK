@@ -135,7 +135,7 @@ Key, description, title are inherited from VirtualDataSourceItem. The key, index
 ### post_metadata
 
 ```
-post_metadata(ds_id: int, vds_objects: list, query_params: VirtualDataSourceParams = None) -> bool
+post_metadata(ds_id: int, vds_objects: list, query_params: VirtualDataSourceParams = None) -> list[JobDetailsVirtualDatasourcePost]
 ```
 Add/Update/Remove Virtual Data Source Objects
 

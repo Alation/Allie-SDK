@@ -6,6 +6,7 @@ import requests
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.virtual_filesystem_model import *
 from ..core.async_handler import AsyncHandler
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -27,7 +28,7 @@ class AlationVirtualFileSystem(AsyncHandler):
 
         self._vfs_endpoint = '/api/v1/bulk_metadata/file_upload/'
 
-    def post_metadata(self, fs_id: int, vfs_objects: list) -> bool:
+    def post_metadata(self, fs_id: int, vfs_objects: list) -> list[JobDetails]:
         """Post (Create/Update/Delete) Alation Virtual Data source objects
 
         Args:
@@ -36,7 +37,7 @@ class AlationVirtualFileSystem(AsyncHandler):
                     be added/updated or deleted.
 
         Returns:
-            boolean: Alation job execution status
+            List of JobDetails: Status report of the executed background jobs.
 
         """
 
@@ -51,9 +52,10 @@ class AlationVirtualFileSystem(AsyncHandler):
         LOGGER.debug(payload_jsonl)
         async_results = self.async_post(f'{self._vfs_endpoint}{fs_id}/', payload=payload_jsonl)
 
-        return async_results
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]
 
-    def post_metadata_jsonl(self, fs_id: int, payload: str) -> list:
+    def post_metadata_jsonl(self, fs_id: int, payload: str) -> list[JobDetails]:
         """Post (Create/Update/Delets) Alation Virtual Data source objects
 
         Args:
@@ -61,14 +63,15 @@ class AlationVirtualFileSystem(AsyncHandler):
             payload (str): A list of Alation virtual file system object definitions as a jsonl payload
 
         Returns:
-            boolean: Alation job execution status
+            List of JobDetails: Status report of the executed background jobs.
         """
 
         # validate_query_params(query_params, VirtualDataSourceParams)
         # params = query_params.generate_params_dict() if query_params else None
         async_results = self.async_post(f'{self._vfs_endpoint}{fs_id}', data=payload)
 
-        return async_results
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]
 
 @property
 def vfs_endpoint(self) -> str:
