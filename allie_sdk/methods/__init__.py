@@ -12,6 +12,7 @@ from .group import AlationGroup
 from .otype import AlationOtype
 from .policy_group import AlationPolicyGroup
 from .rdbms import AlationRDBMS
-from .user import AlationUser
 from .trust_check import AlationTrustChecks
+from .user import AlationUser
 from .virtual_datasource import AlationVirtualDataSource
+from .virtual_filesystem import AlationVirtualFileSystem
