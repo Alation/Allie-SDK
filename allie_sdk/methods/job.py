@@ -28,6 +28,10 @@ class AlationJob(RequestHandler):
         if "task" in job_response.keys():
             # cater for non-standard result sets (e.g. policy endpoint) structure: {'task': {'id': 25647, ... }}
             self.async_job = AsyncJobDetails.from_api_response(job_response['task'])
+        elif "job" in job_response.keys():
+            # cater for non-standard result sets (e.g. virtual file system endpoint)
+            # structure: {'job': {'id': 25647, ... }}
+            self.async_job = AsyncJobDetails.from_api_response(job_response['job'])
         else: # cater for standard result set structure: {'job_id': 23442, ... }
             # virtual data source endpoint returns {'job_name': MetadataExtraction#, ... }
             self.async_job = AsyncJobDetails.from_api_response(job_response)

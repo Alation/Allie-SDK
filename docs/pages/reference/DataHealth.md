@@ -86,7 +86,7 @@ Attributes:
 | last_updated  |   FALSE   | str   | ISO 8601 formatted date time string indicating when the value was last updated.                                         |
 
 ###  DataQualityValueParams
-Optional item used to filter the response of the returned data from the function `get_data_quality_rules`.
+Optional item used to filter the response of the returned data from the function `get_data_quality_values`.
 
 Attributes:
 
@@ -202,7 +202,7 @@ field_item = allie.DataQualityFieldItem(
     description='Example test code'
 )
 dq_fields.append(field_item)
-alation.data_quality.post_data_quality_rules(dq_fields)
+alation.data_quality.post_data_quality_fields(dq_fields)
 
 # Create the data quality value
 dq_values = []
@@ -229,15 +229,9 @@ alation = allie.Alation(
 # Get the data quality rule and Values
 dq_field_filter = allie.DataQualityFieldParams()
 dq_field_filter.key.add('sdk-test-1')
-dq_rules = alation.data_quality.get_data_quality_fields(dq_field_filter)
+dq_fields = alation.data_quality.get_data_quality_fields(dq_field_filter)
 
 dq_value_filter = allie.DataQualityValueParams()
 dq_value_filter.field_key.add('sdk-test-1')
 dq_values = alation.data_quality.get_data_quality_values(dq_value_filter)
-
-# Delete the data quality rule
-alation.data_quality.delete_data_quality_rules(dq_rules)
-
-# Delete the data quality values
-alation.data_quality.delete_data_quality_values(dq_values)
 ```

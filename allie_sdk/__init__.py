@@ -72,6 +72,8 @@ from .models import (
     TrustCheckFlagParams,
     User,
     UserParams,
+    VirtualFileSystem,
+    VirtualFileSystemItem,
     VirtualDataSource,
     VirtualDataSourceItem,
     VirtualDataSourceParams,
