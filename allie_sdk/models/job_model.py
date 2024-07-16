@@ -179,3 +179,56 @@ class JobDetailsVirtualDatasourcePost(JobDetails):
         if isinstance(self.result, str):
             result_tmp = json.loads(self.result)
             self.result = JobDetailsVirtualDatasourcePostResult.from_api_response(result_tmp)
+
+@dataclass(kw_only=True)
+class JobDetailsDataQualityResultActionStats(BaseClass):
+    count: int = field(default = 0)
+    sample: list = field(default_factory = list)
+
+@dataclass(kw_only=True)
+class JobDetailsDataQualityResultAction(BaseClass):
+    created: dict | JobDetailsDataQualityResultActionStats = field(default_factory = dict)
+    updated: dict | JobDetailsDataQualityResultActionStats = field(default_factory = dict)
+    deleted: dict | JobDetailsDataQualityResultActionStats = field(default_factory = dict)
+    not_found: dict | JobDetailsDataQualityResultActionStats = field(default_factory = dict)
+
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.created, dict):
+            self.created = JobDetailsDataQualityResultActionStats.from_api_response(self.created)
+        if isinstance(self.updated, dict):
+            self.updated = JobDetailsDataQualityResultActionStats.from_api_response(self.updated)
+        if isinstance(self.deleted, dict):
+            self.deleted = JobDetailsDataQualityResultActionStats.from_api_response(self.deleted)
+        if isinstance(self.not_found, dict):
+            self.not_found = JobDetailsDataQualityResultActionStats.from_api_response(self.not_found)
+
+@dataclass(kw_only=True)
+class JobDetailsDataQualityResultCreatedObjectAttribution(BaseClass):
+    success_count: int = field(default = 0)
+    failure_count: int = field(default = 0)
+    success_sample: list = field(default_factory = list)
+    failure_sample: list = field(default_factory = list)
+@dataclass(kw_only=True)
+class JobDetailsDataQualityResult(BaseClass):
+    fields: dict | JobDetailsDataQualityResultAction = field(default_factory = dict)
+    values: dict | JobDetailsDataQualityResultAction = field(default_factory = dict)
+    created_object_attribution: dict | JobDetailsDataQualityResultCreatedObjectAttribution = field(default_factory = dict)
+    flag_counts: dict = field(default_factory = dict)
+    total_duration: float = field(default = None)
+
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.fields, dict):
+            self.fields = JobDetailsDataQualityResultAction.from_api_response(self.fields)
+        if isinstance(self.values, dict):
+            self.values = JobDetailsDataQualityResultAction.from_api_response(self.values)
+        if isinstance(self.created_object_attribution, dict):
+            self.created_object_attribution = JobDetailsDataQualityResultCreatedObjectAttribution.from_api_response(self.created_object_attribution)
+
+@dataclass(kw_only = True)
+class JobDetailsDataQuality(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            self.result = JobDetailsDataQualityResult.from_api_response(self.result)

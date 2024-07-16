@@ -405,3 +405,128 @@ class TestGroupModels(unittest.TestCase):
         )
 
         self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_data_quality_fields_post(self):
+
+        # Expected input
+        input = {
+            'status': 'successful'
+            , 'msg': 'Job finished in 0.008073 seconds at 2024-07-03 15:30:23.473166+00:00'
+            , 'result': {
+                'fields': {
+                    'created': {
+                        'count': 0
+                        , 'sample': []
+                    }
+                    , 'updated': {
+                        'count': 1
+                        , 'sample': [
+                            {'field_key': 'sdk-test-1'}
+                        ]
+                    }
+                }
+                , 'values': {'created': {'count': 0, 'sample': []}, 'updated': {'count': 0, 'sample': []}}
+                , 'created_object_attribution': {'success_count': 0, 'failure_count': 0, 'success_sample': [], 'failure_sample': []}
+                , 'flag_counts': {'GOOD': 0, 'WARNING': 0, 'ALERT': 0}
+                , 'total_duration': 0.010898920998442918
+            }
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDataQuality(**input)
+
+        # Expected Output
+        output = JobDetailsDataQuality(
+            status='successful'
+            , msg='Job finished in 0.008073 seconds at 2024-07-03 15:30:23.473166+00:00'
+            , result=JobDetailsDataQualityResult(
+                fields=JobDetailsDataQualityResultAction(
+                    created=JobDetailsDataQualityResultActionStats(
+                        count=0
+                        , sample=[]
+                    )
+                    , updated=JobDetailsDataQualityResultActionStats(
+                        count=1
+                        , sample=[
+                            {'field_key': 'sdk-test-1'}
+                        ]
+                    )
+                )
+                , values=JobDetailsDataQualityResultAction(
+                    created=JobDetailsDataQualityResultActionStats(
+                        count=0
+                        , sample=[]
+                    )
+                    , updated=JobDetailsDataQualityResultActionStats(
+                        count=0
+                        , sample=[]
+                    )
+                )
+                , created_object_attribution=JobDetailsDataQualityResultCreatedObjectAttribution(
+                    success_count=0
+                    , failure_count=0
+                    , success_sample=[]
+                    , failure_sample=[]
+                )
+                , flag_counts={'GOOD': 0, 'WARNING': 0, 'ALERT': 0}
+                , total_duration=0.010898920998442918
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_data_quality_values_post(self):
+
+        # Expected input
+        input = {
+            'status': 'successful'
+            , 'msg': 'Job finished in 0.067679 seconds at 2024-07-03 16:35:17.600805+00:00'
+            , 'result': {
+                'fields': {'created': {'count': 0, 'sample': []}, 'updated': {'count': 0, 'sample': []}}
+                , 'values': {'created': {'count': 0, 'sample': []}, 'updated': {'count': 1, 'sample': [{'field_key': 'sdk-test-1', 'object_key': '131.schema_new.table_2'}]}}
+                , 'created_object_attribution': {'success_count': 0, 'failure_count': 0, 'success_sample': [], 'failure_sample': []}
+                , 'flag_counts': {'GOOD': 0, 'WARNING': 1, 'ALERT': 0}
+                , 'total_duration': 0.07003468499897281
+            }
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDataQuality(**input)
+
+        # Expected Output
+        output = JobDetailsDataQuality(
+            status='successful'
+            , msg='Job finished in 0.067679 seconds at 2024-07-03 16:35:17.600805+00:00'
+            , result = JobDetailsDataQualityResult(
+                fields = JobDetailsDataQualityResultAction(
+                    created = JobDetailsDataQualityResultActionStats(
+                        count = 0
+                        , sample = []
+                    )
+                    , updated = JobDetailsDataQualityResultActionStats(
+                        count = 0
+                        , sample = []
+                    )
+                )
+                , values = JobDetailsDataQualityResultAction(
+                    created = JobDetailsDataQualityResultActionStats(
+                        count = 0
+                        , sample = []
+                    )
+                    , updated = JobDetailsDataQualityResultActionStats(
+                        count = 1
+                        , sample = [{'field_key': 'sdk-test-1', 'object_key': '131.schema_new.table_2'}]
+                    )
+                )
+                , created_object_attribution = JobDetailsDataQualityResultCreatedObjectAttribution(
+                    success_count = 0
+                    , failure_count = 0
+                    , success_sample = []
+                    , failure_sample = []
+                )
+                , flag_counts = {'GOOD': 0, 'WARNING': 1, 'ALERT': 0}
+                , total_duration = 0.07003468499897281
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
