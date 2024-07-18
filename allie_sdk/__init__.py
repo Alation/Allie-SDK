@@ -35,6 +35,8 @@ from .models import (
     DocumentPostItem,
     DocumentPutItem,
     DocumentParams,
+    Domain,
+    DomainMembership,
     GlossaryTerm,
     GlossaryTermItem,
     GlossaryTermParams,
@@ -54,5 +56,15 @@ from .models import (
     TrustCheckFlagSubject,
     TrustCheckFlagParams,
     User,
-    UserParams
+    UserParams,
+    VirtualFileSystem,
+    VirtualFileSystemItem,
+    VirtualDataSource,
+    VirtualDataSourceItem,
+    VirtualDataSourceParams,
+    VirtualDataSourceSchema,
+    VirtualDataSourceTable,
+    VirtualDataSourceView,
+    VirtualDataSourceColumn,
+    VirtualDataSourceIndex
 )

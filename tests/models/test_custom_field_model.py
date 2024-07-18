@@ -295,7 +295,7 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.field_id = 1
         mock_item.oid = 1
         mock_item.otype = 'table'
-        mock_item.value.append(CustomFieldStringValueItem(value='Testing'))
+        mock_item.value = CustomFieldStringValueItem(value='Testing')
         expected_payload = {'field_id': 1, 'otype': 'table', 'oid': 1, 'value': 'Testing'}
 
         self.assertEqual(mock_item.generate_api_put_payload(), expected_payload)
@@ -319,7 +319,7 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.field_id = 1
         mock_item.oid = 1
         mock_item.otype = 'table'
-        mock_item.value.append(CustomFieldStringValueItem(value='Testing'))
+        mock_item.value = CustomFieldStringValueItem(value='Testing')
         mock_item.ts_updated = '2023-11-27 4:30 PM'
         expected_payload = {'field_id': 1, 'oid': 1, 'otype': 'table',
                             'ts_updated': '2023-11-27T16:30:00', 'value': 'Testing'}
@@ -332,7 +332,7 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.field_id = 1
         mock_item.oid = 1
         mock_item.otype = 'table'
-        mock_item.value.append(CustomFieldStringValueItem(value='Testing'))
+        mock_item.value = CustomFieldStringValueItem(value='Testing')
         mock_item.ts_updated = datetime(2023, 11, 27, 16, 30, 0, 0)
         expected_payload = {'field_id': 1, 'oid': 1, 'otype': 'table',
                             'ts_updated': '2023-11-27T16:30:00', 'value': 'Testing'}
