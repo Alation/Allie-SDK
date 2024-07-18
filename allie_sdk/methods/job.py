@@ -28,7 +28,12 @@ class AlationJob(RequestHandler):
         if "task" in job_response.keys():
             # cater for non-standard result sets (e.g. policy endpoint) structure: {'task': {'id': 25647, ... }}
             self.async_job = AsyncJobDetails.from_api_response(job_response['task'])
+        elif "job" in job_response.keys():
+            # cater for non-standard result sets (e.g. virtual file system endpoint)
+            # structure: {'job': {'id': 25647, ... }}
+            self.async_job = AsyncJobDetails.from_api_response(job_response['job'])
         else: # cater for standard result set structure: {'job_id': 23442, ... }
+            # virtual data source endpoint returns {'job_name': MetadataExtraction#, ... }
             self.async_job = AsyncJobDetails.from_api_response(job_response)
 
     def check_job_status(self):
@@ -52,8 +57,9 @@ class AlationJob(RequestHandler):
             JobDetails: Alation Job.
 
         """
+        query_params = {'name': self.async_job.job_name} if self.async_job.job_name else {'id': self.async_job.job_id}
         job_response = self.get('/api/v1/bulk_metadata/job/',
-                                query_params={'id': self.async_job.job_id}, pagination=False)
+                                query_params=query_params, pagination=False)
 
         if job_response:
             return JobDetails.from_api_response(job_response)
@@ -64,17 +70,17 @@ class AlationJob(RequestHandler):
         Args:
             job: Alation Job.
         """
-
+        job_identifier = self.async_job.job_id if self.async_job.job_name else self.async_job.job_id
         if job.status.lower() == 'running':
-            LOGGER.debug(f'Job: {self.async_job.job_id}... {job.status}')
+            LOGGER.debug(f'Job: {job_identifier}... {job.status}')
             LOGGER.debug(job.result)
 
         if job.status == 'successful':
-            LOGGER.debug(f'Job: {self.async_job.job_id}\nJob Status: Successful\n'
+            LOGGER.debug(f'Job: {job_identifier}\nJob Status: Successful\n'
                          f'Job Message: {job.msg}')
             LOGGER.debug(job.result)
 
         if job.status == 'failed':
-            LOGGER.error(f'Job: {self.async_job.job_id}\nJob Status: Failed\n'
+            LOGGER.error(f'Job: {job_identifier}\nJob Status: Failed\n'
                          f'Job Message: {job.msg}')
             LOGGER.debug(job.result)

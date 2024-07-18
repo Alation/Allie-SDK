@@ -14,14 +14,18 @@ from .methods import (
     , AlationCustomField
     , AlationCustomTemplate
     , AlationDataQuality
+    , AlationDatasource
     , AlationDocument
+    , AlationDomain
     , AlationGlossaryTerm
     , AlationGroup
     , AlationOtype
     , AlationPolicyGroup
     , AlationRDBMS
     , AlationUser
+    , AlationVirtualFileSystem
     , AlationTrustChecks
+    , AlationVirtualDataSource
 )
 
 os.makedirs('logs', exist_ok=True)
@@ -80,7 +84,13 @@ class Alation(object):
         self.data_quality = AlationDataQuality(
             access_token=self.access_token, session=session, host=host
         )
+        self.datasource = AlationDatasource(
+            access_token=self.access_token, session=session, host=host
+        )
         self.document = AlationDocument(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.domain = AlationDomain(
             access_token=self.access_token, session=session, host=host
         )
         self.glossary_term = AlationGlossaryTerm(
@@ -105,6 +115,12 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.virtual_filesystem = AlationVirtualFileSystem(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.virtual_datasource = AlationVirtualDataSource(
             access_token=self.access_token, session=session, host=host
         )
 
