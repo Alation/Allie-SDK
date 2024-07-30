@@ -16,7 +16,7 @@ Allie SDK is a Python library that Alation customers and partners can use to inc
 Before installing the Allie SDK, you must have:
 
 * Python. The Allie SDK supports python versions 3.10+.
-* Git. Git is required to clone the Allie SDK repository.
+* Git: Git is required to clone the Allie SDK repository and to contribute to it.
 
 ## Install Allie SDK
 
@@ -25,6 +25,8 @@ Download the source code from the [Allie SDK GitHub repo](https://github.com/Ala
 ```python
 import allie_sdk as allie
 ```
+{: .note }
+If you get the error `ModuleNotFoundError` when running your first script, then please locate the `requirements.txt` file at the root of this repo and run the following command to install the necessary modules: `pip3 install -r requirements.txt`.
 
 ## Write your first program
 
