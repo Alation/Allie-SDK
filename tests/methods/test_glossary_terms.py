@@ -81,9 +81,11 @@ class TestGlossaryTerm(unittest.TestCase):
 
         m.register_uri('POST', '/integration/v2/term/', json=async_response)
         m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
-        async_result = MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
 
-        self.assertTrue(async_result)
+        async_result = MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
+        input_transformed = [JobDetailsDocumentPost(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_glossary_terms(self, m):
@@ -106,7 +108,7 @@ class TestGlossaryTerm(unittest.TestCase):
                         }
                     ],
                     "term": {
-                        "titl": "Testing",
+                        "title": "Testing",
                         "description": "Testing the API"
                     }
                 }
@@ -146,7 +148,9 @@ class TestGlossaryTerm(unittest.TestCase):
         m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
         async_result = MOCK_GLOSSARY_TERM.put_glossary_terms(mock_term_list)
 
-        self.assertTrue(async_result)
+        input_transformed = [JobDetailsDocumentPut(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_put_glossary_terms(self, m):
@@ -169,7 +173,7 @@ class TestGlossaryTerm(unittest.TestCase):
                         }
                     ],
                     "term": {
-                        "titl": "Updated Title"
+                        "title": "Updated Title"
                     }
                 }
             ]

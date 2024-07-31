@@ -33,7 +33,7 @@ Attributes:
 ### post_metadata
 
 ```
-post_metadata(fs_id: int, vfs_objects: list) -> bool
+post_metadata(fs_id: int, vfs_objects: list) -> list[JobDetails]
 ```
 Add/Update/Remove Virtual File system Objects
 
@@ -42,7 +42,7 @@ Args:
 * vfs_objects (list): Virtual File System object list.
 
 Returns:
-* boolean: Success/Failure of the API POST Call(s).
+* List of JobDetails: Status report of the executed background jobs.
 
 
 ## Examples

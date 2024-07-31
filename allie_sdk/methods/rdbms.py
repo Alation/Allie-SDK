@@ -10,6 +10,7 @@ from ..models.rdbms_model import (
     Table, TableItem, TableParams,
     Column, ColumnItem, ColumnParams
 )
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -45,7 +46,7 @@ class AlationRDBMS(AsyncHandler):
         if schemas:
             return [Schema.from_api_response(schema) for schema in schemas]
 
-    def post_schemas(self, ds_id: int, schemas: list) -> bool:
+    def post_schemas(self, ds_id: int, schemas: list) -> JobDetailsRdbms:
         """Post (Create or Update) Alation Schema Objects.
 
         Args:
@@ -53,7 +54,7 @@ class AlationRDBMS(AsyncHandler):
             schemas (list): Alation Schemas to be created or updated.
 
         Returns:
-            bool: Success of the API POST Call(s)
+            JobDetailsRdbms: Job details
 
         """
         item: SchemaItem
@@ -61,7 +62,8 @@ class AlationRDBMS(AsyncHandler):
         payload = [item.generate_api_post_payload() for item in schemas]
         async_results = self.async_post(f'/integration/v2/schema/?ds_id={ds_id}', payload)
 
-        return True if not async_results else False
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
 
     def get_tables(self, query_params: TableParams = None) -> list:
         """Query multiple Alation RDBMS Tables.
@@ -80,7 +82,7 @@ class AlationRDBMS(AsyncHandler):
         if tables:
             return [Table.from_api_response(table) for table in tables]
 
-    def post_tables(self, ds_id: int, tables: list) -> bool:
+    def post_tables(self, ds_id: int, tables: list) -> JobDetailsRdbms:
         """Post (Create or Update) Alation Table Objects.
 
         Args:
@@ -88,7 +90,7 @@ class AlationRDBMS(AsyncHandler):
             tables (list): Alation Tables to be created or updated.
 
         Returns:
-            bool: Success of the API POST Call(s)
+            JobDetailsRdbmsTablePost: Result of the job
 
         """
         item: TableItem
@@ -96,7 +98,8 @@ class AlationRDBMS(AsyncHandler):
         payload = [item.generate_api_post_payload() for item in tables]
         async_results = self.async_post(f'/integration/v2/table/?ds_id={ds_id}', payload)
 
-        return True if not async_results else False
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
 
     def get_columns(self, query_params: ColumnParams = None) -> list:
         """Query multiple Alation RDBMS Columns.
@@ -115,7 +118,7 @@ class AlationRDBMS(AsyncHandler):
         if columns:
             return [Column.from_api_response(column) for column in columns]
 
-    def post_columns(self, ds_id: int, columns: list) -> bool:
+    def post_columns(self, ds_id: int, columns: list) -> JobDetailsRdbms:
         """Post (Create or Update) Alation Column Objects.
 
         Args:
@@ -123,7 +126,7 @@ class AlationRDBMS(AsyncHandler):
             columns (list): Alation Columns to be created or updated.
 
         Returns:
-            bool: Success of the API POST Call(s)
+            JobDetailsRdbmsColumnPost: result of the job
 
         """
         item: ColumnItem
@@ -131,4 +134,5 @@ class AlationRDBMS(AsyncHandler):
         payload = [item.generate_api_post_payload() for item in columns]
         async_results = self.async_post(f'/integration/v2/column/?ds_id={ds_id}', payload)
 
-        return True if not async_results else False
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]

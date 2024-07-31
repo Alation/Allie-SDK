@@ -2,13 +2,13 @@ import logging
 import requests
 
 # from ..core.request_handler import RequestHandler
-from ..core.async_handler import AsyncHandler
+from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import *
 from ..models.datasource_model import *
 
 LOGGER = logging.getLogger()
 
-class AlationDatasource(AsyncHandler):
+class AlationDatasource(RequestHandler):
     """Alation REST API Documents Methods."""
 
     def __init__(self, access_token: str, session: requests.Session, host: str):

@@ -6,6 +6,7 @@ import requests
 from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.data_quality_model import  *
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -41,39 +42,41 @@ class AlationDataQuality(AsyncHandler):
         if dq_fields:
             return [DataQualityField.from_api_response(item) for item in dq_fields]
 
-    def post_data_quality_fields(self, dq_fields: list) -> bool:
+    def post_data_quality_fields(self, dq_fields: list) -> list:
         """Post (Create) Alation Data Quality Fields.
 
         Args:
             dq_fields (list): Alation Data Quality Fields to be created.
 
         Returns:
-            bool: Success of the API POST Call(s).
+            list: execution results
 
         """
         item: DataQualityFieldItem
         validate_rest_payload(dq_fields, (DataQualityFieldItem,))
         payload = [item.generate_api_post_payload() for item in dq_fields]
-        async_result = self._dq_post(payload, 'Fields')
+        async_results = self._dq_post(payload, 'Fields')
 
-        return True if not async_result else False
+        if async_results:
+            return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
-    def delete_data_quality_fields(self, dq_fields: list) -> bool:
+    def delete_data_quality_fields(self, dq_fields: list) -> list:
         """Delete Alation Data Quality Fields.
 
         Args:
             dq_fields (list): Alation Data Quality Fields to be deleted.
 
         Returns:
-            bool: Success of the API DELETE Call(s).
+            list: execution results
 
         """
         item: DataQualityField
         validate_rest_payload(dq_fields, (DataQualityField,))
         payload = [item.key for item in dq_fields]
-        async_result = self._dq_delete(payload, 'Fields')
+        async_results = self._dq_delete(payload, 'Fields')
 
-        return True if not async_result else False
+        if async_results:
+            return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
     def get_data_quality_values(self, query_params: DataQualityValueParams = None) -> list:
         """Query multiple Alation Data Quality Values.
@@ -82,7 +85,7 @@ class AlationDataQuality(AsyncHandler):
             query_params (DataQualityValueParams): REST API Get Filter Values.
 
         Returns:
-            list: Alation Data Quality Values
+            list: DataQualityValue Values
 
         """
         validate_query_params(query_params, DataQualityValueParams)
@@ -92,41 +95,43 @@ class AlationDataQuality(AsyncHandler):
         if dq_values:
             return [DataQualityValue.from_api_response(value) for value in dq_values]
 
-    def post_data_quality_values(self, dq_values: list) -> bool:
+    def post_data_quality_values(self, dq_values: list) -> list:
         """Post (Create) Alation Data Quality Values.
 
         Args:
             dq_values (list): Alation Data Quality Values to be created.
 
         Returns:
-            bool: Success of the API POST Call(s).
+            list: execution results
 
         """
         item: DataQualityValueItem
         validate_rest_payload(dq_values, (DataQualityValueItem,))
         payload = [item.generate_api_post_payload() for item in dq_values]
-        async_result = self._dq_post(payload, 'Values')
+        async_results = self._dq_post(payload, 'Values')
 
-        return True if not async_result else False
+        if async_results:
+            return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
-    def delete_data_quality_values(self, dq_values: list) -> bool:
+    def delete_data_quality_values(self, dq_values: list) -> list:
         """Delete Alation Data Quality Values.
 
         Args:
             dq_values (list): Alation Data Quality Values to be deleted.
 
         Returns:
-            bool: Success of the API DELETE Call(s).
+            list: execution results
 
         """
         item: DataQualityValue
         validate_rest_payload(dq_values, (DataQualityValue,))
         payload = [item.generate_api_delete_payload() for item in dq_values]
-        async_result = self._dq_delete(payload, 'Values')
+        async_results = self._dq_delete(payload, 'Values')
 
-        return True if not async_result else False
+        if async_results:
+            return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
-    def _dq_post(self, dq_payload: list, dq_type: str) -> bool:
+    def _dq_post(self, dq_payload: list, dq_type: str) -> list:
         """Post (Create) the DQ Fields or Values in Alation.
 
         Args:
@@ -134,10 +139,10 @@ class AlationDataQuality(AsyncHandler):
             dq_type (str): 'Fields' or 'Values'.
 
         Returns:
-            bool: Returns True if a batch fails
+            list: execution results
 
         """
-        failed_result = None
+        results = []
         batches = self._batch_objects(dq_payload)
 
         for batch in batches:
@@ -145,12 +150,12 @@ class AlationDataQuality(AsyncHandler):
                 dq_batch = {dq_type.lower(): batch}
                 async_result = self.async_post_dict_payload('/integration/v1/data_quality/', dq_batch)
                 if async_result:
-                    failed_result = True
+                    results.extend(async_result)
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
+                results.append(batch_error)
 
-        return failed_result
+        return results
 
     def _dq_delete(self, dq_payload: list, dq_type: str) -> bool:
         """Delete the DQ Fields or Values in Alation.
@@ -163,7 +168,7 @@ class AlationDataQuality(AsyncHandler):
             bool: Returns True if a batch fails
 
         """
-        failed_result = None
+        results = []
         batches = self._batch_objects(dq_payload)
 
         for batch in batches:
@@ -171,9 +176,9 @@ class AlationDataQuality(AsyncHandler):
                 dq_batch = {dq_type.lower(): batch}
                 async_result = self.async_delete_dict_payload('/integration/v1/data_quality/', dq_batch)
                 if async_result:
-                    failed_result = True
+                    results.extend(async_result)
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
+                results.append(batch_error)
 
-        return failed_result
+        return results

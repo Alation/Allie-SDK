@@ -7,6 +7,7 @@ import urllib.parse
 from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.custom_field_model import *
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -94,24 +95,25 @@ class AlationCustomField(AsyncHandler):
         if field_details:
             return CustomField.from_api_response(field_details)
 
-    def post_custom_fields(self, custom_fields: list) -> bool:
+    def post_custom_fields(self, custom_fields: list[CustomFieldItem]) -> list[JobDetailsCustomFieldPost]:
         """Post (Create) Alation Custom Fields.
 
         Args:
             custom_fields (list): Alation Custom Fields to be created.
 
         Returns:
-            bool: Success of the API POST Call(s).
+            List of JobDetailsCustomFieldPost: Status report of the executed background jobs.
 
         """
         item: CustomFieldItem
         validate_rest_payload(custom_fields, (CustomFieldItem,))
         payload = [item.generate_api_post_payload() for item in custom_fields]
-        async_result = self.async_post('/integration/v2/custom_field/', payload)
+        async_results = self.async_post('/integration/v2/custom_field/', payload)
 
-        return True if not async_result else False
+        if async_results:
+            return [JobDetailsCustomFieldPost.from_api_response(item) for item in async_results]
 
-    def put_custom_field_values(self, custom_field_values: list, batch_size: int = 10000) -> bool:
+    def put_custom_field_values(self, custom_field_values: list[CustomFieldValueItem], batch_size: int = 10000) -> list[JobDetails]:
         """Put (Update) Alation Custom Field Values.
 
         Args:
@@ -119,12 +121,13 @@ class AlationCustomField(AsyncHandler):
             batch_size (int): REST API PUT Body Size Limit.
 
         Returns:
-             bool: Success of the API PUT Call(s).
+             List of JobDetails: Status report of the executed background jobs.
 
         """
         item: CustomFieldValueItem
         validate_rest_payload(custom_field_values, (CustomFieldValueItem, CustomFieldValue))
         payload = [item.generate_api_put_payload() for item in custom_field_values]
-        async_result = self.async_put('/integration/v2/custom_field_value/async/', payload, batch_size)
+        async_results = self.async_put('/integration/v2/custom_field_value/async/', payload, batch_size)
 
-        return True if not async_result else False
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]

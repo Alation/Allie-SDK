@@ -33,14 +33,22 @@ class TestVirtualFileSystem(unittest.TestCase):
         job_response = {
             "status": "successful",
             "msg": "Job finished in 0.359308 seconds at 2024-06-05 17:25:48.469169+00:00",
-            "result": "['Uploaded 3 directories and files.']"
+            "result": ['Uploaded 3 directories and files.']
         }
+
+        expected_job_response = [
+                JobDetails(
+                status = "successful"
+                , msg = "Job finished in 0.359308 seconds at 2024-06-05 17:25:48.469169+00:00"
+                , result = ['Uploaded 3 directories and files.']
+            )
+        ]
 
         m.register_uri('POST', f'/api/v1/bulk_metadata/file_upload/{vfs_id}/', json=async_response)
         m.register_uri('GET','/api/v1/bulk_metadata/job/?id=14391', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(fs_id=vfs_id, vfs_objects=mock_vfs_list)
 
-        self.assertFalse(async_result)
+        assert expected_job_response == async_result
 
 if __name__ == '__main__':
     unittest.main()

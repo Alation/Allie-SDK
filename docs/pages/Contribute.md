@@ -15,6 +15,18 @@ This topic describes how to contribute to the Allie SDK project.
 
 ## Code and commit
 
+### How methods should be structured
+
+Methods should either return nothing or the respective result. There are at least two types of results:
+
+- The records returned by a successful GET call.
+- Job details returned by async POST, PUT and DELETE calls. 
+
+If you are writing a method for an Alation API async endpoint, make sure you return the job details and map them to a data class, which are defined in `models/job_model.py`. The structure of the returned job details is not completely standardised (especially the nested elements), so if required, create dedicated data classes (if none for your use case exists already). Also make sure that if any details about created or updated objects are returned by the Alation API endpoint (e.g. id and name), that these details are made available via the data class(es) that represent the job details.
+
+> **Note**: An Alation endpoint is considered *async* if it returns a job ID or job name.
+
+
 ## Add tests
 
 ## Update documentation

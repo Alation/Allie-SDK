@@ -7,6 +7,7 @@ from ..core.custom_exceptions import *
 from ..models.document_model import *
 from ..models.custom_field_model import *
 from ..models.custom_template_model import *
+from ..models.job_model import *
 
 LOGGER = logging.getLogger()
 
@@ -27,7 +28,7 @@ class AlationDocument(AsyncHandler):
         Args:
             query_params (DocumentParams): REST API Documents Query Parameters.
         Returns:
-            list: Alation Business Policies
+            list: Alation Documents
         """
 
         validate_query_params(query_params, DocumentParams)
@@ -42,7 +43,7 @@ class AlationDocument(AsyncHandler):
     def create_documents (
         self
         , documents: list[DocumentPostItem]
-    ):
+    )->list[JobDetailsDocumentPost]:
 
         """Create documents in Bulk
         Args:
@@ -50,7 +51,7 @@ class AlationDocument(AsyncHandler):
             https://developer.alation.com/dev/reference/postdocuments
 
         Returns:
-            Nothing
+            List of JobDetailsDocumentPost: Status report of the executed background jobs.
         """
 
 
@@ -65,13 +66,15 @@ class AlationDocument(AsyncHandler):
             url = '/integration/v2/document/'
             , payload = payload
         )
-        
-        return True if not async_results else False
+
+        if async_results:
+            return [JobDetailsDocumentPost.from_api_response(item) for item in async_results]
+
     
     def update_documents (
             self
             , documents: list[DocumentPutItem]
-        ):
+        )->list[JobDetailsDocumentPut]:
 
         """Bulk Update Documents in Bulk
         Args:
@@ -79,7 +82,7 @@ class AlationDocument(AsyncHandler):
             https://developer.alation.com/dev/reference/updatedocuments
 
         Returns:
-            Nothing
+            List of JobDetailsDocumentPut: Status report of the executed background jobs.
         """
 
         # make sure input data matches expected structure
@@ -93,7 +96,8 @@ class AlationDocument(AsyncHandler):
             url = '/integration/v2/document/'
             , payload = payload
         )
-        return True if not async_results else False
+        if async_results:
+            return [JobDetailsDocumentPut.from_api_response(item) for item in async_results]
 
     def delete_documents(
             self

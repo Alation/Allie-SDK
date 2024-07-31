@@ -84,7 +84,7 @@ Args:
 * glossary_terms (list): Alation Glossary Terms to be created.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* List of JobDetails: Status report of the executed background jobs.
 
 ### put_glossary_terms
 
@@ -98,7 +98,7 @@ Args:
 * glossary_terms (list): Alation Glossary Terms to be updated.
 
 Returns:
-* bool: Success of the API PUT Call(s)
+* List of JobDetails: Status report of the executed background jobs.
 
 ### delete_glossary_terms
 
