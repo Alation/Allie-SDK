@@ -200,12 +200,24 @@ class CustomFieldValue(BaseCustomFieldValue):
 
         if isinstance(self.value, list):
             for item in self.value:
-                if isinstance(item, dict):
-                    parsed_values.append(CustomFieldDictValueItem(
-                        otype=item.get('otype', None), oid=item.get('oid', None)))
-                if isinstance(item, CustomFieldStringValueItem):
+                # for multi-select picker values
+                if isinstance(item, str):
+                    parsed_values.append(
+                        CustomFieldStringValueItem(
+                            value = item
+                        )
+                    )
+                # for object sets etc
+                elif isinstance(item, dict):
+                    parsed_values.append(
+                        CustomFieldDictValueItem(
+                            otype=item.get('otype', None)
+                            , oid=item.get('oid', None)
+                        )
+                    )
+                elif isinstance(item, CustomFieldStringValueItem):
                     parsed_values.append(item)
-                if isinstance(item, CustomFieldDictValueItem):
+                elif isinstance(item, CustomFieldDictValueItem):
                     parsed_values.append(item)
 
         self.value = parsed_values

@@ -34,7 +34,13 @@ def test_get_documents(requests_mock):
             "custom_fields": [
                 {
                 "field_id": 0,
+                "title": "My text field",
                 "value": "sample text"
+                }
+                , {
+                    "field_id": 1,
+                    "title": "My multi-select field",
+                    "value": ["red", "orange", "green"]
                 }
             ]
         }
