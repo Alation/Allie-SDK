@@ -209,12 +209,14 @@ class TestCustomField(unittest.TestCase):
         mock_value_1.field_id = 1
         mock_value_1.otype = 'Table'
         mock_value_1.oid = 1
+        mock_value_1.value = []
         mock_value_1.value.append(CustomFieldStringValueItem(value='Test'))
 
         mock_value_2 = CustomFieldValueItem()
         mock_value_2.field_id = 2
         mock_value_2.otype = 'Table'
         mock_value_2.oid = 1
+        mock_value_2.value = []
         mock_value_2.value.append(CustomFieldDictValueItem(otype='user', oid=1))
 
         mock_values_list = [mock_value_1, mock_value_2]
@@ -246,6 +248,7 @@ class TestCustomField(unittest.TestCase):
         mock_value_1.field_id = 1
         mock_value_1.otype = 'Table'
         mock_value_1.oid = 1
+        mock_value_1.value = []
         mock_value_1.value.append(CustomFieldStringValueItem(value='Test'))
         mock_values_list = [mock_value_1]
 
