@@ -156,6 +156,7 @@ class BaseCustomFieldValue(BaseClass):
 
 @dataclass
 class CustomFieldValue(BaseCustomFieldValue):
+    field_name:str = field(default=None) # this is only returned by some endpoints, e.g. documents API
 
     def __post_init__(self):
         if self.value:

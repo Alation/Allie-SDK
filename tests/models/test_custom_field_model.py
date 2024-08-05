@@ -402,6 +402,7 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.field_id = 1
         mock_item.oid = 1
         mock_item.otype = 'table'
+        mock_item.value = []
         mock_item.value.append(CustomFieldDictValueItem(otype='table', oid=1))
         mock_item.value.append(CustomFieldDictValueItem(otype='article', oid=2))
 
