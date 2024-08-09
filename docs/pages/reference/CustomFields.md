@@ -69,8 +69,9 @@ Attributes:
 | tooltip_text__contains | set   | Filter by a case-sensitive substring on tooltip_text. |
 | tooltip_text__icontains | set   | Filter by a case-insensitive substring on tooltip_text. |
 
-### CustomFieldStringValueItem
-Python object used to return a string value in the Models `BaseCustomFieldValue` and `BaseCustomFieldValue`.
+### CustomFieldStringValue
+
+Python object used in the Models `BaseCustomFieldValue`: A single string values for custom fields that we receive as part of the response/returned payload gets mapped to this data class.
 
 Attributes:
 
@@ -78,16 +79,29 @@ Attributes:
 |--------------|:--------:|-----------------------|--------------------------------------------------------------|
 | value  |  FALSE   | str                   | A string value | 
 
-### CustomFieldDictValueItem
-Python object used to return a dictionary value in the Models `BaseCustomFieldValue` and `BaseCustomFieldValue`.
+
+### CustomFieldStringValueItem
+
+Inherits from `CustomFieldStringValue`.
+
+Python object used to return a string value in the Models `CustomFieldValueItem`.
+
+### CustomFieldDictValue
+
+Python object used to return a dictionary value in the Models `BaseCustomFieldValue`.
 
 Attributes:
 
-| Name         | Required | Type                  | Description                                                  |
-|--------------|:--------:|-----------------------|--------------------------------------------------------------|
-| otype  |  FALSE   | str                   | The Alation otype of the object | 
-| otype  |  FALSE   | int                   | The Alation oid of the object | 
+| Name  | Required | Type                  | Description                                                  |
+|-------|:--------:|-----------------------|--------------------------------------------------------------|
+| otype |  FALSE   | str                   | The Alation otype of the object | 
+| oid   |  FALSE   | int                   | The Alation oid of the object | 
 
+### CustomFieldDictValueItem
+
+Inherits from `CustomFieldDictValue`.
+
+Python object used to return a dictionary in the Models `CustomFieldValueItem`.
 
 ### BaseCustomFieldValue
 Sub-model used in the parent Model of `CustomFieldValue`.
