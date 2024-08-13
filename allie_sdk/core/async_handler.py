@@ -160,6 +160,32 @@ class AsyncHandler(RequestHandler):
 
         return failed_result
 
+    def async_post_data_payload(self, url: str, data: any, query_params: dict = None) -> bool:
+        """POST the Alation Objects via an Async Job Process.
+
+        Args:
+            url (str): POST API Call URL.
+            payload (str): REST API data type payload.
+
+        Returns:
+            bool: Returns True if the job fails.
+
+        """
+        failed_result = None
+        try:
+            LOGGER.debug(data)
+            async_response = self.post(url, body=data, query_params=query_params)
+            if async_response:
+                job = AlationJob(self.access_token, self.session, self.host, async_response)
+                results = job.check_job_status()
+            else:
+                failed_result = True
+        except Exception as batch_error:
+            LOGGER.error(batch_error, exc_info=True)
+            failed_result = True
+
+        return failed_result
+
     def async_put(self, url: str, payload: list, batch_size: int = None) -> bool:
         """Put Alation Objects via an Async Job Process.
 
