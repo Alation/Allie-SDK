@@ -39,16 +39,27 @@ class AlationJob(RequestHandler):
     def check_job_status(self):
         """Query the Alation Background Job and Log Status until Job has completed."""
 
+        job_details = []
+
         while True:
-            job = self._get_job()
+            job, job_details_vanilla = self._get_job()
             self._log_job(job)
 
-            if job.status.lower() in ['successful', 'failed']:
+            if job.status.lower() == 'failed':
+                job_details.append(job_details_vanilla)
+                break
+            elif job.status.lower() == 'successful':
+                job_details.append(job_details_vanilla)
                 break
             else:
                 sleep(3)
 
         sleep(1)
+        # Note: We return the original unparsed job details here
+        # since it is not standardised across endpoints and methods
+        # we can do the mapping to data classes in the actual methods
+        # so we have more context for the processing
+        return job_details
 
     def _get_job(self) -> JobDetails:
         """Query the Alation Job.
@@ -62,7 +73,12 @@ class AlationJob(RequestHandler):
                                 query_params=query_params, pagination=False)
 
         if job_response:
-            return JobDetails.from_api_response(job_response)
+            job_details = JobDetails.from_api_response(job_response)
+            # since the job response is not standardised across endpoints and methods
+            # we cannot just map it to a generic data class here
+            # we need some context as to what endpoint and method was used
+            # and then can do the mapping
+            return job_details, job_response
 
     def _log_job(self, job: JobDetails):
         """Format the Logs Messages of the Alation Job.

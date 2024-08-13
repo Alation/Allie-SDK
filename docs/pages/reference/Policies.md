@@ -124,10 +124,10 @@ create_business_policies(business_policies: list[BusinessPolicyPostItem]) -> boo
 Create Business Policies in Bulk
 
 Args:
-* business_policies: list of `BusinessPolicyPostItem`` objects
+* business_policies: list of `BusinessPolicyPostItem` objects
 
 Returns:
-* bool: Success of the API POST call.
+* List of JobDetails: Status report of the executed background jobs.
 
 ### update_business_policies
 
@@ -141,7 +141,7 @@ Args:
 * business_policies: list of `BusinessPolicyPutItem` objects
 
 Returns:
-* list: Alation Business Policies with each item being represented as a `BusinessPolicyPutItem` object
+* List of JobDetails: Status report of the executed background jobs.
 
 ### delete_business_policies
 

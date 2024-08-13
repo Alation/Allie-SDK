@@ -50,11 +50,24 @@ class TestVirtualDataSource(unittest.TestCase):
             "result": "{\"number_received\": 4, \"updated_objects\": 0, \"error_objects\": [], \"error\": null}"
         }
 
+        expected_job_response = [
+            JobDetailsVirtualDatasourcePost(
+                status='successful'
+                , msg='Job finished in 1.0 seconds at 2024-06-05 17:25:48.469169+00:00'
+                , result=JobDetailsVirtualDatasourcePostResult(
+                    number_received=4
+                    , updated_objects=0
+                    , error_objects=[]
+                    , error=None
+                )
+            )
+        ]
+
         m.register_uri('POST', f'/api/v1/bulk_metadata/extraction/{vds_id}', json=async_response)
         m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=mock_vds_list)
 
-        self.assertFalse(async_result)
+        assert expected_job_response == async_result
 
     @requests_mock.Mocker()
     def test_success_failed_post_virtual_datasource_no_query_params(self, m):
@@ -87,17 +100,27 @@ class TestVirtualDataSource(unittest.TestCase):
         job_response = {
             "status": "successful",
             "msg": "Job finished in 1.0 seconds at 2024-06-05 17:25:48.469169+00:00",
-            "result": "{\"number_received\": 4, \"updated_objects\": 0, \"error_objects\": "
-                      "[\"Line 0. Key: 99.TestSchema.TestTable.index. Missing table \\\"TestTable\\\" "
-                      "for index \\\"index\\\". Make sure that table data uploaded/mentioned before index data\"], "
-                      "\"error\": \"1 errors were ignored\"}"
+            "result": "{\"number_received\": 4, \"updated_objects\": 0, \"error_objects\": [\"Line 0. Key: 99.TestSchema.TestTable.index. Missing table \\\"TestTable\\\" for index \\\"index\\\". Make sure that table data uploaded/mentioned before index data\"], \"error\": \"1 errors were ignored\"}"
         }
+
+        expected_job_response = [
+            JobDetailsVirtualDatasourcePost(
+                status='successful'
+                , msg='Job finished in 1.0 seconds at 2024-06-05 17:25:48.469169+00:00'
+                , result=JobDetailsVirtualDatasourcePostResult(
+                    number_received=4
+                    , updated_objects=0
+                    , error_objects=['Line 0. Key: 99.TestSchema.TestTable.index. Missing table "TestTable" for index "index". Make sure that table data uploaded/mentioned before index data']
+                    , error='1 errors were ignored'
+                )
+            )
+        ]
 
         m.register_uri('POST', f'/api/v1/bulk_metadata/extraction/{vds_id}', json=async_response)
         m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=mock_vds_list)
 
-        self.assertFalse(async_result)
+        assert expected_job_response == async_result
 
     @requests_mock.Mocker()
     def test_success_post_virtual_datasource_with_query_params(self, m):
@@ -141,6 +164,19 @@ class TestVirtualDataSource(unittest.TestCase):
             "result": "{\"number_received\": 4, \"updated_objects\": 0, \"error_objects\": [], \"error\": null}"
         }
 
+        expected_job_response = [
+            JobDetailsVirtualDatasourcePost(
+                status='successful'
+                , msg='Job finished in 1.0 seconds at 2024-06-05 17:25:48.469169+00:00'
+                , result=JobDetailsVirtualDatasourcePostResult(
+                    number_received=4
+                    , updated_objects=0
+                    , error_objects=[]
+                    , error=None
+                )
+            )
+        ]
+
         m.register_uri('POST', '/api/v1/bulk_metadata/extraction/99?set_title_descs=true&remove_not_seen=false',
                        json=async_response)
         m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
@@ -148,7 +184,7 @@ class TestVirtualDataSource(unittest.TestCase):
                                                               vds_objects=mock_vds_list,
                                                               query_params=mock_params)
 
-        self.assertFalse(async_result)
+        assert expected_job_response == async_result
 
 if __name__ == '__main__':
     unittest.main()
