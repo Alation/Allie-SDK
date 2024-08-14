@@ -152,16 +152,17 @@ def test_create_business_policies(requests_mock):
         ]
     )
 
-    """
-    OPEN/CONCERN: Here we don't get any details about the created policies back.
-    With terms in example the job response includes details about the created terms within
-    the result section.
-    With policies there's no point really testing this bit of code since we don't really
-    have something proper to validate against.
-    """
+    function_expected_result = [
+        JobDetails(
+            status = 'successful'
+            , msg = 'Job finished in 2.171085 seconds at 2023-12-08 17:20:53.735123+00:00'
+            , result = [
+                'Successfully processed 2 items (index range: [0, 1])'
+                , 'All total 1 batches with a limit of 250 items attempted. [Succeeded: 2, Failed: 0, Total: 2]'
+            ]
+        )
+    ]
 
-    # OPEN: See concern mentioned further up
-    function_expected_result = True
     assert function_expected_result == bulk_create_business_policies_result
 
 def test_update_business_policies(requests_mock):
@@ -240,8 +241,16 @@ def test_update_business_policies(requests_mock):
         ]
     )
 
-    # OPEN: See concern mentioned further up
-    function_expected_result = None
+    function_expected_result = [
+        JobDetails(
+            status = 'successful'
+            , msg = 'Job finished in 1.129593 seconds at 2023-12-28 17:29:20.084519+00:00'
+            , result = [
+                'Successfully processed 2 items (index range: [0, 1])'
+                , 'All total 1 batches with a limit of 250 items attempted. [Succeeded: 2, Failed: 0, Total: 2]'
+            ]
+        )
+    ]
     assert function_expected_result == bulk_update_business_policies_result  
 
 def test_delete_business_policies(requests_mock):

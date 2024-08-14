@@ -27,7 +27,7 @@ class AsyncHandler(RequestHandler):
         self.host = host
         self.session = session
 
-    def async_delete(self, url: str, payload: list, batch_size: int = None) -> bool:
+    def async_delete(self, url: str, payload: list, batch_size: int = None) -> list:
         """Delete Alation Objects via an Async Job Process.
 
         Args:
@@ -36,10 +36,10 @@ class AsyncHandler(RequestHandler):
             batch_size (int): REST API Delete Body Size Limit.
 
         Returns:
-            bool: Returns True if a batch fails.
+            list: job execution results
 
         """
-        failed_result = None
+        results = []
         batches = self._batch_objects(payload, batch_size)
 
         for batch in batches:
@@ -48,16 +48,15 @@ class AsyncHandler(RequestHandler):
                 async_response = self.delete(url, body=batch)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    job.check_job_status()
-                else:
-                    failed_result = True
+                    results.extend(job.check_job_status())
+
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
 
-        return failed_result
 
-    def async_delete_dict_payload(self, url: str, payload: dict) -> bool:
+        return results
+
+    def async_delete_dict_payload(self, url: str, payload: dict) -> list:
         """Delete the Alation Objects via an Async Job Process.
 
         Args:
@@ -65,20 +64,18 @@ class AsyncHandler(RequestHandler):
             payload (list): REST API Delete Body.
 
         Returns:
-            bool: Returns True if the job fails.
+            list: job execution results
 
         """
-        failed_result = None
+        results = []
         async_response = self.delete(url, body=payload)
         if async_response:
             job = AlationJob(self.access_token, self.session, self.host, async_response)
-            job.check_job_status()
-        else:
-            failed_result = True
+            results.extend(job.check_job_status())
 
-        return failed_result
+        return results
 
-    def async_patch(self, url: str, payload: list, batch_size: int = None) -> bool:
+    def async_patch(self, url: str, payload: list, batch_size: int = None) -> list:
         """Patch Alation Objects via an Async Job Process.
 
         Args:
@@ -87,10 +84,10 @@ class AsyncHandler(RequestHandler):
             batch_size (int): REST API PATCH Body Size Limit.
 
         Returns:
-            bool: Returns True if a batch fails.
+            list: job execution results
 
         """
-        failed_result = None
+        results = []
         batches = self._batch_objects(payload, batch_size)
 
         for batch in batches:
@@ -99,16 +96,15 @@ class AsyncHandler(RequestHandler):
                 async_response = self.patch(url, body=batch)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    job.check_job_status()
-                else:
-                    failed_result = True
+                    results.extend(job.check_job_status())
+
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
+                # results.append(batch_error) => this won't map to JobDetail
 
-        return failed_result
+        return results
 
-    def async_post(self, url: str, payload: list, batch_size: int = None, query_params: dict = None) -> bool:
+    def async_post(self, url: str, payload: list, batch_size: int = None, query_params: dict = None) -> list:
         """Post Alation Objects via an Async Job Process.
 
         Args:
@@ -118,10 +114,10 @@ class AsyncHandler(RequestHandler):
             query_params (dict): REST API POST Query Parameters
 
         Returns:
-            bool: Returns True if a batch fails
+            list: job execution results
 
         """
-        failed_result = None
+        results = []
         batches = self._batch_objects(payload, batch_size)
 
         for batch in batches:
@@ -130,16 +126,14 @@ class AsyncHandler(RequestHandler):
                 async_response = self.post(url, body=batch, query_params=query_params)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results = job.check_job_status()
-                else:
-                    failed_result = True
+                    results.extend(job.check_job_status())
+
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
+                # results.append(batch_error) => this won't map to JobDetail
+        return results
 
-        return failed_result
-
-    def async_post_dict_payload(self, url: str, payload: dict) -> bool:
+    def async_post_dict_payload(self, url: str, payload: dict) -> dict:
         """POST the Alation Objects via an Async Job Process.
 
         Args:
@@ -147,20 +141,18 @@ class AsyncHandler(RequestHandler):
             payload (list): REST API Delete Body.
 
         Returns:
-            bool: Returns True if the job fails.
+            job execution results
 
         """
-        failed_result = None
+
         async_response = self.post(url, body=payload)
         if async_response:
             job = AlationJob(self.access_token, self.session, self.host, async_response)
-            job.check_job_status()
-        else:
-            failed_result = True
+            result = job.check_job_status()
 
-        return failed_result
+            return result
 
-    def async_put(self, url: str, payload: list, batch_size: int = None) -> bool:
+    def async_put(self, url: str, payload: list, batch_size: int = None) -> list:
         """Put Alation Objects via an Async Job Process.
 
         Args:
@@ -169,11 +161,11 @@ class AsyncHandler(RequestHandler):
             batch_size (int): REST API PUT Body Size Limit.
 
         Returns:
-            bool: Returns True if a batch fails
+            list: job execution results
 
         """
-        failed_result = None
         batches = self._batch_objects(payload, batch_size)
+        results = []
 
         for batch in batches:
             try:
@@ -181,14 +173,12 @@ class AsyncHandler(RequestHandler):
                 async_response = self.put(url, body=batch)
                 if async_response:
                     job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    job.check_job_status()
-                else:
-                    failed_result = True
+                    results.extend(job.check_job_status())
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                failed_result = True
+                # results.append(batch_error) => this won't map to JobDetail
 
-        return failed_result
+        return results
 
     def _batch_objects(self, objects: list, batch_size: int = None) -> list:
         """Batch the Alation Objects into Acceptable Payload Sizes.

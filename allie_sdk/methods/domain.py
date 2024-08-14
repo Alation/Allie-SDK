@@ -4,7 +4,7 @@ import logging
 import requests
 
 
-from ..core.async_handler import AsyncHandler
+from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.domain_model import Domain, DomainMembership, DomainParams
 from .job import AlationJob
@@ -12,7 +12,7 @@ from .job import AlationJob
 LOGGER = logging.getLogger()
 
 
-class AlationDomain(AsyncHandler):
+class AlationDomain(RequestHandler):
     """Alation REST API Glossary Term Methods."""
 
     def __init__(self, access_token: str, session: requests.Session, host: str):

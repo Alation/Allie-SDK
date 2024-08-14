@@ -179,7 +179,9 @@ class TestCustomField(unittest.TestCase):
 
         async_result = MOCK_CUSTOM_FIELD.post_custom_fields(mock_fields_list)
 
-        self.assertTrue(async_result)
+        input_transformed = [JobDetailsCustomFieldPost(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_custom_fields(self, m):
@@ -237,9 +239,10 @@ class TestCustomField(unittest.TestCase):
         m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
 
         async_result = MOCK_CUSTOM_FIELD.put_custom_field_values(mock_values_list)
-        print(async_result)
 
-        self.assertTrue(async_result)
+        input_transformed = [JobDetails(**job_response)]
+        # self.assertTrue(async_result)
+        self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_custom_field_value(self, m):

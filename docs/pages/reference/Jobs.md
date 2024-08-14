@@ -11,31 +11,29 @@ parent: SDK Reference
 
 ## Models
 
-### AsyncJobDetails
-Model representing an asynchrous Alation job
+There are many data models associated to Jobs, mainly for the reason that the nested elements are not always the same. Here's a brief overview of the current models:
 
-Attributes:
+| **API Endpoint**                 | **Data class**                  |
+| -------------------------------- | ------------------------------- |
+| **Document POST**                | JobDetailsDocumentPost          |
+| **Document PUT**                 | JobDetailsDocumentPut           |
+| **Term POST**                    | JobDetailsDocumentPost          |
+| **Term PUT**                     | JobDetailsDocumentPut           |
+| **Business Policy POST**         | JobDetails                      |
+| **Business Policy PUT**          | JobDetails                      |
+| **Custom Field POST**            | JobDetailsCustomFieldPost       |
+| **Custom Field Value Async PUT** | JobDetails                      |
+| **RDMBS Schema POST**            | JobDetailsRdbms                 |
+| **RDBMS Table POST**             | JobDetailsRdbms                 |
+| **RDBMS Column POST**            | JobDetailsRdbms                 |
+| **Virtual Data Source POST**     | JobDetailsVirtualDatasourcePost |
+| **Virtual Filesystem POST**      | JobDetails                      |
+| **Data Quality Fields POST**     | JobDetailsDataQuality           |
+| **Data Quality Fields DELETE**   | JobDetailsDataQuality           |
+| **Data Quality Value POST**      | JobDetailsDataQuality           |
+| **Data Quality Value DELETE**    | JobDetailsDataQuality           |
 
-| Name        | Type                  | Description                                                                              |
-|-------------|-----------------------|------------------------------------------------------------------------------------------|
-| id          | int                   | Job object ID |
-| job_id          | int                   | Job object ID |
-| href          | str                   | href of the Job |
 
-{: .note }
-In some result sets job id is `job_id` while in others `id`
-
-
-### JobDetails
-Model representing an Alation job
-
-Attributes:
-
-| Name        | Type                  | Description                                                                              |
-|-------------|-----------------------|------------------------------------------------------------------------------------------|
-| status   | str                   | Indicates the status of the job. Status can be one of the following: `running`, `successful`, `failed` |
-| msg | str                   | Message describing the time taken to complete the job and the timestamp of job completion. |
-| result | str                   | Contains detailed information about the job. The format of the result depends on the API that initiated the job. |
 
 ## Methods
 
