@@ -2,7 +2,7 @@
 
 import unittest
 from allie_sdk.models.rdbms_model import *
-from allie_sdk.models.custom_field_model import CustomFieldDictValueItem, CustomFieldStringValueItem
+from allie_sdk.models.custom_field_model import *
 
 
 class TestRDBMSModels(unittest.TestCase):
@@ -322,8 +322,8 @@ class TestRDBMSModels(unittest.TestCase):
             description="<p>This is the customer name</p>",
             key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.CUSTOMER_NAME",
             custom_fields=[
-                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
-                CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
+                CustomFieldValue(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
+                CustomFieldValue(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
             ],
             index=ColumnIndex(
                 isPrimaryKey=False,
@@ -349,12 +349,12 @@ class TestRDBMSModels(unittest.TestCase):
             CustomFieldValue(
                 field_id=8,
                 field_name="Steward",
-                value=[CustomFieldDictValueItem(otype='user', oid=18)]
+                value=[CustomFieldDictValue(otype='user', oid=18)]
             ),
             CustomFieldValue(
                 field_id=10087,
                 field_name="PII (Personally Identifiable Information)",
-                value=[CustomFieldStringValueItem(value="PII")]
+                value= CustomFieldStringValue(value="PII")
             )
         ]
 

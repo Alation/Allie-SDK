@@ -35,8 +35,13 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.name_singular = 'Testing'
         mock_item.options = ['test1', 'test2']
         mock_item.tooltip_text = 'Test Custom Picker Field'
-        expected_payload = {'field_type': 'PICKER', 'name_singular': 'Testing',
-                            'options': ['test1', 'test2'], 'tooltip_text': 'Test Custom Picker Field'}
+
+        expected_payload = {
+            'field_type': 'PICKER'
+            , 'name_singular': 'Testing'
+            , 'options': ['test1', 'test2']
+            , 'tooltip_text': 'Test Custom Picker Field'
+        }
 
         self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
 
@@ -63,8 +68,12 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.name_singular = 'Testing'
         mock_item.name_plural = 'Tests'
         mock_item.options = ['test1', 'test2']
-        expected_payload = {'field_type': 'MULTI_PICKER', 'name_singular': 'Testing',
-                            'name_plural': 'Tests', 'options': ['test1', 'test2']}
+        expected_payload = {
+            'field_type': 'MULTI_PICKER'
+            , 'name_singular': 'Testing'
+            , 'name_plural': 'Tests'
+            , 'options': ['test1', 'test2']
+        }
 
         self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
 
@@ -137,9 +146,12 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.name_singular = 'Testing'
         mock_item.name_plural = 'Tests'
         expected_payload = {
-            'field_type': 'OBJECT_SET', 'allow_multiple': True, 'name_singular': 'Testing',
-            'allowed_otypes': ['schema', 'table', 'attribute', 'article', 'glossary_term'],
-            'backref_name': 'Testing the Object Set', 'name_plural': 'Tests'
+            'field_type': 'OBJECT_SET'
+            , 'allow_multiple': True
+            , 'name_singular': 'Testing'
+            , 'allowed_otypes': ['schema', 'table', 'attribute', 'article', 'glossary_term']
+            , 'backref_name': 'Testing the Object Set'
+            , 'name_plural': 'Tests'
         }
 
         self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
@@ -154,9 +166,12 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.name_singular = 'Testing'
         mock_item.name_plural = 'Tests'
         expected_payload = {
-            'field_type': 'OBJECT_SET', 'allow_multiple': True, 'name_singular': 'Testing',
-            'allowed_otypes': ['user', 'groupprofile'],
-            'backref_name': 'Testing the People Set', 'name_plural': 'Tests'
+            'field_type': 'OBJECT_SET'
+            , 'allow_multiple': True
+            , 'name_singular': 'Testing'
+            , 'allowed_otypes': ['user', 'groupprofile']
+            , 'backref_name': 'Testing the People Set'
+            , 'name_plural': 'Tests'
         }
 
         self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
@@ -170,9 +185,11 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.backref_name = 'Testing the Reference Set'
         mock_item.name_singular = 'Testing'
         expected_payload = {
-            'field_type': 'OBJECT_SET', 'allow_multiple': False, 'name_singular': 'Testing',
-            'allowed_otypes': ['schema', 'table', 'attribute', 'article', 'glossary_term'],
-            'backref_name': 'Testing the Reference Set'
+            'field_type': 'OBJECT_SET'
+            , 'allow_multiple': False
+            , 'name_singular': 'Testing'
+            , 'allowed_otypes': ['schema', 'table', 'attribute', 'article', 'glossary_term']
+            , 'backref_name': 'Testing the Reference Set'
         }
 
         self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
@@ -222,11 +239,13 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.backref_tooltip_text = 'Testing the Backref Tooltip'
         mock_item.tooltip_text = 'Testing the Tooltip'
         expected_payload = {
-            'field_type': 'OBJECT_SET', 'allow_multiple': True, 'name_singular': 'Testing',
-            'allowed_otypes': ['schema', 'table', 'attribute', 'article', 'glossary_term'],
-            'backref_name': 'Testing the Object Set', 'name_plural': 'Tests',
-            'backref_tooltip_text': 'Testing the Backref Tooltip',
-            'tooltip_text': 'Testing the Tooltip'
+            'field_type': 'OBJECT_SET'
+            , 'allow_multiple': True
+            , 'name_singular': 'Testing'
+            , 'allowed_otypes': ['schema', 'table', 'attribute', 'article', 'glossary_term']
+            , 'backref_name': 'Testing the Object Set', 'name_plural': 'Tests'
+            , 'backref_tooltip_text': 'Testing the Backref Tooltip'
+            , 'tooltip_text': 'Testing the Tooltip'
         }
 
         self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
@@ -238,7 +257,11 @@ class TestCustomFieldModels(unittest.TestCase):
 
         self.assertRaises(InvalidPostBody, lambda: mock_item.generate_api_post_payload())
 
-    def test_custom_field_value_model(self):
+    # --- TESTS FOR CUSTOM FIELD VALUE MODEL --- #
+
+    # for GET method
+    # this applies to rich text, picker, date custom fields
+    def test_custom_field_value_model_string_value(self):
 
         mock_field_value_response = {
             "field_id": 3,
@@ -248,16 +271,76 @@ class TestCustomFieldModels(unittest.TestCase):
             "value": "3 Data Policy"
         }
         mock_string_value = CustomFieldValue.from_api_response(mock_field_value_response)
+
         expected_value = CustomFieldValue(
             field_id=3,
             oid=3,
             otype="policy_group",
             ts_updated="2022-02-12T13:54:24.192436Z",
-            value="3 Data Policy"
+            value="3 Data Policy" # <= this will be automatically parsed/converted by data model
         )
 
         self.assertEqual(mock_string_value, expected_value)
 
+    # for GET method
+    # this applies to multi-picker custom fields
+    def test_custom_field_value_model_multi_string_value(self):
+        mock_field_value_response = {
+            "field_id": 3,
+            "oid": 3,
+            "otype": "policy_group",
+            "ts_updated": "2022-02-12T13:54:24.192436Z",
+            "value": [
+                "red"
+                , "orange"
+                , "green"
+            ]
+        }
+        mock_string_value = CustomFieldValue.from_api_response(mock_field_value_response)
+
+        expected_value = CustomFieldValue(
+            field_id=3,
+            oid=3,
+            otype="policy_group",
+            ts_updated="2022-02-12T13:54:24.192436Z",
+            value=[
+                "red"
+                , "orange"
+                , "green"
+            ] # <= this will be automatically parsed/converted by data model
+        )
+
+        self.assertEqual(mock_string_value, expected_value)
+
+    # for GET method
+    # this applies to object set and people set custom fields
+    def test_custom_field_value_model_dict_value(self):
+        mock_field_value_response = {
+            "field_id": 3,
+            "oid": 3,
+            "otype": "policy_group",
+            "ts_updated": "2022-02-12T13:54:24.192436Z",
+            "value": [
+                {"otype": "user", "oid": 1}
+                , {"otype": "group", "oid": 2}
+            ]
+        }
+        mock_string_value = CustomFieldValue.from_api_response(mock_field_value_response)
+
+        expected_value = CustomFieldValue(
+            field_id=3,
+            oid=3,
+            otype="policy_group",
+            ts_updated="2022-02-12T13:54:24.192436Z",
+            value=[
+                {"otype": "user", "oid": 1}
+                , {"otype": "group", "oid": 2}
+            ] # <= this will be automatically parsed/converted by data model
+        )
+
+        self.assertEqual(mock_string_value, expected_value)
+
+    # for GET method
     def test_custom_field_value_parse_string_values(self):
 
         mock_field_value_response = {
@@ -268,10 +351,11 @@ class TestCustomFieldModels(unittest.TestCase):
             "value": "3 Data Policy"
         }
         mock_string_value = CustomFieldValue.from_api_response(mock_field_value_response)
-        expected_string_value = [CustomFieldStringValueItem(value="3 Data Policy")]
+        expected_string_value = CustomFieldStringValue(value="3 Data Policy")
 
         self.assertEqual(mock_string_value.value, expected_string_value)
 
+    # for GET method
     def test_custom_field_value_parse_dictionary_value(self):
 
         mock_field_value_response = {
@@ -279,16 +363,22 @@ class TestCustomFieldModels(unittest.TestCase):
             "oid": 10,
             "otype": "business_policy",
             "ts_updated": "2022-04-06T18:37:31.427565Z",
-            "value": [{"otype": "user", "oid": 1}, {"otype": "group", "oid": 2}]
+            "value": [
+                {"otype": "user", "oid": 1}
+                , {"otype": "group", "oid": 2}
+            ]
         }
+
         mock_dict_value = CustomFieldValue.from_api_response(mock_field_value_response)
+
         expected_dict_value = [
-            CustomFieldDictValueItem(otype="user", oid=1),
-            CustomFieldDictValueItem(otype="group", oid=2)
+            CustomFieldDictValue(otype="user", oid=1),
+            CustomFieldDictValue(otype="group", oid=2)
         ]
 
         self.assertEqual(mock_dict_value.value, expected_dict_value)
 
+    # for PUT method
     def test_custom_field_value_item_string_value_payload(self):
 
         mock_item = CustomFieldValueItem()
@@ -296,23 +386,39 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.oid = 1
         mock_item.otype = 'table'
         mock_item.value = CustomFieldStringValueItem(value='Testing')
-        expected_payload = {'field_id': 1, 'otype': 'table', 'oid': 1, 'value': 'Testing'}
+        expected_payload = {
+            'field_id': 1
+            , 'otype': 'table'
+            , 'oid': 1
+            , 'value': 'Testing'
+        }
 
         self.assertEqual(mock_item.generate_api_put_payload(), expected_payload)
 
+    # for PUT method
     def test_custom_field_value_item_dict_value_payload(self):
 
         mock_item = CustomFieldValueItem()
         mock_item.field_id = 1
         mock_item.oid = 1
         mock_item.otype = 'table'
+        mock_item.value = []
         mock_item.value.append(CustomFieldDictValueItem(otype='table', oid=1))
         mock_item.value.append(CustomFieldDictValueItem(otype='article', oid=2))
-        expected_payload = {'field_id': 1, 'otype': 'table', 'oid': 1,
-                            'value': [{'otype': 'table', 'oid': 1}, {'otype': 'article', 'oid': 2}]}
+
+        expected_payload = {
+            'field_id': 1
+            , 'otype': 'table'
+            , 'oid': 1
+            , 'value': [
+                {'otype': 'table', 'oid': 1}
+                , {'otype': 'article', 'oid': 2}
+            ]
+        }
 
         self.assertEqual(mock_item.generate_api_put_payload(), expected_payload)
 
+    # for PUT method
     def test_custom_field_value_item_ts_updated_string_payload(self):
 
         mock_item = CustomFieldValueItem()
@@ -321,11 +427,18 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.otype = 'table'
         mock_item.value = CustomFieldStringValueItem(value='Testing')
         mock_item.ts_updated = '2023-11-27 4:30 PM'
-        expected_payload = {'field_id': 1, 'oid': 1, 'otype': 'table',
-                            'ts_updated': '2023-11-27T16:30:00', 'value': 'Testing'}
+
+        expected_payload = {
+            'field_id': 1
+            , 'oid': 1
+            , 'otype': 'table'
+            , 'ts_updated': '2023-11-27T16:30:00'
+            , 'value': 'Testing'
+        }
 
         self.assertEqual(mock_item.generate_api_put_payload(), expected_payload)
 
+    # for PUT method
     def test_custom_field_value_item_ts_updated_datetime_payload(self):
 
         mock_item = CustomFieldValueItem()
@@ -334,11 +447,18 @@ class TestCustomFieldModels(unittest.TestCase):
         mock_item.otype = 'table'
         mock_item.value = CustomFieldStringValueItem(value='Testing')
         mock_item.ts_updated = datetime(2023, 11, 27, 16, 30, 0, 0)
-        expected_payload = {'field_id': 1, 'oid': 1, 'otype': 'table',
-                            'ts_updated': '2023-11-27T16:30:00', 'value': 'Testing'}
+
+        expected_payload = {
+            'field_id': 1
+            , 'oid': 1
+            , 'otype': 'table'
+            , 'ts_updated': '2023-11-27T16:30:00'
+            , 'value': 'Testing'
+        }
 
         self.assertEqual(mock_item.generate_api_put_payload(), expected_payload)
 
+    # for PUT method
     def test_custom_field_value_item_invalid_payload_exception(self):
 
         mock_item = CustomFieldValueItem()
