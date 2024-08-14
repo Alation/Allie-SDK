@@ -9,7 +9,7 @@ from ..core.custom_exceptions import validate_query_params, validate_rest_payloa
 from ..models.domain_model import Domain, DomainMembership, DomainParams
 from .job import AlationJob
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationDomain(RequestHandler):

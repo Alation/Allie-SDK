@@ -7,7 +7,7 @@ from ..core.request_handler import RequestHandler
 from ..models.custom_template_model import *
 from ..core.custom_exceptions import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 class AlationCustomTemplate(RequestHandler):
     """Alation REST API Domain Methods."""

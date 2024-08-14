@@ -17,6 +17,7 @@ class LoggingConfigs(object):
         """
         logging_config = dict(
             version=1,
+            disable_existing_loggers=False,
             formatters={
                 'standard': {'format': '%(asctime)s[%(name)s][%(levelname)s] %(message)s'},
                 'console': {'format': '%(message)s'},
@@ -24,11 +25,11 @@ class LoggingConfigs(object):
                          'format': '%(asctime)s %(name)s %(levelname)s %(message)s'}
             },
             handlers={
-                'file': {'class': 'logging.FileHandler',
+                'file_for_allie': {'class': 'logging.FileHandler',
                          'formatter': 'standard',
                          'level': logging.DEBUG,
                          'filename': f'logs/allie-sdk-{datetime.date.today()}.log'},
-                'console': {'class': 'logging.StreamHandler',
+                'console_for_allie': {'class': 'logging.StreamHandler',
                             'formatter': 'console',
                             'level': logging.INFO,
                             'stream': 'ext://sys.stdout'},
@@ -37,12 +38,11 @@ class LoggingConfigs(object):
                              'level': logging.DEBUG,
                              'filename': f'logs/alation-rest-{datetime.date.today()}.json'}
             },
-            root={'handlers': ['file', 'console'],
-                  'level': logging.NOTSET},
             loggers={
-                'api_json': {'handlers': ['api_json'],
-                             'level': logging.DEBUG,
-                             'qualname': 'alation_rest'}
+                'allie_sdk_logger': {
+                    'handlers': ['file_for_allie', 'console_for_allie', 'api_json'],
+                    'level': logging.DEBUG
+                }
             }
         )
 

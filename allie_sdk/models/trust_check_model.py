@@ -8,7 +8,7 @@ from ..core.custom_exceptions import InvalidPostBody
 from ..core.data_structures import BaseClass, BaseParams
 from .user_model import User
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 @dataclass

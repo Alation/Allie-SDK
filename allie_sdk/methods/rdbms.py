@@ -12,7 +12,7 @@ from ..models.rdbms_model import (
 )
 from ..models.job_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationRDBMS(AsyncHandler):

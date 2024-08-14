@@ -6,7 +6,7 @@ import requests
 from ..core.async_handler import AsyncHandler
 from ..models.connector_model import Connector
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationConnector(AsyncHandler):

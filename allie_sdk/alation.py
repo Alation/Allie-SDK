@@ -36,7 +36,7 @@ for log_file in os.listdir('logs'):
             os.remove(log)
 
 logging.config.dictConfig(LoggingConfigs.logging_configs())
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class Alation(object):

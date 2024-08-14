@@ -6,7 +6,7 @@ from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import *
 from ..models.datasource_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 class AlationDatasource(RequestHandler):
     """Alation REST API Documents Methods."""

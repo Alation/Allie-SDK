@@ -8,7 +8,7 @@ from ..core.custom_exceptions import validate_query_params, validate_rest_payloa
 from ..models.glossary_term_model import GlossaryTerm, GlossaryTermItem, GlossaryTermParams
 from ..models.job_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationGlossaryTerm(AsyncHandler):

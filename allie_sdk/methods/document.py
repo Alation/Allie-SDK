@@ -9,7 +9,7 @@ from ..models.custom_field_model import *
 from ..models.custom_template_model import *
 from ..models.job_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 class AlationDocument(AsyncHandler):
     """Alation REST API Documents Methods."""

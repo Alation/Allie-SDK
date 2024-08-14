@@ -7,7 +7,7 @@ from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import *
 from ..models.policy_group_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 class AlationPolicyGroup(RequestHandler):
     """Alation REST API Business Policy Methods."""

@@ -25,8 +25,6 @@ Download the source code from the [Allie SDK GitHub repo](https://github.com/Ala
 ```python
 import allie_sdk as allie
 ```
-{: .note }
-If you get the error `ModuleNotFoundError` when running your first script, then please locate the `requirements.txt` file at the root of this repo and run the following command to install the necessary modules: `pip3 install -r requirements.txt`.
 
 {: .note }
 If you get the error `ModuleNotFoundError` when running your first script, then please locate the `requirements.txt` file at the root of this repo and run the following command to install the necessary modules: `pip3 install -r requirements.txt`.

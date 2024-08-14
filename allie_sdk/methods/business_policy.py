@@ -12,7 +12,7 @@ from ..models.custom_template_model import *
 from ..models.job_model import *
 
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 class AlationBusinessPolicy(AsyncHandler):
     """Alation REST API Business Policy Methods."""

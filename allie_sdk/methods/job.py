@@ -7,7 +7,7 @@ from time import sleep
 from ..core.request_handler import RequestHandler
 from ..models.job_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationJob(RequestHandler):
