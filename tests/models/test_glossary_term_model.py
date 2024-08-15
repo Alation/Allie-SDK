@@ -2,9 +2,7 @@
 
 import unittest
 from allie_sdk.core.custom_exceptions import InvalidPostBody, UnsupportedPostBody
-from allie_sdk.models.custom_field_model import (
-    CustomFieldValue, CustomFieldValueItem, CustomFieldDictValueItem, CustomFieldStringValueItem
-)
+from allie_sdk.models.custom_field_model import *
 from allie_sdk.models.glossary_term_model import GlossaryTerm, GlossaryTermItem
 
 
@@ -81,21 +79,21 @@ class TestGlossaryTermModels(unittest.TestCase):
 
         mock_response = {
             "custom_fields": [
-                {"value": "Approved", "field_id": 5, "field_name": "Status"},
-                {"value": "No", "field_id": 10040, "field_name": "Contains PII"},
-                {"value": [{"otype": "groupprofile", "oid": 7}], "field_id": 8, "field_name": "Steward"}
+                {"value": "Approved", "field_id": 5},
+                {"value": "No", "field_id": 10040},
+                {"value": [{"otype": "groupprofile", "oid": 7}], "field_id": 8}
             ]
         }
         mock_term = GlossaryTerm.from_api_response(mock_response)
         expected_parsed_fields = [
             CustomFieldValue(
-                field_id=5, field_name="Status", value=[CustomFieldStringValueItem(value="Approved")]
+                field_id=5, value = CustomFieldStringValue(value="Approved")
             ),
             CustomFieldValue(
-                field_id=10040, field_name="Contains PII", value=[CustomFieldStringValueItem(value="No")]
+                field_id=10040, value = CustomFieldStringValue(value="No")
             ),
             CustomFieldValue(
-                field_id=8, field_name="Steward", value=[CustomFieldDictValueItem(otype="groupprofile", oid=7)]
+                field_id=8, value=[CustomFieldDictValue(otype="groupprofile", oid=7)]
             )
         ]
 

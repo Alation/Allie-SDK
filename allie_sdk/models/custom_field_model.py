@@ -122,20 +122,27 @@ class CustomFieldParams(BaseParams):
 
 
 @dataclass
-class CustomFieldStringValueItem:
+class CustomFieldStringValue:
     value: str = field(default=None)
 
+@dataclass
+class CustomFieldStringValueItem(CustomFieldStringValue):
     def return_value(self) -> str:
         return self.value
 
 
 @dataclass
-class CustomFieldDictValueItem:
+class CustomFieldDictValue:
     otype: str = field(default=None)
     oid: int = field(default=None)
 
+@dataclass
+class CustomFieldDictValueItem(CustomFieldDictValue):
     def return_value(self) -> dict:
-        return {'otype': self.otype.lower(), 'oid': self.oid}
+        return {
+            'otype': self.otype.lower()
+            , 'oid': self.oid
+        }
 
 
 @dataclass
@@ -144,8 +151,70 @@ class BaseCustomFieldValue(BaseClass):
     ts_updated: datetime = field(default=None)
     otype: str = field(default=None)
     oid: int = field(default=None)
-    value: CustomFieldStringValueItem | list[CustomFieldStringValueItem | CustomFieldDictValueItem] = field(default_factory=list)
+    value: CustomFieldStringValue | list[CustomFieldStringValue | CustomFieldDictValue] = field(default=None)
 
+
+@dataclass
+class CustomFieldValue(BaseCustomFieldValue):
+    field_name:str = field(default=None) # this is only returned by some endpoints, e.g. documents API
+
+    def __post_init__(self):
+        if self.value:
+            self._parse_field_values()
+        if isinstance(self.ts_updated, str):
+            self.ts_updated = self.convert_timestamp(self.ts_updated)
+
+    def _parse_field_values(self):
+
+        if isinstance(self.value, str):
+            self.value = CustomFieldStringValue(value=self.value)
+
+        if isinstance(self.value, list):
+
+            parsed_values = []
+
+            for item in self.value:
+                # for multi-select picker values
+                if isinstance(item, str):
+                    parsed_values.append(
+                        CustomFieldStringValue(
+                            value = item
+                        )
+                    )
+                # for object sets etc
+                elif isinstance(item, dict):
+                    parsed_values.append(
+                        CustomFieldDictValue(
+                            otype=item.get('otype', None)
+                            , oid=item.get('oid', None)
+                        )
+                    )
+
+                elif isinstance(item, CustomFieldStringValue):
+                    parsed_values.append(item)
+                elif isinstance(item, CustomFieldDictValue):
+                    parsed_values.append(item)
+
+            self.value = parsed_values
+
+@dataclass
+class CustomFieldValueItem(BaseCustomFieldValue):
+
+    def get_field_values(self) -> str | list:
+        if isinstance(self.value, CustomFieldStringValueItem):
+            return self.value.return_value()
+
+        if isinstance(self.value, list):
+
+            field_values = []
+            for item in self.value:
+                if isinstance(item, CustomFieldDictValueItem):
+                    field_values.append(item.return_value())
+                # for multi-picker values
+                elif isinstance(item, CustomFieldStringValueItem):
+                    field_values.append(item.return_value())
+
+            return field_values
     def generate_api_put_payload(self) -> dict:
         for item in [self.field_id, self.otype, self.oid, self.value]:
             if not item:
@@ -165,55 +234,6 @@ class BaseCustomFieldValue(BaseClass):
                 payload['ts_updated'] = self.ts_updated.isoformat()
 
         return payload
-
-    def get_field_values(self) -> str | list:
-        if isinstance(self.value, CustomFieldStringValueItem):
-            return self.value.return_value()
-
-        if isinstance(self.value, list):
-
-            field_values = []
-            for item in self.value:
-                if isinstance(item, CustomFieldDictValueItem):
-                    field_values.append(item.return_value())
-                # for multi-picker values
-                elif isinstance(item, CustomFieldStringValueItem):
-                    field_values.append(item.return_value())
-
-            return field_values
-
-
-@dataclass
-class CustomFieldValue(BaseCustomFieldValue):
-    field_name: str = field(default=None)
-
-    def __post_init__(self):
-        if self.value:
-            self._parse_field_values()
-        if isinstance(self.ts_updated, str):
-            self.ts_updated = self.convert_timestamp(self.ts_updated)
-
-    def _parse_field_values(self):
-        parsed_values = []
-        if isinstance(self.value, str):
-            parsed_values.append(CustomFieldStringValueItem(value=self.value))
-
-        if isinstance(self.value, list):
-            for item in self.value:
-                if isinstance(item, dict):
-                    parsed_values.append(CustomFieldDictValueItem(
-                        otype=item.get('otype', None), oid=item.get('oid', None)))
-                if isinstance(item, CustomFieldStringValueItem):
-                    parsed_values.append(item)
-                if isinstance(item, CustomFieldDictValueItem):
-                    parsed_values.append(item)
-
-        self.value = parsed_values
-
-@dataclass
-class CustomFieldValueItem(BaseCustomFieldValue):
-    pass
-
 
 @dataclass
 class CustomFieldValueParams(BaseParams):
