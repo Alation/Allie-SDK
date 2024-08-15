@@ -6,7 +6,7 @@ import requests
 from ..core.request_handler import RequestHandler
 from ..models.authentication_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationAuthentication(RequestHandler):

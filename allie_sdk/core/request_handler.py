@@ -7,7 +7,7 @@ import requests
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
 
-API_LOGGER = logging.getLogger("api_json")
+API_LOGGER = logging.getLogger("allie_sdk_logger")
 RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
 SUCCESS_CODES = [200, 201, 202, 204]
 

@@ -8,7 +8,7 @@ from ..models.virtual_filesystem_model import *
 from ..core.async_handler import AsyncHandler
 from ..models.job_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationVirtualFileSystem(AsyncHandler):

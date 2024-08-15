@@ -6,7 +6,7 @@ import requests
 from .request_handler import RequestHandler
 from ..methods.job import AlationJob
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AsyncHandler(RequestHandler):

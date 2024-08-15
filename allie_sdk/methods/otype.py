@@ -6,7 +6,7 @@ import requests
 from ..core.async_handler import AsyncHandler
 from ..models.otype_model import Otype
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationOtype(AsyncHandler):

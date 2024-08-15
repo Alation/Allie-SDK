@@ -7,7 +7,7 @@ from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import validate_query_params
 from ..models.user_model import *
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 
 class AlationUser(RequestHandler):
