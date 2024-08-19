@@ -50,7 +50,7 @@ class AlationVirtualFileSystem(AsyncHandler):
         payload_jsonl = '\n' + '\n'.join(json.dumps(p) for p in payload_d)
 
         LOGGER.debug(payload_jsonl)
-        async_results = self.async_post(f'{self._vfs_endpoint}{fs_id}/', payload=payload_jsonl)
+        async_results = self.async_post_data_payload(f'{self._vfs_endpoint}{fs_id}/', data=payload_jsonl)
 
         if async_results:
             return [JobDetails.from_api_response(item) for item in async_results]
@@ -68,7 +68,7 @@ class AlationVirtualFileSystem(AsyncHandler):
 
         # validate_query_params(query_params, VirtualDataSourceParams)
         # params = query_params.generate_params_dict() if query_params else None
-        async_results = self.async_post(f'{self._vfs_endpoint}{fs_id}', data=payload)
+        async_results = self.async_post_data_payload(f'{self._vfs_endpoint}{fs_id}', data=payload)
 
         if async_results:
             return [JobDetails.from_api_response(item) for item in async_results]
