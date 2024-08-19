@@ -158,7 +158,6 @@ class AsyncHandler(RequestHandler):
             LOGGER.error(batch_error, exc_info=True)
             # results.append(batch_error) => this won't map to JobDetail
 
-
         return results
 
     def async_post_dict_payload(self, url: str, payload: dict) -> dict:
