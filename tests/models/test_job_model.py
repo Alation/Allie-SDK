@@ -530,3 +530,93 @@ class TestGroupModels(unittest.TestCase):
         )
 
         self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_hub_folder_post(self):
+
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00",
+            "result": {
+                "created_folder_count": 2,
+                "created_folders": [
+                    {
+                        "id": 10,
+                        "title": "my test folder"
+                    },
+                    {
+                        "id": 11,
+                        "title": "my test folder 2"
+                    }
+                ]
+            }
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentHubFolderPost(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentHubFolderPost(
+            status='successful'
+            , msg='Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00'
+            , result = JobDetailsDocumentHubFolderPostResult(
+                created_folder_count = 2
+                , created_folders = [
+                    JobDetailsDocumentHubFolderPostResultCreatedFolder(
+                        id = 10
+                        , title = "my test folder"
+                    )
+                    , JobDetailsDocumentHubFolderPostResultCreatedFolder(
+                        id = 11
+                        , title = "my test folder 2"
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_hub_folder_put(self):
+
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00",
+            "result": {
+                "updated_folder_count": 2,
+                "updated_folders": [
+                    {
+                        "id": 10,
+                        "title": "my test folder"
+                    },
+                    {
+                        "id": 11,
+                        "title": "my test folder 2"
+                    }
+                ]
+            }
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentHubFolderPut(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentHubFolderPut(
+            status='successful'
+            , msg='Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00'
+            , result = JobDetailsDocumentHubFolderPutResult(
+                updated_folder_count = 2
+                , updated_folders = [
+                    JobDetailsDocumentHubFolderPutResultUpdatedFolder(
+                        id = 10
+                        , title = "my test folder"
+                    )
+                    , JobDetailsDocumentHubFolderPutResultUpdatedFolder(
+                        id = 11
+                        , title = "my test folder 2"
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual(input_transformed, output)

@@ -47,7 +47,9 @@ class AlationDocument(AsyncHandler):
 
         """Create documents in Bulk
         Args:
-            documents: list of Allie.DocumentPostItem objects. This is the main payload which has to conform to the payload outlined here:
+            documents: list of Allie.DocumentPostItem objects. This is the main payload.
+
+            Additional info:
             https://developer.alation.com/dev/reference/postdocuments
 
         Returns:
@@ -57,11 +59,11 @@ class AlationDocument(AsyncHandler):
 
         # make sure input data matches expected structure
         item: DocumentPostItem
-        validate_rest_payload(documents, (DocumentPostItem,))
+        validate_rest_payload(payload = documents, expected_types = (DocumentPostItem,))
         # make sure we only include fields with values in the payload
         payload = [item.generate_api_post_payload() for item in documents]
 
-        # The policys APIs returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
+        # The API returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
         async_results = self.async_post(
             url = '/integration/v2/document/'
             , payload = payload
@@ -78,7 +80,9 @@ class AlationDocument(AsyncHandler):
 
         """Bulk Update Documents in Bulk
         Args:
-            documents: This is the main payload which has to conform to the payload outlined here: 
+            documents: This is the main payload - list of DocumentPutItem objects.
+
+            Additional info:
             https://developer.alation.com/dev/reference/updatedocuments
 
         Returns:
@@ -87,11 +91,11 @@ class AlationDocument(AsyncHandler):
 
         # make sure input data matches expected structure
         item: DocumentPutItem
-        validate_rest_payload(documents, (DocumentPutItem,))
+        validate_rest_payload(payload = documents, expected_types = (DocumentPutItem,))
         # make sure we only include fields with values in the payload
         payload = [item.generate_api_put_payload() for item in documents]
 
-        # The policys APIs returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
+        # The API returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
         async_results = self.async_put(
             url = '/integration/v2/document/'
             , payload = payload
@@ -112,7 +116,7 @@ class AlationDocument(AsyncHandler):
         if documents:
 
             item: Document
-            validate_rest_payload(documents, (Document,))
+            validate_rest_payload(payload = documents, expected_types = (Document,))
             payload = {'id': [item.id for item in documents]}
             # The policys APIs returns a job id which needs to be used in conjunction with the Jobs ID to get the job details
             delete_result = self.delete('/integration/v2/document/', payload)
