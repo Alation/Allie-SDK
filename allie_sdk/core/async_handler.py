@@ -133,6 +133,33 @@ class AsyncHandler(RequestHandler):
                 # results.append(batch_error) => this won't map to JobDetail
         return results
 
+    def async_post_data_payload(self, url: str, data: any, query_params: dict = None) -> list:
+        """POST the Alation Objects via an Async Job Process.
+            Method to process the posts that are not lists, but data e.g. strings. Batching is not needed in these cases
+            and the payload should be processed in their entirety as the contents and sequence of objects is important.
+            For example Virtual Data and File Sources use this logic
+        Args:
+            url (str): POST API Call URL.
+            payload (str): REST API data type payload.
+
+        Returns:
+            bool: Returns True if the job fails.
+
+        """
+        results = []
+        try:
+            LOGGER.debug(data)
+            async_response = self.post(url, body=data, query_params=query_params)
+            if async_response:
+                job = AlationJob(self.access_token, self.session, self.host, async_response)
+                results.extend(job.check_job_status())
+
+        except Exception as batch_error:
+            LOGGER.error(batch_error, exc_info=True)
+            # results.append(batch_error) => this won't map to JobDetail
+
+        return results
+
     def async_post_dict_payload(self, url: str, payload: dict) -> dict:
         """POST the Alation Objects via an Async Job Process.
 

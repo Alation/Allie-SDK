@@ -61,7 +61,8 @@ class AlationVirtualDataSource(AsyncHandler):
         # add line feeds between json payload dicts for jsonl format
         payload_jsonl = '\n'.join(json.dumps(p) for p in payload_d)
         LOGGER.debug(payload_jsonl)
-        async_results = self.async_post(f'{self._vds_endpoint}{ds_id}', payload=payload_jsonl, query_params=params)
+        async_results = self.async_post_data_payload(f'{self._vds_endpoint}{ds_id}',
+                                                     data=payload_jsonl, query_params=params)
 
         if async_results:
             return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
@@ -85,7 +86,7 @@ class AlationVirtualDataSource(AsyncHandler):
 
         validate_query_params(query_params, VirtualDataSourceParams)
         params = query_params.generate_params_dict() if query_params else None
-        async_results = self.async_post(f'{self._vds_endpoint}{ds_id}', query_params=params, json=payload)
+        async_results = self.async_post_data_payload(f'{self._vds_endpoint}{ds_id}', data=payload, query_params=params)
 
         if async_results:
             return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
