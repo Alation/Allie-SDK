@@ -3,6 +3,30 @@ from allie_sdk.methods.job import *
 
 
 class TestGroupModels(unittest.TestCase):
+
+    def test_job_model_for_document_delete(self):
+
+        # Expected input
+        input = {
+            "deleted_document_count": 2,
+            "deleted_document_ids": [
+                11, 12
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentDelete(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentDelete(
+            deleted_document_count = 2
+            , deleted_document_ids = [
+                11, 12
+            ]
+        )
+
+        self.assertEqual(input_transformed, output)
+
     # check if we can map the job result output for a document creation to our data class
     def test_job_model_for_document_post(self):
 
@@ -527,6 +551,119 @@ class TestGroupModels(unittest.TestCase):
                 , flag_counts = {'GOOD': 0, 'WARNING': 1, 'ALERT': 0}
                 , total_duration = 0.07003468499897281
             )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_hub_folder_post(self):
+
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00",
+            "result": {
+                "created_folder_count": 2,
+                "created_folders": [
+                    {
+                        "id": 10,
+                        "title": "my test folder"
+                    },
+                    {
+                        "id": 11,
+                        "title": "my test folder 2"
+                    }
+                ]
+            }
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentHubFolderPost(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentHubFolderPost(
+            status='successful'
+            , msg='Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00'
+            , result = JobDetailsDocumentHubFolderPostResult(
+                created_folder_count = 2
+                , created_folders = [
+                    JobDetailsDocumentHubFolderPostResultCreatedFolder(
+                        id = 10
+                        , title = "my test folder"
+                    )
+                    , JobDetailsDocumentHubFolderPostResultCreatedFolder(
+                        id = 11
+                        , title = "my test folder 2"
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_hub_folder_put(self):
+
+        # Expected input
+        input = {
+            "status": "successful",
+            "msg": "Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00",
+            "result": {
+                "updated_folder_count": 2,
+                "updated_folders": [
+                    {
+                        "id": 10,
+                        "title": "my test folder"
+                    },
+                    {
+                        "id": 11,
+                        "title": "my test folder 2"
+                    }
+                ]
+            }
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentHubFolderPut(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentHubFolderPut(
+            status='successful'
+            , msg='Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00'
+            , result = JobDetailsDocumentHubFolderPutResult(
+                updated_folder_count = 2
+                , updated_folders = [
+                    JobDetailsDocumentHubFolderPutResultUpdatedFolder(
+                        id = 10
+                        , title = "my test folder"
+                    )
+                    , JobDetailsDocumentHubFolderPutResultUpdatedFolder(
+                        id = 11
+                        , title = "my test folder 2"
+                    )
+                ]
+            )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_hub_folder_delete(self):
+
+        # Expected input
+        input = {
+            "deleted_folder_count": 2,
+            "deleted_folder_ids": [
+                11, 12
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentHubFolderDelete(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentHubFolderDelete(
+            deleted_folder_count = 2
+            , deleted_folder_ids = [
+                11, 12
+            ]
         )
 
         self.assertEqual(input_transformed, output)

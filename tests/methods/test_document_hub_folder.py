@@ -1,35 +1,29 @@
 import requests_mock
-from allie_sdk.methods.document import *
+from allie_sdk.methods.document_hub_folder import *
 
 
 
-MOCK_USER = AlationDocument(
+MOCK_USER = AlationDocumentHubFolder(
     access_token='test'
     , session=requests.session()
     , host='https://test.com'
 )
 
-def test_get_documents(requests_mock):
+def test_get_document_hub_folders(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
 
     # What does the response look like for the document request?
-    document_api_response = [
+    document_hub_folder_api_response = [
         {
             "id": 1,
             "deleted": False,
             "ts_deleted": "2022-07-05T15:09:40.421916Z",
-            # "is_public": True,  => was removed Apr 2024
             "ts_created": "2022-07-05T15:09:40.421916Z",
             "ts_updated": "2022-07-05T15:09:40.421916Z",
-            # "otype": "glossary_term",  => was removed Apr 2024
             "title": "Sales",
             "description": "Relevant data and articles for Sales Analytics",
             "template_id": 47,
-            "folder_ids": [
-                14,
-                165
-            ],
             "document_hub_id": 1,
             "custom_fields": [
                 {
@@ -46,35 +40,35 @@ def test_get_documents(requests_mock):
         }
     ]
 
-    success_documents = [ Document.from_api_response(item) for item in document_api_response ]
+    success_document_hub_folders = [ DocumentHubFolder.from_api_response(item) for item in document_hub_folder_api_response ]
 
-    # Override the policy API call
+    # Override the document hub API call
     requests_mock.register_uri(
         method = 'GET'
-        , url = '/integration/v2/document/'
-        , json = document_api_response
+        , url = '/integration/v2/folder/'
+        , json = document_hub_folder_api_response
         , status_code = 200
     )
 
     # --- TEST THE FUNCTION --- #
-    documents = MOCK_USER.get_documents()
+    document_hub_folders = MOCK_USER.get_document_hub_folders()
 
-    assert success_documents == documents
+    assert success_document_hub_folders == document_hub_folders
 
-def test_create_documents(requests_mock):
+def test_create_document_hub_folders(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
 
     # What does the response look like for the create document request?
-    document_api_response = {
-        "job_id": 27809
+    document_hub_folder_api_response = {
+        "job_id": 27807
     }
 
     # Override the document API call
     requests_mock.register_uri(
         method='POST'
-        , url='/integration/v2/document/'
-        , json=document_api_response
+        , url='/integration/v2/folder/'
+        , json=document_hub_folder_api_response
         , status_code=202
     )
 
@@ -83,31 +77,29 @@ def test_create_documents(requests_mock):
         'status': 'successful'
         , 'msg': 'Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
         , 'result': {
-            'created_term_count': 2
-            , 'created_terms': [
-                {'id': 1325, 'title': 'My KPI 1'}
-                , {'id': 1326, 'title': 'My KPI 2'}
+            'created_folder_count': 2
+            , 'created_folders': [
+                {'id': 10, 'title': 'My Doc Hub Folder 1'}
+                , {'id': 11, 'title': 'My Doc Hub Folder 2'}
             ]
         }
     }
 
 
     # Override the job API call
-    # Note: The id in the job URL corresponds to the task id in document_api_response defined above
+    # Note: The id in the job URL corresponds to the task id in document_hub_folder_api_response defined above
     requests_mock.register_uri(
         method = 'GET'
-        , url = '/api/v1/bulk_metadata/job/?id=27809'
+        , url = '/api/v1/bulk_metadata/job/?id=27807'
         , json = job_api_response
     )
 
     # --- TEST THE FUNCTION --- #
-    create_documents_result = MOCK_USER.create_documents(
+    create_document_hub_folders_result = MOCK_USER.create_document_hub_folders(
         [
-            DocumentPostItem(
-                title = "My KPI 1"
-                , description = "This is the description for KPI 1"
-                , template_id = 12
-                , folder_ids = [ 6 ]
+            DocumentHubFolderPostItem(
+                title = "My Doc Hub Folder 1"
+                , description = "This is the description for Doc Hub Folder 1"
                 , document_hub_id = 2
                 , custom_fields = [
                     CustomFieldValueItem(
@@ -121,11 +113,9 @@ def test_create_documents(requests_mock):
                     )
                 ]
             )
-            , DocumentPostItem(
-                title = "My KPI 2"
-                , description = "This is the description for KPI 2"
-                , template_id = 12
-                , folder_ids = [ 6 ]
+            , DocumentHubFolderPostItem(
+                title = "My Doc Hub Folder 2"
+                , description = "This is the description for Doc Hub Folder 2"
                 , document_hub_id = 2
                 , custom_fields = [
                     CustomFieldValueItem(
@@ -143,45 +133,40 @@ def test_create_documents(requests_mock):
     )
 
     function_expected_result = [
-        # MOCK_USER.JobDetails(
-        #     status='successful'
-        #     , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
-        #     , result={
-        #         'created_term_count': 2
-        #         , 'created_terms': [
-        #             {'id': 1325, 'title': 'My KPI 1'}
-        #             , {'id': 1326, 'title': 'My KPI 2'}
-        #         ]
-        #     }
-        # )
-        JobDetailsDocumentPost(
+        JobDetailsDocumentHubFolderPost(
             status='successful'
             , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
-            , result=JobDetailsDocumentPostResult(
-                created_term_count=2
-                , created_terms=[
-                    JobDetailsDocumentPostResultDetails(id=1325, title='My KPI 1')
-                    , JobDetailsDocumentPostResultDetails(id=1326, title='My KPI 2')
+            , result=JobDetailsDocumentHubFolderPostResult(
+                created_folder_count = 2
+                , created_folders = [
+                    JobDetailsDocumentHubFolderPostResultCreatedFolder(
+                        id = 10
+                        , title = "My Doc Hub Folder 1"
+                    )
+                    , JobDetailsDocumentHubFolderPostResultCreatedFolder(
+                        id = 11
+                        , title = "My Doc Hub Folder 2"
+                    )
                 ]
             )
         )
     ]
-    assert function_expected_result == create_documents_result
+    assert function_expected_result == create_document_hub_folders_result
 
-def test_update_documents(requests_mock):
+def test_update_document_hub_folders(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
 
     # What does the response look like for the update document request?
-    document_api_response = {
+    document_hub_folder_api_response = {
         "job_id": 27811
     }
 
     # Override the policy API call
     requests_mock.register_uri(
         method='PUT'
-        , url='/integration/v2/document/'
-        , json=document_api_response
+        , url='/integration/v2/folder/'
+        , json=document_hub_folder_api_response
         , status_code=202
     )
 
@@ -189,10 +174,10 @@ def test_update_documents(requests_mock):
     job_api_response = {
         'msg': 'Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
         , 'result': {
-            'updated_term_count': 2
-            , 'updated_terms': [
-                {'id': 1334}
-                , {'id': 1335}
+            'updated_folder_count': 2
+            , 'updated_folders': [
+                {'id': 10, 'title': 'My Doc Hub Folder 1'}
+                , {'id': 11, 'title': 'My Doc Hub Folder 2'}
             ]
         }
         , 'status': 'successful'
@@ -200,7 +185,7 @@ def test_update_documents(requests_mock):
 
 
     # Override the job API call
-    # Note: The id in the job URL corresponds to the task id in document_response defined above
+    # Note: The id in the job URL corresponds to the task id in document_hub_folder_response defined above
     requests_mock.register_uri(
         method = 'GET'
         , url = '/api/v1/bulk_metadata/job/?id=27811'
@@ -208,14 +193,12 @@ def test_update_documents(requests_mock):
     )
 
     # --- TEST THE FUNCTION --- #
-    update_documents_result = MOCK_USER.update_documents(
+    update_document_hub_folders_result = MOCK_USER.update_document_hub_folders(
         [
-            DocumentPutItem(
-                id = 1334
-                , title = "My KPI 1"
-                , description = "This is the description for KPI 1"
-                , template_id = 12
-                , folder_ids = [ 6 ]
+            DocumentHubFolderPutItem(
+                id = 10
+                , title = "My Doc Hub Folder 1"
+                , description = "This is the description for Doc Hub Folder 1"
                 , document_hub_id = 2
                 , custom_fields = [
                     CustomFieldValueItem(
@@ -229,12 +212,10 @@ def test_update_documents(requests_mock):
                     )
                 ]
             )
-            , DocumentPutItem(
-                id = 1335
-                , title = "My KPI 2"
-                , description = "This is the description for KPI 2"
-                , template_id = 12
-                , folder_ids = [ 6 ]
+            , DocumentHubFolderPutItem(
+                id = 11
+                , title = "My Doc Hub Folder 2"
+                , description = "This is the description for Doc Hub Folder 2"
                 , document_hub_id = 2
                 , custom_fields = [
                     CustomFieldValueItem(
@@ -252,29 +233,35 @@ def test_update_documents(requests_mock):
     )
 
     function_expected_result = [
-        JobDetailsDocumentPut(
+        JobDetailsDocumentHubFolderPut(
             status='successful'
             , msg='Job finished in 0.075303 seconds at 2024-06-21 13:16:42.261763+00:00'
-            , result=JobDetailsDocumentPutResult(
-                updated_term_count=2
-                , updated_terms=[
-                    JobDetailsDocumentPutResultDetails(id=1334)
-                    , JobDetailsDocumentPutResultDetails(id=1335)
+            , result=JobDetailsDocumentHubFolderPutResult(
+                updated_folder_count = 2
+                , updated_folders = [
+                    JobDetailsDocumentHubFolderPutResultUpdatedFolder(
+                        id = 10
+                        , title = "My Doc Hub Folder 1"
+                    )
+                    , JobDetailsDocumentHubFolderPutResultUpdatedFolder(
+                        id = 11
+                        , title = "My Doc Hub Folder 2"
+                    )
                 ]
             )
         )
     ]
 
-    assert function_expected_result == update_documents_result
+    assert function_expected_result == update_document_hub_folders_result
 
-def test_delete_documents(requests_mock):
+def test_delete_document_hub_folders(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
 
     # What does the response look like for the delete document request?
-    document_api_response = {
-            "deleted_document_count": 2,
-            "deleted_document_ids": [
+    document_hub_folder_api_response = {
+            "deleted_folder_count": 2,
+            "deleted_folder_ids": [
                 1, 2
             ]
         }
@@ -282,28 +269,28 @@ def test_delete_documents(requests_mock):
     # Override the policy API call
     requests_mock.register_uri(
         method = 'DELETE'
-        , url = '/integration/v2/document/'
-        , json = document_api_response
+        , url = '/integration/v2/folder/'
+        , json = document_hub_folder_api_response
         , status_code = 200
     )
 
 
     # --- TEST THE FUNCTION --- #
-    delete_document_result = MOCK_USER.delete_documents(
+    delete_document_hub_folder_result = MOCK_USER.delete_document_hub_folders(
         [
-            Document(
+            DocumentHubFolder(
                 id = 1
             )
-            , Document(
+            , DocumentHubFolder(
                 id = 2
             )
         ]
     )
 
-    function_expected_result = JobDetailsDocumentDelete(
-            deleted_document_count = 2
-            , deleted_document_ids = [
+    function_expected_result = JobDetailsDocumentHubFolderDelete(
+            deleted_folder_count = 2
+            , deleted_folder_ids = [
                 1, 2
             ]
         )
-    assert function_expected_result == delete_document_result
+    assert function_expected_result == delete_document_hub_folder_result

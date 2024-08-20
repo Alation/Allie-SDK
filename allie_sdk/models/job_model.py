@@ -82,6 +82,12 @@ class JobDetailsDocumentPutResult(BaseClass):
                 if updated_objects_dict_counter > 0:
                     self.updated_terms = updated_terms_out
 
+# --- DOCUMENT DELETE --- #
+@dataclass(kw_only = True)
+class JobDetailsDocumentDelete(BaseClass):
+    deleted_document_count:int = field(default = None)
+    deleted_document_ids:list = field(default_factory = list)
+
 @dataclass(kw_only = True)
 class JobDetails(BaseClass):
     status: str = field(default = None)
@@ -172,6 +178,7 @@ class JobDetailsVirtualDatasourcePostResult(BaseClass):
     updated_objects:int = field(default = None)
     error_objects:list = field(default_factory = list)
     error: str = field(default = None)
+
 @dataclass(kw_only = True)
 class JobDetailsVirtualDatasourcePost(JobDetails):
     def __post_init__(self):
@@ -179,6 +186,8 @@ class JobDetailsVirtualDatasourcePost(JobDetails):
         if isinstance(self.result, str):
             result_tmp = json.loads(self.result)
             self.result = JobDetailsVirtualDatasourcePostResult.from_api_response(result_tmp)
+
+# --- DATA QUALITY --- #
 
 @dataclass(kw_only=True)
 class JobDetailsDataQualityResultActionStats(BaseClass):
@@ -232,3 +241,65 @@ class JobDetailsDataQuality(JobDetails):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
             self.result = JobDetailsDataQualityResult.from_api_response(self.result)
+
+# --- DOCUMENT HUB FOLDER POST --- #
+
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderPostResultCreatedFolder(BaseClass):
+    id:int = field(default = None)
+    title:str = field(default = None)
+
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderPostResult(BaseClass):
+    created_folder_count:int = field(default = 0)
+    created_folders: list = field(default_factory = list)
+
+    def __post_init__(self):
+        if isinstance(self.created_folders, list):
+
+            created_folders_out = []
+            for cf in self.created_folders:
+                if isinstance(cf, dict):
+                    created_folders_out.append(JobDetailsDocumentHubFolderPostResultCreatedFolder.from_api_response(cf))
+            if len(created_folders_out) > 0:
+                self.created_folders = created_folders_out
+
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderPost(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            self.result = JobDetailsDocumentHubFolderPostResult.from_api_response(self.result)
+
+# --- DOCUMENT HUB FOLDER PUT --- #
+
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderPutResultUpdatedFolder(BaseClass):
+    id:int = field(default = None)
+    title:str = field(default = None)
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderPutResult(BaseClass):
+    updated_folder_count:int = field(default = 0)
+    updated_folders: list = field(default_factory = list)
+
+    def __post_init__(self):
+        if isinstance(self.updated_folders, list):
+
+            updated_folders_out = []
+            for cf in self.updated_folders:
+                if isinstance(cf, dict):
+                    updated_folders_out.append(JobDetailsDocumentHubFolderPutResultUpdatedFolder.from_api_response(cf))
+            if len(updated_folders_out) > 0:
+                self.updated_folders = updated_folders_out
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderPut(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            self.result = JobDetailsDocumentHubFolderPutResult.from_api_response(self.result)
+
+# --- DOCUMENT HUB FOLDER DELETE --- #
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderDelete(BaseClass):
+    deleted_folder_count:int = field(default = None)
+    deleted_folder_ids:list = field(default_factory = list)
