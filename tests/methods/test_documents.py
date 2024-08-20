@@ -286,7 +286,12 @@ def test_delete_documents(requests_mock):
     # --- PREPARE THE TEST SETUP --- #
 
     # What does the response look like for the delete document request?
-    document_api_response = ''
+    document_api_response = {
+            "deleted_document_count": 2,
+            "deleted_document_ids": [
+                1, 2
+            ]
+        }
 
     # Override the policy API call
     requests_mock.register_uri(
@@ -309,5 +314,10 @@ def test_delete_documents(requests_mock):
         ]
     )
 
-    function_expected_result = True
+    function_expected_result = JobDetailsDocumentDelete(
+            deleted_document_count = 2
+            , deleted_document_ids = [
+                1, 2
+            ]
+        )
     assert function_expected_result == delete_document_result
