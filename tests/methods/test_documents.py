@@ -67,14 +67,7 @@ def test_create_documents(requests_mock):
 
     # What does the response look like for the create document request?
     document_api_response = {
-        'task': {
-            'id': 23739
-            , 'type': 'DOCUMENTS_BULK_CREATE'
-            , 'state': 'QUEUED'
-            , 'status': 'NA'
-            , 'ts_started': '2023-12-08T10:08:35.974963Z'
-            , 'links': []
-        }    
+        "job_id": 27809
     }
 
     # Override the document API call
@@ -103,7 +96,7 @@ def test_create_documents(requests_mock):
     # Note: The id in the job URL corresponds to the task id in document_api_response defined above
     requests_mock.register_uri(
         method = 'GET'
-        , url = '/api/v1/bulk_metadata/job/?id=23739'
+        , url = '/api/v1/bulk_metadata/job/?id=27809'
         , json = job_api_response
     )
 
@@ -181,14 +174,7 @@ def test_update_documents(requests_mock):
 
     # What does the response look like for the update document request?
     document_api_response = {
-        'task': {
-            'id': 23739
-            , 'type': 'DOCUMENTS_BULK_CREATE'
-            , 'state': 'QUEUED'
-            , 'status': 'NA'
-            , 'ts_started': '2023-12-08T10:08:35.974963Z'
-            , 'links': []
-        }    
+        "job_id": 27811
     }
 
     # Override the policy API call
@@ -217,7 +203,7 @@ def test_update_documents(requests_mock):
     # Note: The id in the job URL corresponds to the task id in document_response defined above
     requests_mock.register_uri(
         method = 'GET'
-        , url = '/api/v1/bulk_metadata/job/?id=23739'
+        , url = '/api/v1/bulk_metadata/job/?id=27811'
         , json=job_api_response
     )
 
@@ -298,7 +284,7 @@ def test_delete_documents(requests_mock):
         method = 'DELETE'
         , url = '/integration/v2/document/'
         , json = document_api_response
-        , status_code = 204
+        , status_code = 200
     )
 
 
