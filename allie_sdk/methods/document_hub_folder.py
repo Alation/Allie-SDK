@@ -101,3 +101,24 @@ class AlationDocumentHubFolder(AsyncHandler):
         )
         if async_results:
             return [JobDetailsDocumentHubFolderPut.from_api_response(item) for item in async_results]
+
+    def delete_document_hub_folders(
+            self
+            , document_hub_folders: list[DocumentHubFolder]
+    ) -> JobDetailsDocumentHubFolderDelete|None:
+        """Bulk delete document hub folders
+
+        Args:
+            document_hub_folders: List of DocumentHubFolder objects (only need to contain the id)
+        """
+
+        if document_hub_folders:
+
+            item: DocumentHubFolder
+            validate_rest_payload(payload = document_hub_folders, expected_types = (DocumentHubFolder,))
+            payload = {'ids': [item.id for item in document_hub_folders]}
+
+            delete_result = self.delete('/integration/v2/folder/', payload)
+            # There's no job ID returned here
+            if delete_result:
+                return JobDetailsDocumentHubFolderDelete.from_api_response(delete_result)

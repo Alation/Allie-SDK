@@ -82,6 +82,12 @@ class JobDetailsDocumentPutResult(BaseClass):
                 if updated_objects_dict_counter > 0:
                     self.updated_terms = updated_terms_out
 
+# --- DOCUMENT DELETE --- #
+@dataclass(kw_only = True)
+class JobDetailsDocumentDelete(BaseClass):
+    deleted_document_count:int = field(default = None)
+    deleted_document_ids:list = field(default_factory = list)
+
 @dataclass(kw_only = True)
 class JobDetails(BaseClass):
     status: str = field(default = None)
@@ -291,3 +297,9 @@ class JobDetailsDocumentHubFolderPut(JobDetails):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
             self.result = JobDetailsDocumentHubFolderPutResult.from_api_response(self.result)
+
+# --- DOCUMENT HUB FOLDER DELETE --- #
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderDelete(BaseClass):
+    deleted_folder_count:int = field(default = None)
+    deleted_folder_ids:list = field(default_factory = list)

@@ -3,6 +3,30 @@ from allie_sdk.methods.job import *
 
 
 class TestGroupModels(unittest.TestCase):
+
+    def test_job_model_for_document_delete(self):
+
+        # Expected input
+        input = {
+            "deleted_document_count": 2,
+            "deleted_document_ids": [
+                11, 12
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentDelete(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentDelete(
+            deleted_document_count = 2
+            , deleted_document_ids = [
+                11, 12
+            ]
+        )
+
+        self.assertEqual(input_transformed, output)
+
     # check if we can map the job result output for a document creation to our data class
     def test_job_model_for_document_post(self):
 
@@ -617,6 +641,29 @@ class TestGroupModels(unittest.TestCase):
                     )
                 ]
             )
+        )
+
+        self.assertEqual(input_transformed, output)
+
+    def test_job_model_for_document_hub_folder_delete(self):
+
+        # Expected input
+        input = {
+            "deleted_folder_count": 2,
+            "deleted_folder_ids": [
+                11, 12
+            ]
+        }
+
+        # Transformation
+        input_transformed = JobDetailsDocumentHubFolderDelete(**input)
+
+        # Expected Output
+        output = JobDetailsDocumentHubFolderDelete(
+            deleted_folder_count = 2
+            , deleted_folder_ids = [
+                11, 12
+            ]
         )
 
         self.assertEqual(input_transformed, output)
