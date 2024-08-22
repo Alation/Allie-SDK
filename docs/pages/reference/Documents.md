@@ -16,14 +16,14 @@ Sub-model used in the parent Models of `Document`, `DocumentPostItem`, and `Docu
 
 Attributes:
 
-| Name        | Type                  | Description                                                                              |
-|-------------|-----------------------|------------------------------------------------------------------------------------------|
-| title          | str                   | The title of the document |
-| description    | str                   | The description of the document|
-| template_id    | int                   | The ID of the custom template assigned to the document|   
-| folder_ids | list                   | A list containing the folder IDs that the document is a member of|
-| document_hub_id | int                   | The ID of the Document Hub assigned to the document |
-| custom_fields | list                   | A list of `CustomFieldValueItem` objects containing custom field information relative to the custom template ID |
+| Name            | Type | Description                                                                                                                                                                                                                       |
+|-----------------|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| title           | str  | The title of the document                                                                                                                                                                                                         |
+| description     | str  | The description of the document                                                                                                                                                                                                   |
+| template_id     | int  | The ID of the custom template assigned to the document                                                                                                                                                                            |   
+| folder_ids      | list | A list containing the folder IDs that the document is a member of                                                                                                                                                                 |
+| document_hub_id | int  | The ID of the Document Hub assigned to the document                                                                                                                                                                               |
+| custom_fields   | list | A list of `CustomFieldValueItem` objects containing custom field information relative to the custom template ID                                                                                                                   |
 
 ### Document
 Individual list item returned in the response of the function `get_documents` that represents a document in Alation.
@@ -52,13 +52,15 @@ Optional item used to filter the response of the returned data from the function
 
 Attributes:
 
-| Name  | Type  | Description                                                                                                                |
-|-------|-------|----------------------------------------------------------------------------------------------------------------------------|
-| id   | int   | Filter by document ID   |
-| folder_id | int   | The ID of the folder whose documents you want to get.|
+| Name            | Type  | Description                                                                                                                |
+|-----------------|-------|----------------------------------------------------------------------------------------------------------------------------|
+| id              | int   | Filter by document ID   |
+| folder_id       | int   | The ID of the folder whose documents you want to get.|
 | document_hub_id | int   | The ID of the Document Hub whose documents you want to get. |
-| search | str   | Filter by document title |
-| deleted | bool   | Will return only deleted documents when set to True. |
+| search          | str   | Filter by document title |
+| deleted         | bool   | Will return only deleted documents when set to True. |
+| values          | str  | A comma-separated list of fields to be included in the response. When provided, the API will return only the specified set of fields for each object in the response. If not supplied, the API will return all fields by default. |
+
 
 
 ## Methods

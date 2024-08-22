@@ -126,3 +126,4 @@ class DocumentParams(BaseParams):
     document_hub_id:int = field(default = None)
     search:str = field(default = None)
     deleted:bool = field(default = False)
+    values: str = field(default=None)
