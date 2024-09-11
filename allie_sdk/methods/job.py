@@ -69,8 +69,11 @@ class AlationJob(RequestHandler):
 
         """
         query_params = {'name': self.async_job.job_name} if self.async_job.job_name else {'id': self.async_job.job_id}
-        job_response = self.get('/api/v1/bulk_metadata/job/',
-                                query_params=query_params, pagination=False)
+        job_response = self.get(
+            url ='/api/v1/bulk_metadata/job/'
+            , query_params=query_params
+            , pagination=False
+        )
 
         if job_response:
             job_details = JobDetails.from_api_response(job_response)
