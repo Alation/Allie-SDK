@@ -17,7 +17,7 @@ class DocumentBase(BaseClass):
 
 @dataclass(kw_only = True)
 class Document(DocumentBase):
-    id:int # mandatory
+    id:int = field(default = None)
     deleted:bool = field(default = False)
     ts_deleted:str = field(default = None)
     # is_public:bool = field(default = False) => was removed Apr 2024
@@ -100,7 +100,7 @@ class DocumentPutItem(DocumentBase):
     # make sure payload includes only fields with values
     def generate_api_put_payload(self) -> dict:
         if self.id is None:
-            raise InvalidPostBody("'is' is a required field for Document PUT payload body")
+            raise InvalidPostBody("'id' is a required field for Document PUT payload body")
         payload = {'id': self.id}
         if self.title:
             payload['title'] = self.title
