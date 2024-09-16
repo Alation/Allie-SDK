@@ -5,6 +5,7 @@ import requests
 
 from .request_handler import RequestHandler
 from ..methods.job import AlationJob
+from ..models.job_model import *
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
@@ -47,12 +48,17 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.delete(url, body=batch)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
 
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-
+                results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -70,8 +76,13 @@ class AsyncHandler(RequestHandler):
         results = []
         async_response = self.delete(url, body=payload)
         if async_response:
-            job = AlationJob(self.access_token, self.session, self.host, async_response)
-            results.extend(job.check_job_status())
+            # check if the response includes a job_id and only then fetch job details
+            if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                job = AlationJob(self.access_token, self.session, self.host, async_response)
+                results.extend(job.check_job_status())
+            else:
+                # add the error details to the results list
+                results.append(async_response)
 
         return results
 
@@ -95,12 +106,17 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.patch(url, body=batch)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
 
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                # results.append(batch_error) => this won't map to JobDetail
+                results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -125,12 +141,17 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.post(url, body=batch, query_params=query_params)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
 
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                # results.append(batch_error) => this won't map to JobDetail
+                results.append(self._map_batch_error_to_job_details(batch_error))
         return results
 
     def async_post_data_payload(self, url: str, data: any, query_params: dict = None) -> list:
@@ -151,12 +172,17 @@ class AsyncHandler(RequestHandler):
             LOGGER.debug(data)
             async_response = self.post(url, body=data, query_params=query_params)
             if async_response:
-                job = AlationJob(self.access_token, self.session, self.host, async_response)
-                results.extend(job.check_job_status())
+                # check if the response includes a job_id and only then fetch job details
+                if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                    job = AlationJob(self.access_token, self.session, self.host, async_response)
+                    results.extend(job.check_job_status())
+                else:
+                    # add the error details to the results list
+                    results.append(async_response)
 
         except Exception as batch_error:
             LOGGER.error(batch_error, exc_info=True)
-            # results.append(batch_error) => this won't map to JobDetail
+            results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -174,10 +200,14 @@ class AsyncHandler(RequestHandler):
 
         async_response = self.post(url, body=payload)
         if async_response:
-            job = AlationJob(self.access_token, self.session, self.host, async_response)
-            result = job.check_job_status()
-
-            return result
+            # check if the response includes a job_id and only then fetch job details
+            if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                job = AlationJob(self.access_token, self.session, self.host, async_response)
+                result = job.check_job_status()
+                return result
+            else:
+                # add the error details to the results list
+                return async_response
 
     def async_put(self, url: str, payload: list, batch_size: int = None) -> list:
         """Put Alation Objects via an Async Job Process.
@@ -199,11 +229,16 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.put(url, body=batch)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                # results.append(batch_error) => this won't map to JobDetail
+                results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -228,3 +263,15 @@ class AsyncHandler(RequestHandler):
         LOGGER.debug(f'Batching complete. {len(batch_payload)} batches created.')
 
         return batch_payload
+
+    @staticmethod
+    def _map_batch_error_to_job_details(batch_error:Exception) -> dict:
+
+        # conform with JobDetails structure
+        error_data = dict(
+            status = "failed"
+            , msg = ""
+            , result = batch_error
+        )
+
+        return error_data
