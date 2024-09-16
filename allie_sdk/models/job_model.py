@@ -128,13 +128,17 @@ class JobDetailsCustomFieldPost(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, list):
+
             result_out = []
-            result_counter = 0
-            for value in self.result:
-                if isinstance(value, dict):
-                    result_counter += 1
-                    result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
-            if result_counter > 0:
+            if len(self.result) > 0:
+                for value in self.result:
+                    if isinstance(value, dict):
+                        if all(var in value.keys() for var in ("msg", "data")):
+                            result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
+                        else:
+                            # handle anything coming from errors
+                            result_out.append(value)
+
                 self.result = result_out
 
 @dataclass(kw_only = True)

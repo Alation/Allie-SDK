@@ -331,8 +331,11 @@ class RequestHandler(object):
                 response_data = api_response.content
 
         log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'GET', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        log_details = {
+            'Method': 'GET'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
 
         if api_response.status_code not in SUCCESS_CODES:
             self._log_error(
@@ -426,9 +429,15 @@ class RequestHandler(object):
 
     @staticmethod
     def _map_request_error_to_job_details(response_data) -> dict:
+
+        if isinstance(response_data, dict):
+            msg = response_data.get("title", None)
+        else:
+            msg = ""
+
         error_data = dict(
             status = "failed"
-            , msg = response_data.get("title", None)
+            , msg = msg
             , result = response_data
         )
 

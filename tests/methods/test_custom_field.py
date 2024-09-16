@@ -186,12 +186,14 @@ class TestCustomField(unittest.TestCase):
     @requests_mock.Mocker()
     def test_failed_post_custom_fields(self, m):
 
+        # input (payload)
         mock_field_1 = CustomFieldItem()
         mock_field_1.field_type = 'RICH_TEXT'
         mock_field_1.name_singular = 'Testing'
         mock_fields_list = [mock_field_1]
 
-        failed_response = [
+        # response from the custom fields API endpoint
+        custom_field_api_response = [
             {
                 "field_type": [
                     "field_type RICH_TEXTS is not supported."
@@ -199,10 +201,25 @@ class TestCustomField(unittest.TestCase):
             }
         ]
 
-        m.register_uri('POST', '/integration/v2/custom_field/', json=failed_response, status_code=400)
-        async_result = MOCK_CUSTOM_FIELD.post_custom_fields(mock_fields_list)
+        expected_response = [
+            JobDetailsCustomFieldPost(
+                status = "failed"
+                , msg = ""
+                , result = custom_field_api_response
+            )
+        ]
 
-        self.assertFalse(async_result)
+        # override response of custom field API endpoint
+        m.register_uri(
+            'POST'
+            , '/integration/v2/custom_field/'
+            , json=custom_field_api_response
+            , status_code=400
+        )
+
+        actual_response = MOCK_CUSTOM_FIELD.post_custom_fields(mock_fields_list)
+
+        self.assertEqual(expected_response, actual_response)
 
     @requests_mock.Mocker()
     def test_success_post_custom_field_values(self, m):
@@ -247,6 +264,7 @@ class TestCustomField(unittest.TestCase):
     @requests_mock.Mocker()
     def test_failed_post_custom_field_value(self, m):
 
+        # Input data (payload)
         mock_value_1 = CustomFieldValueItem()
         mock_value_1.field_id = 1
         mock_value_1.otype = 'Table'
@@ -255,7 +273,7 @@ class TestCustomField(unittest.TestCase):
         mock_value_1.value.append(CustomFieldStringValueItem(value='Test'))
         mock_values_list = [mock_value_1]
 
-        failed_response = {
+        custom_field_value_api_failed_response =  {
             "title": "Invalid Payload",
             "detail": "Please check the API documentation for more details on the spec.",
             "errors": [
@@ -268,10 +286,38 @@ class TestCustomField(unittest.TestCase):
             "code": "400000"
         }
 
-        m.register_uri('PUT', '/integration/v2/custom_field_value/async/', json=failed_response, status_code=400)
-        failed_response = MOCK_CUSTOM_FIELD.put_custom_field_values(mock_values_list)
+        expected_response = [
+            JobDetails(
+                status = "failed"
+                , msg = "Invalid Payload"
+                , result = {
+                    "title": "Invalid Payload",
+                    "detail": "Please check the API documentation for more details on the spec.",
+                    "errors": [
+                        {
+                            "otype": [
+                                "Invalid otype"
+                            ]
+                        }
+                    ],
+                    "code": "400000"
+                }
+            )
+        ]
 
-        self.assertFalse(failed_response)
+        # override the custom field value api response
+        m.register_uri(
+            'PUT'
+            , '/integration/v2/custom_field_value/async/'
+            , json=custom_field_value_api_failed_response
+            , status_code=400
+        )
+
+        # call the function that we want to test
+        actual_response = MOCK_CUSTOM_FIELD.put_custom_field_values(mock_values_list)
+
+        # check if the actual result matches the expecte result
+        self.assertEqual(expected_response, actual_response)
 
 if __name__ == '__main__':
     unittest.main()

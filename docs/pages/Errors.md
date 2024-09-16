@@ -6,10 +6,9 @@ nav_order: 7
 # Errors
 {:.no_toc}
 
-There are at least **three error types** that an **Allie-SDK based request call** can return:
+There are at least **two error types** that an **Allie-SDK based request call** can return:
 
-- **Error details returned by API endpoint**
-- **Exception error**:
+- **Request error**: examples are connection error, invalid payload etc.
 - **Batch error**: If anything goes wrong with batching your payload. Applies Async jobs only and the following methods: `POST`, `PUT`, `PATCH`.
 
 
@@ -23,15 +22,28 @@ So you should always be able to use the `status` property to evaluate whether a 
 
 > **Note**: If you find that this is not the case with a specific API call, please issue an **Issue** on **GitHub**.x
 
-## Error details returned by API endpoint
-
-Example of this could be information returned by the API endpoint that a certain element or value within your payload is not valid.
 
 ## Request error
 
 This is an error returned from the request module on any of the methods (`GET`, `PATCH`, `POST`, `PUT`).
 
+Example of this could be: 
+
+- information returned by the API endpoint that a certain element or value within your payload is not valid.
+- connection problem
+- wrong endpoint URL
+- etc
+
 This is handled by the `_map_request_error_to_job_details` method in `request_handler.py`.
+
+
+### Example
+
+This is the error message/JobDetails structure returned for an invalid payload for the custom fields PUT call:
+
+```python
+[JobDetails(status='failed', msg='Invalid Payload', result={'title': 'Invalid Payload', 'detail': 'Please check the API documentation for more details on the spec.', 'errors': [{'non_field_errors': ['No support for updating `description` field for `data`.']}], 'code': '400000'})]
+```
 
 ## Batch error
 
@@ -50,3 +62,4 @@ We could already map the error data to `JobDetails` within the `_map_request_err
 Instead, we decided to simple return a dict with the `_map_request_error_to_job_details` and `_map_batch_error_to_job_details` methods, so that on the main function level (e.g. `put_custom_field_values`) we can just call `JobDetails.from_api_response(item)` for anything that gets returned.
 
 This in turn means that variations of `JobDetails` will have to implement some logic to store these error data within their structure, but in this case it is managed only in one place, so it's easier to maintain.
+
