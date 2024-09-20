@@ -240,7 +240,8 @@ class RequestHandler(object):
 
             # return error details
             # conform with JobDetails structure
-            return self._map_request_error_to_job_details(response_data)
+            mapped_response_data = self._map_request_error_to_job_details(response_data)
+            return mapped_response_data
 
         else:
             self._log_success(
@@ -295,8 +296,8 @@ class RequestHandler(object):
 
             # return error details
             # conform with JobDetails structure
-            mapped = self._map_request_error_to_job_details(response_data)
-            return mapped
+            mapped_response_data = self._map_request_error_to_job_details(response_data)
+            return mapped_response_data
 
         else:
             self._log_success(

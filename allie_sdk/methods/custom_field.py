@@ -106,7 +106,7 @@ class AlationCustomField(AsyncHandler):
 
         """
         item: CustomFieldItem
-        validate_rest_payload(custom_fields, (CustomFieldItem,))
+        validate_rest_payload(custom_fields, expected_types = (CustomFieldItem,))
         payload = [item.generate_api_post_payload() for item in custom_fields]
         async_results = self.async_post('/integration/v2/custom_field/', payload)
 

@@ -106,7 +106,7 @@ class AlationDocument(AsyncHandler):
     def delete_documents(
             self
             , documents: list[Document]
-    ) -> JobDetailsDocumentDelete|None:
+    ) -> JobDetailsDocumentDelete:
         """Bulk delete documents
 
         Args:

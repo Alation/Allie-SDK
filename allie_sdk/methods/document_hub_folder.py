@@ -105,7 +105,7 @@ class AlationDocumentHubFolder(AsyncHandler):
     def delete_document_hub_folders(
             self
             , document_hub_folders: list[DocumentHubFolder]
-    ) -> JobDetailsDocumentHubFolderDelete|None:
+    ) -> JobDetailsDocumentHubFolderDelete:
         """Bulk delete document hub folders
 
         Args:
