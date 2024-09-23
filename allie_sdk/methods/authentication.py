@@ -35,8 +35,11 @@ class AlationAuthentication(RequestHandler):
             RefreshToken: Alation API Refresh Token.
 
         """
-        validate_body = {'refresh_token': self.refresh_token,
-                         'user_id': self.user_id}
+        validate_body = {
+            'refresh_token': self.refresh_token
+            , 'user_id': self.user_id
+        }
+
         validity = self.post('/integration/v1/validateRefreshToken/',
                              validate_body)
 

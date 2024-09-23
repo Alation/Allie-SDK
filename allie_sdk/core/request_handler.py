@@ -67,7 +67,7 @@ class RequestHandler(object):
 
         log_url = self._format_log_url(api_response.url)
         log_details = {
-            'Method': 'PATCH'
+            'Method': 'DELETE'
             , 'URL': api_response.url
             , 'Response': api_response.status_code
         }
@@ -81,7 +81,7 @@ class RequestHandler(object):
 
             # return error details
             # conform with JobDetails structure
-            return self._map_request_error_to_job_details(response_data)
+            # return self._map_request_error_to_job_details(response_data)
 
         else:
             self._log_success(
@@ -89,6 +89,7 @@ class RequestHandler(object):
                 , message = f'Succesfully submitted the DELETE Request to: {log_url}')
 
             return response_data if response_data else True
+            # TODO: return True here if there's no response data seems a bit weird no?
 
     def get(self, url: str, query_params: dict = None, pagination: bool = True) -> any:
         """API Get Request.
@@ -179,7 +180,7 @@ class RequestHandler(object):
 
             # return error details
             # conform with JobDetails structure
-            return self._map_request_error_to_job_details(response_data)
+            # return self._map_request_error_to_job_details(response_data)
 
         else:
             self._log_success(
@@ -240,8 +241,8 @@ class RequestHandler(object):
 
             # return error details
             # conform with JobDetails structure
-            mapped_response_data = self._map_request_error_to_job_details(response_data)
-            return mapped_response_data
+            # mapped_response_data = self._map_request_error_to_job_details(response_data)
+            # return mapped_response_data
 
         else:
             self._log_success(
@@ -296,8 +297,8 @@ class RequestHandler(object):
 
             # return error details
             # conform with JobDetails structure
-            mapped_response_data = self._map_request_error_to_job_details(response_data)
-            return mapped_response_data
+            # mapped_response_data = self._map_request_error_to_job_details(response_data)
+            # return mapped_response_data
 
         else:
             self._log_success(
@@ -428,18 +429,21 @@ class RequestHandler(object):
 
         return url
 
-    @staticmethod
-    def _map_request_error_to_job_details(response_data) -> dict:
-
-        if isinstance(response_data, dict):
-            msg = response_data.get("title", None)
-        else:
-            msg = ""
-
-        error_data = dict(
-            status = "failed"
-            , msg = msg
-            , result = response_data
-        )
-
-        return error_data
+    # disabled this since it is not very useful to return the error
+    # message since we can't really base any subsequent logic on it.
+    # logging the error is sufficient!
+    # @staticmethod
+    # def _map_request_error_to_job_details(response_data) -> dict:
+    #
+    #     if isinstance(response_data, dict):
+    #         msg = response_data.get("title", None)
+    #     else:
+    #         msg = ""
+    #
+    #     error_data = dict(
+    #         status = "failed"
+    #         , msg = msg
+    #         , result = response_data
+    #     )
+    #
+    #     return error_data

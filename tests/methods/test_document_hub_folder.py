@@ -216,33 +216,35 @@ def test_create_document_hub_folders_fail(requests_mock):
         ]
     )
 
-    function_expected_result = [
-        JobDetailsDocumentHubFolderPost(
-            status='failed'
-            , msg=None
-            , result=
-                {
-                    'job_id': None
-                    , 'invalid_folders': [
-                        {
-                            'index': 0
-                            , 'errors': [
-                                [{'field_id': ['The field_id 9999999999999 is not present on the chosen template.']}]
-                            ]
-                            , 'folder': {
-                                'title': 'Test Document Hub Folder'
-                                , 'description': 'Test Document Hub Folder'
-                                , 'document_hub_id': 2
-                                , 'custom_fields': [
-                                    {'field_id': 9999999999999, 'value': 'Production'}
-                                ]
-                                , 'template_id': 163
-                            }
-                        }
-                ]
-            }
-        )
-    ]
+    # function_expected_result = [
+    #     JobDetailsDocumentHubFolderPost(
+    #         status='failed'
+    #         , msg=None
+    #         , result=
+    #             {
+    #                 'job_id': None
+    #                 , 'invalid_folders': [
+    #                     {
+    #                         'index': 0
+    #                         , 'errors': [
+    #                             [{'field_id': ['The field_id 9999999999999 is not present on the chosen template.']}]
+    #                         ]
+    #                         , 'folder': {
+    #                             'title': 'Test Document Hub Folder'
+    #                             , 'description': 'Test Document Hub Folder'
+    #                             , 'document_hub_id': 2
+    #                             , 'custom_fields': [
+    #                                 {'field_id': 9999999999999, 'value': 'Production'}
+    #                             ]
+    #                             , 'template_id': 163
+    #                         }
+    #                     }
+    #             ]
+    #         }
+    #     )
+    # ]
+
+    function_expected_result = None
 
     assert function_expected_result == create_document_hub_folders_result
 
@@ -413,33 +415,34 @@ def test_update_document_hub_folders_fail(requests_mock):
         ]
     )
 
-    function_expected_result = [
-        JobDetailsDocumentHubFolderPut(
-            status='failed'
-            , msg=None
-            , result={
-                'job_id': None
-                , 'invalid_folders': [
-                    {
-                        'index': 0
-                        , 'errors': [
-                            {'custom_fields': ['Custom field values were included, but no template was specified.']}
-                        ]
-                        , 'folder': {
-                            'id': 9999999999
-                            , 'title': 'Test Document Hub Folder'
-                            , 'description': 'Test Document Hub Folder'
-                            , 'document_hub_id': None
-                            , 'custom_fields': [
-                                {'field_id': 999999999, 'value': 'Under Review'}
-                            ]
-                        }
-                    }
-                ]
-            }
-        )
-    ]
+    # function_expected_result = [
+    #     JobDetailsDocumentHubFolderPut(
+    #         status='failed'
+    #         , msg=None
+    #         , result={
+    #             'job_id': None
+    #             , 'invalid_folders': [
+    #                 {
+    #                     'index': 0
+    #                     , 'errors': [
+    #                         {'custom_fields': ['Custom field values were included, but no template was specified.']}
+    #                     ]
+    #                     , 'folder': {
+    #                         'id': 9999999999
+    #                         , 'title': 'Test Document Hub Folder'
+    #                         , 'description': 'Test Document Hub Folder'
+    #                         , 'document_hub_id': None
+    #                         , 'custom_fields': [
+    #                             {'field_id': 999999999, 'value': 'Under Review'}
+    #                         ]
+    #                     }
+    #                 }
+    #             ]
+    #         }
+    #     )
+    # ]
 
+    function_expected_result = None
 
     assert function_expected_result == update_document_hub_folders_result
 

@@ -94,6 +94,8 @@ class JobDetailsDocumentPutResult(BaseClass):
                     for value in self.updated_terms:
                         if isinstance(value, dict):
                             updated_terms_out.append(JobDetailsDocumentPutResultDetails.from_api_response(value))
+                        else:
+                            updated_terms_out.append(value)
                     self.updated_terms = updated_terms_out
 
 @dataclass(kw_only = True)
@@ -164,6 +166,8 @@ class JobDetailsRdbmsResult(BaseClass):
                 for value in self.mapping:
                     if isinstance(value, dict):
                         mapping_out.append(JobDetailsRdbmsResultMapping.from_api_response(value))
+                    else:
+                        mapping_out.append(value)
 
                 self.mapping = mapping_out
 

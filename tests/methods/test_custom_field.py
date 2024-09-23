@@ -201,13 +201,15 @@ class TestCustomField(unittest.TestCase):
             }
         ]
 
-        expected_response = [
-            JobDetailsCustomFieldPost(
-                status = "failed"
-                , msg = ""
-                , result = custom_field_api_response
-            )
-        ]
+        # expected_response = [
+        #     JobDetailsCustomFieldPost(
+        #         status = "failed"
+        #         , msg = ""
+        #         , result = custom_field_api_response
+        #     )
+        # ]
+
+        expected_response = None
 
         # override response of custom field API endpoint
         m.register_uri(
@@ -286,24 +288,26 @@ class TestCustomField(unittest.TestCase):
             "code": "400000"
         }
 
-        expected_response = [
-            JobDetails(
-                status = "failed"
-                , msg = "Invalid Payload"
-                , result = {
-                    "title": "Invalid Payload",
-                    "detail": "Please check the API documentation for more details on the spec.",
-                    "errors": [
-                        {
-                            "otype": [
-                                "Invalid otype"
-                            ]
-                        }
-                    ],
-                    "code": "400000"
-                }
-            )
-        ]
+        # expected_response = [
+        #     JobDetails(
+        #         status = "failed"
+        #         , msg = "Invalid Payload"
+        #         , result = {
+        #             "title": "Invalid Payload",
+        #             "detail": "Please check the API documentation for more details on the spec.",
+        #             "errors": [
+        #                 {
+        #                     "otype": [
+        #                         "Invalid otype"
+        #                     ]
+        #                 }
+        #             ],
+        #             "code": "400000"
+        #         }
+        #     )
+        # ]
+
+        expected_response = None
 
         # override the custom field value api response
         m.register_uri(
