@@ -65,8 +65,15 @@ class AlationAuthentication(RequestHandler):
         """
         validate_refresh_token_response = self.validate_refresh_token()
 
-        # Case: Refresh token is expired
-        if isinstance(validate_refresh_token_response, RefreshToken):
+        # Case: There was some other error validating the refresh token
+        if isinstance(validate_refresh_token_response, JobDetails):
+            # just pass on the error message
+            # it's already in the JobDetails structure
+            return validate_refresh_token_response
+
+        # Case: A RefreshToken object is returned
+        elif isinstance(validate_refresh_token_response, RefreshToken):
+            # Case: Refresh token is expired
             if validate_refresh_token_response.token_status.upper() != 'ACTIVE':
                 validation_error_message = "The Refresh Token is expired! Please generate a new refresh token and try again."
                 LOGGER.error(validation_error_message)
@@ -74,27 +81,22 @@ class AlationAuthentication(RequestHandler):
                 # make it conform to JobDetails structure
                 mapped_response = self._map_request_error_to_job_details(validation_error_message)
                 return JobDetails.from_api_response(mapped_response)
-        # Case: There was some other error validating the refresh token
-        elif isinstance(validate_refresh_token_response, JobDetails):
-                # just pass on the error message
-                # it's already in the JobDetails structure
-                return validate_refresh_token_response
-        # Case: We've got a valid refresh token and can proceed with creating a new access token
-        else:
-            token_body = {'refresh_token': self.refresh_token,
-                          'user_id': self.user_id}
-            token = self.post('/integration/v1/createAPIAccessToken/',
-                              token_body)
+            # Case: We've got a valid refresh token and can proceed with creating a new access token
+            else:
+                token_body = {'refresh_token': self.refresh_token,
+                              'user_id': self.user_id}
+                token = self.post('/integration/v1/createAPIAccessToken/',
+                                  token_body)
 
-            if token:
-                # cater for error messages
-                # check if the dict contains a status property
-                status = token.get("status")
-                if status:
-                    if status == "failed":
-                        return JobDetails.from_api_response(token)
-                else:
-                    return AccessToken.from_api_response(token)
+                if token:
+                    # cater for error messages
+                    # check if the dict contains a status property
+                    status = token.get("status")
+                    if status:
+                        if status == "failed":
+                            return JobDetails.from_api_response(token)
+                    else:
+                        return AccessToken.from_api_response(token)
 
     def validate_access_token(self, access_token: str) -> AccessToken | JobDetails:
         """Validate the Alation API Access Token.
