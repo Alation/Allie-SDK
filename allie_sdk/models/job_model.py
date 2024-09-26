@@ -108,9 +108,17 @@ class JobDetailsDocumentPut(JobDetails):
 
 # --- DOCUMENT DELETE --- #
 @dataclass(kw_only = True)
-class JobDetailsDocumentDelete(BaseClass):
-    deleted_document_count:int = field(default = None)
-    deleted_document_ids:list = field(default_factory = list)
+class JobDetailsDocumentDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("deleted_document_count", "deleted_document_ids") for var in self.result.keys()):
+                self.result = JobDetailsDocumentDeleteResult.from_api_response(self.result)
+
+@dataclass(kw_only = True)
+class JobDetailsDocumentDeleteResult(BaseClass):
+    deleted_document_count: int = field(default=None)
+    deleted_document_ids: list = field(default_factory=list)
 
 
 # --- CUSTOM FIELD POST --- #

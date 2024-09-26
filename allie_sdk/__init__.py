@@ -58,6 +58,7 @@ from .models import (
     JobDetailsDataQualityResultActionStats,
     JobDetailsDataQualityResultCreatedObjectAttribution,
     JobDetailsDocumentDelete,
+    JobDetailsDocumentDeleteResult,
     JobDetailsDocumentPost,
     JobDetailsDocumentPostResult,
     JobDetailsDocumentPostResultDetails,
