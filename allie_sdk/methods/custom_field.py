@@ -30,7 +30,7 @@ class AlationCustomField(AsyncHandler):
         self.host = host
         self.session = session
 
-    def get_custom_fields(self, query_params: CustomFieldParams = None) -> list:
+    def get_custom_fields(self, query_params: CustomFieldParams = None) -> list[CustomField]:
         """Get the details of all Alation Custom Fields.
 
         Args:

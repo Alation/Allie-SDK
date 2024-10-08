@@ -123,5 +123,4 @@ class AlationDocument(AsyncHandler):
             # There's no job ID returned here
             if delete_result:
                 # make sure result conforms to JobDetails structure
-                mapped_delete_result = self._map_request_success_to_job_details(delete_result)
-                return JobDetailsDocumentDelete.from_api_response(mapped_delete_result)
+                return JobDetailsDocumentDelete.from_api_response(delete_result)

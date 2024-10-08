@@ -145,10 +145,16 @@ class JobDetailsCustomFieldPost(JobDetails):
             result_out = []
             if len(self.result) > 0:
                 for value in self.result:
-                    if isinstance(value, dict):
-                        if all(var in value.keys() for var in ("msg", "data")):
-                            result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
-                    else:
+                    # somehow the job status returns a string representation of a dict
+                    try:
+                        value_dict = json.loads(value)
+
+                        if isinstance(value_dict, dict):
+                            if all(var in value_dict.keys() for var in ("msg", "data")):
+                                result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value_dict))
+                            else:
+                                result_out.append(value)
+                    except json.JSONDecodeError:
                         # handle anything coming from errors
                         result_out.append(value)
 
@@ -329,6 +335,13 @@ class JobDetailsDocumentHubFolderPut(JobDetails):
 
 # --- DOCUMENT HUB FOLDER DELETE --- #
 @dataclass(kw_only = True)
-class JobDetailsDocumentHubFolderDelete(BaseClass):
-    deleted_folder_count:int = field(default = None)
-    deleted_folder_ids:list = field(default_factory = list)
+class JobDetailsDocumentHubFolderDeleteResult(BaseClass):
+    deleted_folder_count: int = field(default=None)
+    deleted_folder_ids: list = field(default_factory=list)
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("deleted_folder_count", "deleted_folder_ids") for var in self.result.keys()):
+                self.result = JobDetailsDocumentHubFolderDeleteResult.from_api_response(self.result)

@@ -177,7 +177,7 @@ get_a_builtin_custom_field(field_name: str) -> CustomField:
 Get the details of a Builtin Alation Custom Field.
 
 Args:
-* field_name (str): Name of the Builtin Custom Field.
+* field_name (str): Name of the Builtin Custom Field. Possible values: title, description, business_glossary_status, steward.
 
 Returns:
 * `CustomField`: Alation Custom Field.

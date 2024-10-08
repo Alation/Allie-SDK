@@ -87,9 +87,15 @@ class RequestHandler(object):
         else:
             self._log_success(
                 log_details
-                , message = f'Succesfully submitted the DELETE Request to: {log_url}')
+                , message = f'Succesfully submitted the DELETE Request to: {log_url}'
+            )
 
-            return response_data if response_data else True
+            if response_data:
+                # make sure result conforms to JobDetails structure
+                mapped_response_data = self._map_request_success_to_job_details(response_data)
+                return mapped_response_data
+            else:
+                return True # TODO: Do we really need this?
 
             
 

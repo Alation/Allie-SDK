@@ -1,7 +1,34 @@
 ---
-title: Errors
+title: Request Status and Errors
 nav_order: 7
 ---
+
+# Request Status
+
+Request types:
+
+`GET`: There's no status returned here, you either get the data returned that you asked for or nothing at all or an error message.
+
+`DELETE`:
+
+- TODO: No status, msg, result top level!
+
+`POST`:
+
+- async:
+  - success: status `successful`
+  - payload content validation fails: status `failed`
+  - other errors: status `failed`, although, it might fail before that?
+- sync: ?
+  - success: status `successful`
+  - payload content validation fails: status `failed`
+  - other errors: it will fail right away???
+
+'PUT':
+
+`PATCH`:
+
+
 
 # Errors
 {:.no_toc}
@@ -37,13 +64,11 @@ Example of this could be:
 This is handled by the `_map_request_error_to_job_details` method in `request_handler.py`.
 
 
-### Example
+### Invalid Payload
 
-This is the error message/JobDetails structure returned for an invalid payload for the custom fields PUT call:
+Some Async Alation API endpoints validate the payload before submitting the request. If the payload is invalid, no job id will be returned but instead details about what makes the payload invalid. Allie-SDK logs these payload violations. The reason why we only log it and not return it is because you can't really base any subsequent logic on it: In example, if the payload validation returns an error that the data source id does not exist, we cannot magically fix this within the code. So these errors are best just logged out.
 
-```python
-[JobDetails(status='failed', msg='Invalid Payload', result={'title': 'Invalid Payload', 'detail': 'Please check the API documentation for more details on the spec.', 'errors': [{'non_field_errors': ['No support for updating `description` field for `data`.']}], 'code': '400000'})]
-```
+
 
 ## Batch error
 
@@ -53,13 +78,4 @@ These are any errors resulting from attempting to batch your payload.
 
 This is handled by the `_map_batch_error_to_job_details` method in `async_handler.py`.
 
-# Allie-SDK development
-
-## Notes on design decisions
-
-We could already map the error data to `JobDetails` within the `_map_request_error_to_job_details` and `_map_batch_error_to_job_details` methods, however, that would mean that on the main function level (e.g. `put_custom_field_values`) we would need to check whether a list with object based on a data class gets returned (e.g. `JobDetails`) or a list with dicts. So it this point the logic could get a bit complex and every main function would have to implement this logic.
-
-Instead, we decided to simple return a dict with the `_map_request_error_to_job_details` and `_map_batch_error_to_job_details` methods, so that on the main function level (e.g. `put_custom_field_values`) we can just call `JobDetails.from_api_response(item)` for anything that gets returned.
-
-This in turn means that variations of `JobDetails` will have to implement some logic to store these error data within their structure, but in this case it is managed only in one place, so it's easier to maintain.
 

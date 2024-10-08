@@ -23,7 +23,7 @@ class AlationDocumentHubFolder(AsyncHandler):
         """
         super().__init__(session = session, host = host, access_token=access_token)
 
-    def get_document_hub_folders(self, query_params:DocumentHubFolderParams = None) -> list:
+    def get_document_hub_folders(self, query_params:DocumentHubFolderParams = None) -> list[DocumentHubFolder]:
         """Query multiple Alation Document Hub Folders and return their details
         Args:
             query_params (DocumentHubFolderParams): REST API Documents Query Parameters.
@@ -119,6 +119,8 @@ class AlationDocumentHubFolder(AsyncHandler):
             payload = {'ids': [item.id for item in document_hub_folders]}
 
             delete_result = self.delete('/integration/v2/folder/', payload)
+
             # There's no job ID returned here
             if delete_result:
+                # make sure result conforms to JobDetails structure
                 return JobDetailsDocumentHubFolderDelete.from_api_response(delete_result)
