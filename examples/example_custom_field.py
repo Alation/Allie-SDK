@@ -3,8 +3,8 @@ Example of creating a custom field
 
 Prerequisites:
 
-- You adjusted the "config_examples.ini" file with your settings.
-- In the "Set Global Variables" sectio below define the *unique* name of the custom text field that will be created.
+- You adjusted the "config.ini" file with your settings.
+- In the "Set Global Variables" section below define the *unique* name of the custom text field that will be created.
 
 """
 

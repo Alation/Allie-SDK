@@ -3,7 +3,7 @@ Example of creating, listing, updating and deleting one document.
 
 Prerequisites:
 
-- You adjusted the "config_examples.ini" file with your settings.
+- You adjusted the "config.ini" file with your settings.
 - You created a document hub. Set the DOCUMENT_HUB_ID within the "Set Global Variables" section below.
 - The template for the document hub folder has a field called "Status" assigned.
 - The "Status" field can be set to values: "Under Review", "Approved".

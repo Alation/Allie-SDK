@@ -3,7 +3,7 @@ Example of creating a populating a custom field and retrieving a custom field va
 
 Prerequisites:
 
-- You adjusted the "config_examples.ini" file with your settings.
+- You adjusted the "config.ini" file with your settings.
 - In the "Set Global Variables" define the object and field that you want to update.
   The custom field and object have to exist already.
   The custom field has to be assigned to the object's custom template.
