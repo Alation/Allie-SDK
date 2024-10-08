@@ -38,7 +38,7 @@ logging.basicConfig(
 # ================================
 
 config = configparser.ConfigParser()
-config.read("config_examples.ini")
+config.read("config.ini")
 
 ALATION_USER_ID = config.get(section = "api", option = "ALATION_USER_ID")
 ALATION_BASE_URL = config.get(section = "api", option = "ALATION_BASE_URL")
