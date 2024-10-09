@@ -114,7 +114,7 @@ class AlationBusinessPolicy(AsyncHandler):
     def delete_business_policies(
             self
             , business_policies:list[BusinessPolicy]
-        ):
+        )->JobDetails:
         """Bulk delete business policies
 
         Args:
@@ -125,6 +125,12 @@ class AlationBusinessPolicy(AsyncHandler):
         validate_rest_payload(business_policies, (BusinessPolicy,))
         payload = {'ids': [item.id for item in business_policies]}
         
-        delete_result = self.delete('/integration/v1/business_policies/', payload)
-        # There's no job ID or result returned here
-        return True if delete_result else False
+        delete_result = self.delete(
+            url = '/integration/v1/business_policies/'
+            , body = payload
+        )
+
+        # There's no job ID returned here
+        if delete_result:
+            # make sure result conforms to JobDetails structure
+            return JobDetails.from_api_response(delete_result)

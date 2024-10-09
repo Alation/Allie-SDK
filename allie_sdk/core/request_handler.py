@@ -90,12 +90,9 @@ class RequestHandler(object):
                 , message = f'Succesfully submitted the DELETE Request to: {log_url}'
             )
 
-            if response_data:
-                # make sure result conforms to JobDetails structure
-                mapped_response_data = self._map_request_success_to_job_details(response_data)
-                return mapped_response_data
-            else:
-                return True # TODO: Do we really need this?
+            # make sure result conforms to JobDetails structure
+            mapped_response_data = self._map_request_success_to_job_details(response_data)
+            return mapped_response_data
 
             
 
@@ -456,8 +453,9 @@ class RequestHandler(object):
         return error_data
 
     @staticmethod
-    def _map_request_success_to_job_details(response_data) -> dict:
-
+    def _map_request_success_to_job_details(response_data=None) -> dict:
+        # some API endpoints don't return any response content (e.g. for business policies)
+        # hence we made the reponse_data argument optional here
         success_data = dict(
             status = "successful"
             , msg = ""

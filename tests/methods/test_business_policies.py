@@ -282,5 +282,9 @@ def test_delete_business_policies(requests_mock):
     )
 
     # OPEN: See concern mentioned further up
-    function_expected_result = True
+    function_expected_result = JobDetails(
+        status = 'successful'
+        , msg = ''
+        , result = ''
+    )
     assert function_expected_result == delete_business_policy_result
