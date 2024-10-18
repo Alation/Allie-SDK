@@ -1,4 +1,4 @@
-cu"""Alation REST API Data Quality Methods."""
+"""Alation REST API Data Quality Methods."""
 
 import logging
 import requests
