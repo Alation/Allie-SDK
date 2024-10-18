@@ -28,14 +28,17 @@ class AlationAuthentication(RequestHandler):
         self.refresh_token = refresh_token
         self.user_id = user_id
 
-    def validate_refresh_token(self) -> RefreshToken:
+    def validate_refresh_token(self, refresh_token = None) -> RefreshToken:
         """Validate the Alation API Refresh Token.
 
         Returns:
             RefreshToken: Alation API Refresh Token.
 
         """
-        validate_body = {'refresh_token': self.refresh_token,
+        
+        ref_token = refresh_token if refresh_token else self.refresh_token
+        
+        validate_body = {'refresh_token': ref_token,
                          'user_id': self.user_id}
         validity = self.post('/integration/v1/validateRefreshToken/',
                              validate_body)
@@ -52,8 +55,8 @@ class AlationAuthentication(RequestHandler):
         """
         refresh_status = self.validate_refresh_token()
 
-        if refresh_status.token_status.upper() != 'ACTIVE':
-            LOGGER.error("The Refresh Token is expired! Please generate a new"
+        if refresh_status is None or refresh_status.token_status.upper() != 'ACTIVE':
+            LOGGER.error("The Refresh Token is expired or not valid! Please generate a new"
                          " refresh token and try again.")
 
         else:
@@ -82,6 +85,8 @@ class AlationAuthentication(RequestHandler):
 
         if validity:
             return AccessToken.from_api_response(validity)
+        else: 
+            return None
 
     def revoke_access_tokens(self) -> bool:
         """Revoke the Alation API Access Tokens of an Alation API Refresh Token.

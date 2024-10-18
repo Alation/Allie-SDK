@@ -45,7 +45,7 @@ class Alation(object):
 
     def __init__(self, host: str, user_id: int, refresh_token: str = None,
                  access_token: str = None, validate_ssl: bool = True,
-                 private_ssl_cert: str = None):
+                 private_ssl_cert: str = None, disable_authentication: bool = False):
         """Creates an instance of the Alation object.
 
         Args:
@@ -55,6 +55,7 @@ class Alation(object):
             access_token (str): Alation REST API Access Token.
             validate_ssl (bool): Validate the SSL Cert when using HTTPS Requests.
             private_ssl_cert (str): Path to the Private SSL Cert or CA Bundle.
+            disable_authentication (bool): if True, this Alation instance can be instantiated without authenticating first
 
         """
         self._access_token = None
@@ -62,15 +63,19 @@ class Alation(object):
         session.verify = validate_ssl
         if private_ssl_cert:
             session.verify = private_ssl_cert
-
-        # Initialize the Authentication Class and generate the Access Token
-        self.authentication = AlationAuthentication(
-            refresh_token=refresh_token, user_id=user_id, session=session, host=host)
-        if access_token:
-            self.access_token = self.authentication.validate_access_token(
-                access_token).api_access_token
+            
+        if not disable_authentication:
+            # Initialize the Authentication Class and generate the Access Token
+            self.authentication = AlationAuthentication(
+                refresh_token=refresh_token, user_id=user_id, session=session, host=host)
+            if access_token:
+                self.access_token = self.authentication.validate_access_token(
+                    access_token).api_access_token
+            else:
+                self.access_token = self.authentication.create_access_token().api_access_token
         else:
-            self.access_token = self.authentication.create_access_token().api_access_token
+            self.authentication = AlationAuthentication(
+                refresh_token=refresh_token, user_id=user_id, session=session, host=host)
 
         # Initialize Remaining Alation API Methods
         self.connector = AlationConnector(
