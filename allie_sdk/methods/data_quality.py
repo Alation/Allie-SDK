@@ -94,6 +94,10 @@ class AlationDataQuality(AsyncHandler):
 
         if dq_values:
             return [DataQualityValue.from_api_response(value) for value in dq_values]
+        # adding below lines as a temporary solution to this issue
+        # https://github.com/Alation/Allie-SDK/issues/36
+        elif dq_values == []:
+            return []
 
     def post_data_quality_values(self, dq_values: list) -> list:
         """Post (Create) Alation Data Quality Values.
