@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "allie-sdk"
+name = "allie-sdk-test"
 description = "A Python library for the Alation REST APIs."
 version = "0.0.1"
 dependencies = [
