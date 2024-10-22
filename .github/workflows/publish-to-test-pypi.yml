@@ -20,7 +20,7 @@ jobs:
         pip install
         build
         --user
-        --verbose
+        
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
     - name: Store the distribution packages
@@ -52,6 +52,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/
+        verbose: true
   github-release:
     name: >-
       Sign the Python 🐍 distribution 📦 with Sigstore
