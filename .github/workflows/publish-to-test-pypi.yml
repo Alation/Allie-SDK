@@ -37,7 +37,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/allie-sdk-test
+      url: https://test.pypi.org/p/allie-sdk
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
