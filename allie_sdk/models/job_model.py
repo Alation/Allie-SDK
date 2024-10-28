@@ -145,18 +145,23 @@ class JobDetailsCustomFieldPost(JobDetails):
             result_out = []
             if len(self.result) > 0:
                 for value in self.result:
-                    # somehow the job status returns a string representation of a dict
-                    try:
-                        value_dict = json.loads(value)
-
-                        if isinstance(value_dict, dict):
-                            if all(var in value_dict.keys() for var in ("msg", "data")):
-                                result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value_dict))
-                            else:
-                                result_out.append(value)
-                    except json.JSONDecodeError:
-                        # handle anything coming from errors
+                    if type(value) is dict:
+                        # validation errors from the Data Model get returned as a dict
+                        # e.g. errors like "field_type RICH_TEXTS is not supported."
                         result_out.append(value)
+                    else:
+                        # somehow the job status returns a string representation of a dict
+                        try:
+                            value_dict = json.loads(value)
+
+                            if isinstance(value_dict, dict):
+                                if all(var in value_dict.keys() for var in ("msg", "data")):
+                                    result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value_dict))
+                                else:
+                                    result_out.append(value)
+                        except json.JSONDecodeError:
+                            # handle anything coming from errors
+                            result_out.append(value)
 
                 self.result = result_out
 

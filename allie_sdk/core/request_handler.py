@@ -41,7 +41,12 @@ class RequestHandler(object):
             self.access_token = access_token
             self.headers['Token'] = access_token
 
-    def delete(self, url: str, body: any = None) -> dict | list:
+    def delete(
+        self
+        , url: str
+        , body: any = None
+        , is_async: bool = False
+    ) -> dict | list:
         """API Delete Request.
 
         Args:
@@ -90,9 +95,13 @@ class RequestHandler(object):
                 , message = f'Succesfully submitted the DELETE Request to: {log_url}'
             )
 
-            # make sure result conforms to JobDetails structure
-            mapped_response_data = self._map_request_success_to_job_details(response_data)
-            return mapped_response_data
+            if is_async:
+                # return response data as is since we still need to extract the job id in async_handler.py
+                return response_data
+            else:
+                # make sure result conforms to JobDetails structure
+                mapped_response_data = self._map_request_success_to_job_details(response_data)
+                return mapped_response_data
 
             
 

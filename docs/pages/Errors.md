@@ -33,10 +33,13 @@ Request types:
 # Errors
 {:.no_toc}
 
-There are at least **two error types** that an **Allie-SDK based request call** can return:
+There are at least **three error types** that an **Allie-SDK based request call** can return:
 
+- **Data model validation error**: in some cases the `generate_api_post_payload` method of a given data class validates the input structure and will throw an error if certain conditions are not met. This process is usually triggered by the `validate_rest_payload` method within the Allie-SDK methods. (in example: `allie_sdk.core.custom_exceptions.InvalidPostBody`).
 - **Request error**: examples are connection error, invalid payload etc.
 - **Batch error**: If anything goes wrong with batching your payload. Applies Async jobs only and the following methods: `POST`, `PUT`, `PATCH`.
+
+> **Important**: The execution of a job might be successful, but this doesn't mean that the request was overall successful. In some cases (e.g. data quality) the API endpoints returns some additional information (e.g. that a certain object was not found and that hence the object couldn't be created). So while overall the status is shown as successful, always check the returned response to understand if your request was really successful.
 
 
 We made an effort make the **data structure** of these error messages **consistent** by mapping them to a **data class** of type `JobDetails` or similar. In a nutshell, the top level structure will always contain the following **properties**:
@@ -56,7 +59,7 @@ This is an error returned from the request module on any of the methods (`GET`, 
 
 Example of this could be: 
 
-- information returned by the API endpoint that a certain element or value within your payload is not valid.
+- information returned by the API endpoint that a certain element or value within your payload is not valid. 
 - connection problem
 - wrong endpoint URL
 - etc

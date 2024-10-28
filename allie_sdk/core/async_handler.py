@@ -73,16 +73,24 @@ class AsyncHandler(RequestHandler):
             list: job execution results
 
         """
-        results = []
-        async_response = self.delete(url, body=payload)
+
+        # Note: batching is implemented on a higher level since the structure of the payload is not standardised
+
+        async_response = self.delete(
+            url = url
+            , body=payload
+            , is_async = True
+        )
+
         if async_response:
             # check if the response includes a job_id and only then fetch job details
             if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
                 job = AlationJob(self.access_token, self.session, self.host, async_response)
-                results.extend(job.check_job_status())
+                results = job.check_job_status()
             else:
-                # add the error details to the results list
-                results.append(async_response)
+                # add the error details
+                # this needs to be a list here since results above is also a list
+                results = [ async_response ]
 
         return results
 
@@ -198,16 +206,20 @@ class AsyncHandler(RequestHandler):
 
         """
 
+        # Note: batching is implemented on a higher level since the structure of the payload is not standardised
+
         async_response = self.post(url, body=payload)
         if async_response:
             # check if the response includes a job_id and only then fetch job details
             if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
                 job = AlationJob(self.access_token, self.session, self.host, async_response)
-                result = job.check_job_status()
-                return result
+                results = job.check_job_status()
             else:
                 # add the error details to the results list
-                return async_response
+                # this needs to be a list here since results above is also a list
+                results = [ async_response ]
+
+            return results
 
     def async_put(self, url: str, payload: list, batch_size: int = None) -> list:
         """Put Alation Objects via an Async Job Process.

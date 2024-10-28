@@ -23,7 +23,13 @@ class CustomField(BaseClass):
     tooltip_text: str = field(default=None)
 
 @dataclass
-class CustomFieldItem:
+class CustomFieldItem(BaseClass):
+    """
+    Originally we didn't inherit from the BaseClass here
+    The reason why we added it was that if someone has already
+    a dict with the same structure, they can use the
+    from_api_response() method to easily convert it to this class
+    """
     allow_multiple: bool = field(default=None)
     allowed_otypes: list = field(default=None)
     backref_name: str = field(default=None)

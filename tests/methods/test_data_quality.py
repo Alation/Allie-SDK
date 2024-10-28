@@ -126,8 +126,14 @@ def test_failed_post_data_quality_fields(requests_mock):
         "Entry": 1,
         "Message": "field_key is required"
     }
-    requests_mock.register_uri('POST', '/integration/v1/data_quality/',
-                   json=failed_response, status_code=400)
+
+    requests_mock.register_uri(
+        'POST'
+        , '/integration/v1/data_quality/'
+        , json = failed_response
+        , status_code = 400
+    )
+
     async_result = MOCK_DQ.post_data_quality_fields(
         [
             DataQualityFieldItem(
@@ -139,7 +145,15 @@ def test_failed_post_data_quality_fields(requests_mock):
         ]
     )
 
-    assert async_result is None
+    expected_response = [
+        JobDetailsDataQuality(
+            status = 'failed'
+            , msg = None
+            , result = {'Entry': 1, 'Message': 'field_key is required'}
+        )
+    ]
+
+    assert expected_response == async_result
 
 def test_success_delete_data_quality_fields(requests_mock):
 
@@ -216,15 +230,29 @@ def test_failed_delete_data_quality_fields(requests_mock):
     dq_field = DataQualityField()
     dq_field.key = '1.Test.DataQuality'
     dq_field_list = [dq_field]
+
     failed_response = {
         "Entry": -1,
         "Message": "A \"values\" or \"fields\" property must be specified"
     }
-    requests_mock.register_uri('DELETE', '/integration/v1/data_quality/',
-                   json=failed_response, status_code=400)
+
+    requests_mock.register_uri(
+        'DELETE'
+        , '/integration/v1/data_quality/'
+        , json = failed_response
+        , status_code = 400
+    )
     async_result = MOCK_DQ.delete_data_quality_fields(dq_field_list)
 
-    assert async_result is None
+    expected_result = [
+        JobDetailsDataQuality(
+            status='failed'
+            , msg=None
+            , result={'Entry': -1, 'Message': 'A "values" or "fields" property must be specified'}
+        )
+    ]
+
+    assert expected_result == async_result
 
 def test_success_get_data_quality_values(requests_mock):
 
@@ -372,11 +400,23 @@ def test_failed_post_data_quality_values(requests_mock):
         "Entry": 1,
         "Message": "field_key is required"
     }
-    requests_mock.register_uri('POST', '/integration/v1/data_quality/', json=failed_response,
-                   status_code=400)
+    requests_mock.register_uri(
+        'POST'
+        , '/integration/v1/data_quality/'
+        , json=failed_response
+        , status_code=400
+    )
     async_result = MOCK_DQ.post_data_quality_values(dq_value_list)
 
-    assert async_result is None
+    expected_result = [
+        JobDetailsDataQuality(
+            status='failed'
+            , msg=None
+            , result={'Entry': 1, 'Message': 'field_key is required'}
+        )
+    ]
+
+    assert expected_result == async_result
 
 def test_success_delete_data_quality_values(requests_mock):
 
@@ -476,8 +516,22 @@ def test_failed_async_delete_process(requests_mock):
         "Entry": 1,
         "Message": "field_key is required"
     }
-    requests_mock.register_uri('DELETE', '/integration/v1/data_quality/', json=failed_response,
-                   status_code=400)
+    requests_mock.register_uri(
+        'DELETE'
+        , '/integration/v1/data_quality/'
+        , json=failed_response
+        , status_code=400
+    )
+
+
     async_result = MOCK_DQ.delete_data_quality_values(dq_value_list)
 
-    assert async_result is None
+    expected_result = [
+        JobDetailsDataQuality(
+            status='failed'
+            , msg=None
+            , result={'Entry': 1, 'Message': 'field_key is required'}
+        )
+    ]
+
+    assert expected_result == async_result
