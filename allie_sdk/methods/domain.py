@@ -5,14 +5,16 @@ import requests
 
 
 from ..core.request_handler import RequestHandler
+from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.domain_model import Domain, DomainMembership, DomainParams
+from ..models.job_model import JobDetails
 from .job import AlationJob
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
 
-class AlationDomain(RequestHandler):
+class AlationDomain(AsyncHandler):
     """Alation REST API Glossary Term Methods."""
 
     def __init__(self, access_token: str, session: requests.Session, host: str):
@@ -52,7 +54,7 @@ class AlationDomain(RequestHandler):
     def assign_objects_to_domain(
         self
         , domain_membership: DomainMembership
-    ) -> DomainMembership:
+    ) -> list[JobDetails]:
         """
         Assign objects to Alation Domain.
 
@@ -86,11 +88,27 @@ class AlationDomain(RequestHandler):
 
             if job_id:
                 job = AlationJob(self.access_token, self.session, self.host, results)
-                job.check_job_status()
-                j = job._get_job()
-                return j
-                # job_status = j.get('status')
-                # if job_status == 'successful':
+                job_details = job.check_job_status()
+                # job_details example value:
+                # [{'msg': 'Job finished in 0.033747 seconds at 2024-10-29 17:17:51.842614+00:00', 'result': None, 'status': 'successful'}]
+
+                return [JobDetails.from_api_response(item) for item in job_details]
+
+                # TODO: Do we have to implement batching here as well?
+                # Created issue for this: https://github.com/Alation/Allie-SDK/issues/38
+
             else:
-                return results
+
+                # if an error is returned the dict will include a status property
+                status = results.get("status")
+                if status:
+                    return [JobDetails.from_api_response(results)]
+                else:
+                    return [
+                        JobDetails(
+                            status = "successful"
+                            , msg = ""
+                            , result = None
+                        )
+                    ]
 

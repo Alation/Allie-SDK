@@ -23,7 +23,7 @@ class AlationConnector(AsyncHandler):
         """
         super().__init__(access_token, session, host)
 
-    def get_connectors(self) -> list:
+    def get_connectors(self) -> list[Connector]:
         """Get the details of all Installed OCF Connectors.
 
         Returns:

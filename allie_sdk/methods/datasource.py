@@ -20,7 +20,7 @@ class AlationDatasource(RequestHandler):
         """
         super().__init__(session = session, host = host, access_token=access_token)
 
-    def get_ocf_datasources(self, query_params:OCFDatasourceParams = None) -> list:
+    def get_ocf_datasources(self, query_params:OCFDatasourceParams = None) -> list[OCFDatasource]:
         """Query multiple Alation datasources and return their details
         Args:
             query_params (DatasourcesParams): REST API Datasources Query Parameters.
@@ -37,7 +37,7 @@ class AlationDatasource(RequestHandler):
             datasources_checked = [OCFDatasource.from_api_response(datasource) for datasource in datasources]
             return datasources_checked
 
-    def get_native_datasources(self, query_params:NativeDatasourceParams = None) -> list:
+    def get_native_datasources(self, query_params:NativeDatasourceParams = None) -> list[NativeDatasource]:
         """Query multiple Alation datasources and return their details
         Args:
             query_params (NativeDatasourcesParams): REST API Datasources Query Parameters.

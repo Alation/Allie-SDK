@@ -26,7 +26,10 @@ class AlationBusinessPolicy(AsyncHandler):
         """
         super().__init__(session = session, host = host, access_token = access_token)
 
-    def get_business_policies(self, query_params:BusinessPolicyParams = None) -> list:
+    def get_business_policies(
+            self
+            , query_params:BusinessPolicyParams = None
+    ) -> list[BusinessPolicy]:
         """Query multiple Alation Business Policies and return their details
         Args:
             query_params (BusinessPolicyParams): REST API Business Policy Query Parameters.

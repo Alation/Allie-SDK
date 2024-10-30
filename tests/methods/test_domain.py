@@ -1,4 +1,6 @@
 import requests_mock
+
+import allie_sdk as allie
 from allie_sdk.methods.domain import *
 
 
@@ -67,5 +69,11 @@ def test_assign_objects_to_domain(requests_mock):
         )
     )
 
-    function_expected_result = {'exclude': False, 'id': 179, 'oid': [21, 23], 'otype': 'glossary_v3'}
+    function_expected_result = [
+        allie.JobDetails(
+            status = "successful"
+            , msg = ""
+            , result = None
+        )
+    ]
     assert function_expected_result == create_domain_membership_result

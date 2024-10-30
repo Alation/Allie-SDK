@@ -43,7 +43,7 @@ class AlationDocument(AsyncHandler):
     def create_documents (
         self
         , documents: list[DocumentPostItem]
-    )->list[JobDetailsDocumentPost]:
+    ) -> list[JobDetailsDocumentPost]:
 
         """Create documents in Bulk
         Args:
@@ -76,7 +76,7 @@ class AlationDocument(AsyncHandler):
     def update_documents (
             self
             , documents: list[DocumentPutItem]
-        )->list[JobDetailsDocumentPut]:
+        ) -> list[JobDetailsDocumentPut]:
 
         """Bulk Update Documents in Bulk
         Args:
