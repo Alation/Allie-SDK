@@ -4,13 +4,15 @@ name: Publish Python 🐍 distribution 📦 PyPI
 # on: push
 
 on: 
-  push:
-    branches: [ "main" ]
+  # only publish to PyPI on new release creation
+  release:
+    types:
+      - created
 
 jobs:
   build:
     name: Build distribution 📦
-    if: startsWith(github.ref, 'refs/tags/') 
+    # if: startsWith(github.ref, 'refs/tags/') 
     runs-on: ubuntu-latest
 
     steps:
@@ -36,8 +38,7 @@ jobs:
 
   publish-to-pypi:
     name: Publish Python 🐍 distribution 📦 to PyPI
-    # only publish to PyPI on tag pushes
-    if: startsWith(github.ref, 'refs/tags/') 
+    # if: startsWith(github.ref, 'refs/tags/') 
      
     needs:
     - build
