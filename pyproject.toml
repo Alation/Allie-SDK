@@ -5,7 +5,6 @@ build-backend = "hatchling.build"
 [project]
 name = "allie-sdk"
 description = "A Python library for the Alation REST APIs."
-# look into how we can link this version to the actual codebase on github
 version = "1.0.0"
 dependencies = [
   "requests~=2.32.0",
@@ -38,5 +37,5 @@ keywords = ["Alation", "Allie SDK", "Alation Python SDK", "Alation SDK"]
 Homepage = "https://github.com/Alation/Allie-SDK"
 Issues = "https://github.com/Alation/Allie-SDK/issues"
 Documentation = "https://alation.github.io/Allie-SDK/"
-# Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
 
