@@ -20,14 +20,7 @@ Before installing the Allie SDK, you must have:
 
 ## Install Allie SDK
 
-Download the source code from the [Allie SDK GitHub repo](https://github.com/Alation/Allie-SDK). Copy the folder `allie_sdk` to the root of any Python project. Once copied to the root, import the library:
-
-```python
-import allie_sdk as allie
-```
-
-{: .note }
-If you get the error `ModuleNotFoundError` when running your first script, then please locate the `requirements.txt` file at the root of this repo and run the following command to install the necessary modules: `pip3 install -r requirements.txt`.
+Allie SDK exists as a package on the [Python Package Index (PyPI)](https://pypi.org/project/allie-sdk/) and can be installed via pip with `pip3 install allie-sdk`. Alternatively, the codebase can also be cloned directly from the official [Allie SDK GitHub Repository](https://github.com/Alation/Allie-SDK).
 
 ## Write your first program
 
