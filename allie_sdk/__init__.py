@@ -76,6 +76,8 @@ from .models import (
     JobDetailsRdbms,
     JobDetailsRdbmsResult,
     JobDetailsRdbmsResultMapping,
+    JobDetailsTermDelete,
+    JobDetailsTermDeleteResult,
     JobDetailsVirtualDatasourcePost,
     JobDetailsVirtualDatasourcePostResult,
     Otype,

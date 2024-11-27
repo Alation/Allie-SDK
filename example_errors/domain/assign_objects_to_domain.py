@@ -47,11 +47,6 @@ alation = allie.Alation(
     , refresh_token = ALATION_API_REFRESH_TOKEN
 )
 
-
-
-
-
-
 # ================================
 # ASSIGN OBJECTS TO DOMAINS
 # ================================

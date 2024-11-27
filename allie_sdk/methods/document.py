@@ -119,7 +119,10 @@ class AlationDocument(AsyncHandler):
             validate_rest_payload(payload = documents, expected_types = (Document,))
             payload = {'id': [item.id for item in documents]}
 
-            delete_result = self.delete('/integration/v2/document/', payload)
+            delete_result = self.delete(
+                url = '/integration/v2/document/'
+                , body = payload
+            )
             # There's no job ID returned here
             if delete_result:
                 # make sure result conforms to JobDetails structure

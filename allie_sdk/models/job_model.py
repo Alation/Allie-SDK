@@ -108,6 +108,10 @@ class JobDetailsDocumentPut(JobDetails):
 
 # --- DOCUMENT DELETE --- #
 @dataclass(kw_only = True)
+class JobDetailsDocumentDeleteResult(BaseClass):
+    deleted_document_count: int = field(default=None)
+    deleted_document_ids: list = field(default_factory=list)
+@dataclass(kw_only = True)
 class JobDetailsDocumentDelete(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
@@ -115,12 +119,19 @@ class JobDetailsDocumentDelete(JobDetails):
             if all(var in ("deleted_document_count", "deleted_document_ids") for var in self.result.keys()):
                 self.result = JobDetailsDocumentDeleteResult.from_api_response(self.result)
 
+# --- TERM DELETE --- #
+# Interestingly enough the term delete response is not in line with the document responses.
 @dataclass(kw_only = True)
-class JobDetailsDocumentDeleteResult(BaseClass):
-    deleted_document_count: int = field(default=None)
-    deleted_document_ids: list = field(default_factory=list)
-
-
+class JobDetailsTermDeleteResult(BaseClass):
+    deleted_term_count: int = field(default=None)
+    deleted_term_ids: list = field(default_factory=list)
+@dataclass(kw_only = True)
+class JobDetailsTermDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("deleted_term_count", "deleted_term_ids") for var in self.result.keys()):
+                self.result = JobDetailsTermDeleteResult.from_api_response(self.result)
 # --- CUSTOM FIELD POST --- #
 
 @dataclass(kw_only = True)

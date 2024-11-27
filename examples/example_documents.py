@@ -5,7 +5,8 @@ Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
 - You created a document hub. Set the DOCUMENT_HUB_ID within the "Set Global Variables" section below.
-- The template for the document hub folder has a field called "Status" assigned.
+- You created a document hub folder. The script will randomly pick a document hub folder you created.
+- The template for the document has a field called "Status" assigned.
 - The "Status" field can be set to values: "Under Review", "Approved".
 - The document template must have a unique template name (so it should not just be called "Document").
 
@@ -20,8 +21,8 @@ import configparser
 # Set Global Variables
 # ================================
 
-DOCUMENT_HUB_ID = 5
-DOCUMENT_TEMPLATE_NAME = "DS Document"
+DOCUMENT_HUB_ID = 2
+DOCUMENT_TEMPLATE_NAME = "DS Test 6"
 
 # ================================
 # Define Logging Config
@@ -65,13 +66,16 @@ templates = alation.custom_template.get_custom_templates(
         )
     )
 
-
-if len(templates) > 1:
-    logging.error(f"More than one document template with the name {DOCUMENT_TEMPLATE_NAME} found.")
-    logging.error("How to resolve: Make sure the template name is unique!")
-    sys.exit(1)
+if templates:
+    if len(templates) > 1:
+        logging.error(f"More than one document template with the name {DOCUMENT_TEMPLATE_NAME} found.")
+        logging.error("How to resolve: Make sure the template name is unique!")
+        sys.exit(1)
+    else:
+        my_template_id = templates[0].id
 else:
-    my_template_id = templates[0].id
+    logging.error("No template by the name of '{DOCUMENT_TEMPLATE_NAME}' was found.")
+    sys.exit(1)
 
 status_field_details = alation.custom_field.get_custom_fields(
     query_params = allie.CustomFieldParams(
@@ -86,7 +90,7 @@ else:
     status_field_id = status_field_details[0].id
 
 
-# get random folder
+# get random document hub folder
 folders = alation.document_hub_folder.get_document_hub_folders(
     allie.DocumentHubFolderParams(
         document_hub_id = DOCUMENT_HUB_ID

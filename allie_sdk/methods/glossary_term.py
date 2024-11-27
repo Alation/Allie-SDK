@@ -25,7 +25,7 @@ class AlationGlossaryTerm(AsyncHandler):
         """
         super().__init__(access_token, session, host)
 
-    def get_glossary_terms(self, query_params: GlossaryTermParams = None) -> list:
+    def get_glossary_terms(self, query_params: GlossaryTermParams = None) -> list[GlossaryTerm]:
         """Get the details of all Alation Glossary Terms.
 
         Args:
@@ -82,7 +82,7 @@ class AlationGlossaryTerm(AsyncHandler):
         if async_results:
             return [JobDetailsDocumentPut.from_api_response(item) for item in async_results]
 
-    def delete_glossary_terms(self, glossary_terms: list) -> bool:
+    def delete_glossary_terms(self, glossary_terms: list) -> JobDetailsTermDelete:
         """Delete Alation Glossary Terms.
 
         Args:
@@ -95,6 +95,10 @@ class AlationGlossaryTerm(AsyncHandler):
         item: GlossaryTerm
         validate_rest_payload(glossary_terms, (GlossaryTerm,))
         payload = {'id': [item.id for item in glossary_terms]}
-        delete_result = self.delete('/integration/v2/term/', payload)
+        delete_result = self.delete(
+            url = '/integration/v2/term/'
+            , body = payload
+        )
 
-        return True if delete_result else False
+        # make sure result conforms to JobDetails structure
+        return JobDetailsTermDelete.from_api_response(delete_result)
