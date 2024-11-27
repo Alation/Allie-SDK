@@ -5,7 +5,7 @@ Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
 - You created a glossary. Set the GLOSSARY_ID within the "Set Global Variables" section below.
-- The template for the glossary term has a field called "Status" assigned.
+- The template for the glossary term has a field called "Status" assigned. Set the TEMPLATE_NAME within the "Set Global Variables" section below.
 - The "Status" field can be set to values: "Under Review", "Approved".
 - The document template must have a unique template name.
 
