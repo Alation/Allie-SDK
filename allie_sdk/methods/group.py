@@ -19,11 +19,11 @@ class AlationGroup(RequestHandler):
         """
         super().__init__(session = session, host = host, access_token = access_token)
 
-    def get_groups(self, query_params:GroupParams = None) -> list:
+    def get_groups(self, query_params:GroupParams = None) -> list[Group]:
         validate_query_params(query_params, GroupParams)
         params = query_params.generate_params_dict() if query_params else None
 
-        groups = self.get('/integration/v1/group/', query_params = params)
+        groups = self.get(url = '/integration/v1/group/', query_params = params)
 
         if groups:
             groups_checked = [Group.from_api_response(g) for g in groups]
