@@ -1,5 +1,5 @@
 """
-Example of listing domains and assigning object to a given domain.
+Example of listing groups.
 
 Prerequisites:
 

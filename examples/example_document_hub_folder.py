@@ -73,7 +73,7 @@ else:
 # CREATE DOCUMENT HUB FOLDERS
 # ================================
 
-create_folder_result = alation.document_hub_folder.create_document_hub_folders(
+create_folder_response = alation.document_hub_folder.create_document_hub_folders(
     [
         allie.DocumentHubFolderPostItem(
             title = 'Test Document Hub Folder'
@@ -91,9 +91,9 @@ create_folder_result = alation.document_hub_folder.create_document_hub_folders(
     ]
 )
 
-if create_folder_result[0].status == "successful":
-    created_folder_id = create_folder_result[0].result.created_folders[0].id
-    logging.info(f"Number of folders created: {create_folder_result[0].result.created_folder_count}")
+if create_folder_response[0].status == "successful":
+    created_folder_id = create_folder_response[0].result.created_folders[0].id
+    logging.info(f"Number of folders created: {create_folder_response[0].result.created_folder_count}")
     logging.info(f"The following folders were created (IDs): {created_folder_id}")
 
 
@@ -127,7 +127,7 @@ if existing_folders:
 # UPDATE DOCUMENT HUB FOLDERS
 # ================================
 
-update_folder_result = alation.document_hub_folder.update_document_hub_folders(
+update_folder_response = alation.document_hub_folder.update_document_hub_folders(
     [
         allie.DocumentHubFolderPutItem(
             id = created_folder_id
@@ -146,18 +146,18 @@ update_folder_result = alation.document_hub_folder.update_document_hub_folders(
     ]
 )
 
-if update_folder_result[0].status == "successful":
-    logging.info(f"Number of folders updated: {update_folder_result[0].result.updated_folder_count}")
-    logging.info(f"The following folders were updated (IDs): {update_folder_result[0].result.updated_folders[0].id}")
+if update_folder_response[0].status == "successful":
+    logging.info(f"Number of folders updated: {update_folder_response[0].result.updated_folder_count}")
+    logging.info(f"The following folders were updated (IDs): {update_folder_response[0].result.updated_folders[0].id}")
 
 # ================================
 # DELETE DOCUMENT HUB FOLDERS
 # ================================
 
-delete_folder_result = alation.document_hub_folder.delete_document_hub_folders(
+delete_folder_response = alation.document_hub_folder.delete_document_hub_folders(
     document_hub_folders = existing_folders
 )
 
-if delete_folder_result.status == "successful":
-    logging.info(f"Number of folders deleted: {delete_folder_result.result.deleted_folder_count}")
-    logging.info(f"The following folders were deleted (IDs): {delete_folder_result.result.deleted_folder_ids}")
+if delete_folder_response.status == "successful":
+    logging.info(f"Number of folders deleted: {delete_folder_response.result.deleted_folder_count}")
+    logging.info(f"The following folders were deleted (IDs): {delete_folder_response.result.deleted_folder_ids}")

@@ -56,7 +56,7 @@ alation = allie.Alation(
 # CREATE CUSTOM FIELD
 # ================================
 
-create_result = alation.custom_field.post_custom_fields(
+create_response = alation.custom_field.post_custom_fields(
     custom_fields = [
         allie.CustomFieldItem(
             field_type = "RICH_TEXT"
@@ -65,9 +65,9 @@ create_result = alation.custom_field.post_custom_fields(
     ]
 )
 
-if create_result:
-    if create_result[0].status == "successful":
-        for r in create_result[0].result:
+if create_response:
+    if create_response[0].status == "successful":
+        for r in create_response[0].result:
             if r.data.field_ids:
                 field_id = r.data.field_ids[0]
                 logging.info(f"Created custom field with id: {field_id}")
@@ -77,11 +77,11 @@ if create_result:
 # GET CUSTOM FIELD BY ID
 # ================================
 
-get_field_result = alation.custom_field.get_a_custom_field(
+get_field_response = alation.custom_field.get_a_custom_field(
     field_id = field_id
 )
 
-if get_field_result:
+if get_field_response:
     logging.info(f"Managed to fetch custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' by ID.")
 
 # ================================

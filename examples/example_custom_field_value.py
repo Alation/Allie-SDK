@@ -82,7 +82,7 @@ if my_custom_fields:
 # SET CUSTOM FIELD VALUE
 # ================================
 
-populate_custom_field_result = alation.custom_field.put_custom_field_values(
+populate_custom_field_response = alation.custom_field.put_custom_field_values(
     [
         allie.CustomFieldValueItem(
             field_id = field_id
@@ -95,11 +95,11 @@ populate_custom_field_result = alation.custom_field.put_custom_field_values(
     ]
 )
 
-if populate_custom_field_result[0].result == "successful":
+if populate_custom_field_response[0].result == "successful":
     logging.info(f"Custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' successfully populated.")
-elif populate_custom_field_result[0].result == "failed":
-    logging.error(f"Execution failed: {populate_custom_field_result[0].msg}")
-    logging.error(populate_custom_field_result[0].result.errors)
+elif populate_custom_field_response[0].result == "failed":
+    logging.error(f"Execution failed: {populate_custom_field_response[0].msg}")
+    logging.error(populate_custom_field_response[0].result.errors)
     sys.exit(1)
 
 # ================================
@@ -113,9 +113,9 @@ params = allie.CustomFieldValueParams(
     , field_id = field_id
 )
 
-get_field_values_result = alation.custom_field.get_custom_field_values(
+get_field_values_response = alation.custom_field.get_custom_field_values(
     params
 )
 
-if get_field_values_result:
+if get_field_values_response:
     logging.info("Managed to fetch custom field value.")

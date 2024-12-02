@@ -2,6 +2,7 @@
 
 import requests_mock
 import unittest
+from datetime import datetime
 from allie_sdk.methods.trust_check import *
 
 MOCK_TRUST_CHECK = AlationTrustChecks(
@@ -58,7 +59,7 @@ class TestTrustChecks(unittest.TestCase):
 
         mock_item = TrustCheckFlagItem()
         mock_item.flag_type = 'ENDORSEMENT'
-        mock_item.subject.otype = 'Table'
+        mock_item.subject.otype = 'table'
         mock_item.subject.id = 1
 
         success_response = {
@@ -77,18 +78,45 @@ class TestTrustChecks(unittest.TestCase):
                 "display_name": "Alation PS User"
             }
         }
-        success_flag = TrustCheckFlag.from_api_response(success_response)
+        # success_flag = TrustCheckFlag.from_api_response(success_response)
         m.register_uri('POST', '/integration/flag/', json=success_response)
         flag = MOCK_TRUST_CHECK.post_trust_check(mock_item)
 
-        self.assertEqual(success_flag, flag)
+        expected_response = JobDetails(
+            status='successful'
+            , msg=''
+            , result=TrustCheckFlag(
+                id=481
+                , flag_type='ENDORSEMENT'
+                , flag_reason=''
+                , ts_created="2023-12-03T16:26:57.043823Z"
+                , ts_updated=None
+                , subject=TrustCheckFlagSubject(id=12, otype='table', url='/table/12/')
+                , user=User(
+                    display_name='Alation PS User'
+                    , email=None
+                    , id=1
+                    , profile_id=None
+                    , url='/user/1/'
+                    , last_login=None
+                    , ts_created=None
+                    , first_name=None
+                    , last_name=None
+                    , role=None
+                    , title=None
+                    , username=None
+                )
+            )
+        )
+
+        self.assertEqual(expected_response, flag)
 
     @requests_mock.Mocker()
     def test_failed_post_trust_check(self, m):
 
         mock_item = TrustCheckFlagItem()
         mock_item.flag_type = 'ENDORSEMENT'
-        mock_item.subject.otype = 'Table'
+        mock_item.subject.otype = 'table'
         mock_item.subject.id = 1
 
         failed_response = {
@@ -99,7 +127,13 @@ class TestTrustChecks(unittest.TestCase):
         m.register_uri('POST', '/integration/flag/', json=failed_response, status_code=400)
         flag = MOCK_TRUST_CHECK.post_trust_check(mock_item)
 
-        self.assertIsNone(flag)
+        expected_result = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'subject': ['Invalid otype']}
+        )
+
+        self.assertEqual(expected_result, flag)
 
     @requests_mock.Mocker()
     def test_success_put_trust_check(self, m):
@@ -125,11 +159,42 @@ class TestTrustChecks(unittest.TestCase):
                 "display_name": "Alation PS User"
             }
         }
-        success_flag = TrustCheckFlag.from_api_response(success_response)
+
         m.register_uri('PUT', '/integration/flag/1/', json=success_response)
         flag = MOCK_TRUST_CHECK.put_trust_check(mock_item)
 
-        self.assertEqual(success_flag, flag)
+        expected_response = JobDetails(
+            status='successful'
+            , msg=''
+            , result=TrustCheckFlag(
+                id=1
+                , flag_type='WARNING'
+                , flag_reason='<p>This is a test/p>'
+                , ts_created="2023-12-03T16:38:21.165765Z"
+                , ts_updated=None
+                , subject=TrustCheckFlagSubject(
+                    id=12
+                    , otype='table'
+                    , url='/table/12/'
+                )
+                , user=User(
+                    display_name='Alation PS User'
+                    , email=None
+                    , id=1
+                    , profile_id=None
+                    , url='/user/1/'
+                    , last_login=None
+                    , ts_created=None
+                    , first_name=None
+                    , last_name=None
+                    , role=None
+                    , title=None
+                    , username=None
+                )
+            )
+        )
+
+        self.assertEqual(expected_response, flag)
 
     @requests_mock.Mocker()
     def test_failed_put_trust_check(self, m):
@@ -145,7 +210,13 @@ class TestTrustChecks(unittest.TestCase):
         m.register_uri('PUT', '/integration/flag/1/', json=failed_response, status_code=404)
         flag = MOCK_TRUST_CHECK.put_trust_check(mock_item)
 
-        self.assertIsNone(flag)
+        expected_response = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'Not found.'}
+        )
+
+        self.assertEqual(expected_response, flag)
 
     @requests_mock.Mocker()
     def test_success_delete_trust_check(self, m):
@@ -155,7 +226,13 @@ class TestTrustChecks(unittest.TestCase):
         m.register_uri('DELETE', '/integration/flag/1/',  status_code=204)
         delete_result = MOCK_TRUST_CHECK.delete_trust_check(mock_item)
 
-        self.assertTrue(delete_result)
+        expected_response = JobDetails(
+            status='successful'
+            , msg=''
+            , result=''
+        )
+
+        self.assertEqual(expected_response, delete_result)
 
     @requests_mock.Mocker()
     def test_failed_delete_trust_check(self, m):
@@ -169,7 +246,13 @@ class TestTrustChecks(unittest.TestCase):
         m.register_uri('DELETE', '/integration/flag/1/', json=failed_response, status_code=404)
         flag = MOCK_TRUST_CHECK.delete_trust_check(mock_item)
 
-        self.assertIsNone(flag)
+        expected_response = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'Not found.'}
+        )
+
+        self.assertEqual(expected_response, flag)
 
 
 if __name__ == '__main__':

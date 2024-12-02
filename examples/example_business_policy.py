@@ -79,7 +79,7 @@ else:
 # CREATE MULTIPLE POLICIES
 # ================================
 
-create_business_policy_result = alation.business_policy.create_business_policies(
+create_business_policy_response = alation.business_policy.create_business_policies(
     [
         allie.BusinessPolicyPostItem(
             title = BUSINESS_POLICY_TITLE
@@ -101,12 +101,12 @@ create_business_policy_result = alation.business_policy.create_business_policies
 )
 
 
-if create_business_policy_result:
-    if create_business_policy_result[0].status == "successful":
+if create_business_policy_response:
+    if create_business_policy_response[0].status == "successful":
         logging.info("Business policy created successfully.")
-    elif create_business_policy_result[0].status == "failed":
+    elif create_business_policy_response[0].status == "failed":
         logging.error(f"Failed to create Business Policy. Reason:")
-        logging.error(create_business_policy_result[0].result)
+        logging.error(create_business_policy_response[0].result)
         sys.exit(1)
 
 
@@ -128,7 +128,7 @@ else:
 # UPDATE MANY POLICIES
 # ================================
 
-update_result = alation.business_policy.update_business_policies(
+update_response = alation.business_policy.update_business_policies(
     business_policies = [
         allie.BusinessPolicyPutItem(
             id = business_policy_id
@@ -152,14 +152,14 @@ update_result = alation.business_policy.update_business_policies(
     ]
 )
 
-if update_result[0].status == "successful":
+if update_response[0].status == "successful":
     logging.info("Business policy updated successfully.")
 
 # ================================
 # DELETE POLICIES
 # ================================
 
-delete_business_policy_result = alation.business_policy.delete_business_policies(
+delete_business_policy_response = alation.business_policy.delete_business_policies(
     business_policies =
         [
             allie.BusinessPolicy(
@@ -168,5 +168,5 @@ delete_business_policy_result = alation.business_policy.delete_business_policies
         ]
 )
 
-if delete_business_policy_result.result == "successful":
+if delete_business_policy_response.result == "successful":
     logging.info("All done!")

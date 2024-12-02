@@ -1,5 +1,5 @@
 """
-Example of creating, listing, updating and deleting one document.
+Example of creating, listing, updating and deleting one glossary term.
 
 Prerequisites:
 
@@ -93,7 +93,7 @@ else:
 # CREATE GLOSSARY TERMS
 # ================================
 
-create_glossary_term_result = alation.glossary_term.post_glossary_terms(
+create_glossary_term_response = alation.glossary_term.post_glossary_terms(
     [
         allie.GlossaryTermItem(
             title = "My Term 1"
@@ -112,9 +112,9 @@ create_glossary_term_result = alation.glossary_term.post_glossary_terms(
     ]
 )
 
-if create_glossary_term_result[0].status == "successful":
-    created_glossary_term_id = create_glossary_term_result[0].result.created_terms[0].id
-    print(f"Number of glossary terms created: {create_glossary_term_result[0].result.created_term_count}")
+if create_glossary_term_response[0].status == "successful":
+    created_glossary_term_id = create_glossary_term_response[0].result.created_terms[0].id
+    print(f"Number of glossary terms created: {create_glossary_term_response[0].result.created_term_count}")
     print(f"The following glossary terms were created (IDs): {created_glossary_term_id}")
 
 # ================================
@@ -138,7 +138,7 @@ if existing_terms:
 # ================================
 
 
-updated_term_result = alation.glossary_term.put_glossary_terms(
+updated_term_response = alation.glossary_term.put_glossary_terms(
     [
         allie.GlossaryTermItem(
             id = created_glossary_term_id
@@ -147,18 +147,18 @@ updated_term_result = alation.glossary_term.put_glossary_terms(
     ]
 )
 
-if updated_term_result[0].status == "successful":
-    print(f"Number of documents updated: {updated_term_result[0].result.updated_term_count}")
-    print(f"The following documents were updated (IDs): {updated_term_result[0].result.updated_terms[0].id}")
+if updated_term_response[0].status == "successful":
+    print(f"Number of documents updated: {updated_term_response[0].result.updated_term_count}")
+    print(f"The following documents were updated (IDs): {updated_term_response[0].result.updated_terms[0].id}")
 
 # ================================
 # DELETE GLOSSARY TERMS
 # ================================
 
-deleted_term_result = alation.glossary_term.delete_glossary_terms(
+deleted_term_response = alation.glossary_term.delete_glossary_terms(
     existing_terms
  )
 
-if deleted_term_result.status == "successful":
-    print(f"Number of documents deleted: {deleted_term_result.result.deleted_term_count}")
-    print(f"The following documents were deleted (IDs): {deleted_term_result.result.deleted_term_ids}")
+if deleted_term_response.status == "successful":
+    print(f"Number of documents deleted: {deleted_term_response.result.deleted_term_count}")
+    print(f"The following documents were deleted (IDs): {deleted_term_response.result.deleted_term_ids}")

@@ -108,7 +108,7 @@ else:
 # CREATE DOCUMENTS
 # ================================
 
-create_document_result = alation.document.create_documents(
+create_document_response = alation.document.create_documents(
     [
         allie.DocumentPostItem(
             title = "My KPI 1x1"
@@ -128,9 +128,9 @@ create_document_result = alation.document.create_documents(
     ]
 )
 
-if create_document_result[0].status == "successful":
-    created_document_id = create_document_result[0].result.created_terms[0].id
-    print(f"Number of documents created: {create_document_result[0].result.created_term_count}")
+if create_document_response[0].status == "successful":
+    created_document_id = create_document_response[0].result.created_terms[0].id
+    print(f"Number of documents created: {create_document_response[0].result.created_term_count}")
     print(f"The following documents were created (IDs): {created_document_id}")
 
 # ================================
@@ -170,7 +170,7 @@ if existing_documents:
 # ================================
 
 
-updated_doc_result = alation.document.update_documents(
+updated_doc_response = alation.document.update_documents(
     [
         allie.DocumentPutItem(
             id = created_document_id
@@ -179,16 +179,16 @@ updated_doc_result = alation.document.update_documents(
     ]
 )
 
-if updated_doc_result[0].status == "successful":
-    print(f"Number of documents updated: {updated_doc_result[0].result.updated_term_count}")
-    print(f"The following documents were updated (IDs): {updated_doc_result[0].result.updated_terms[0].id}")
+if updated_doc_response[0].status == "successful":
+    print(f"Number of documents updated: {updated_doc_response[0].result.updated_term_count}")
+    print(f"The following documents were updated (IDs): {updated_doc_response[0].result.updated_terms[0].id}")
 
 # ================================
 # DELETE DOCUMENTS
 # ================================
 
 
-delete_document_result = alation.document.delete_documents(
+delete_document_response = alation.document.delete_documents(
     existing_documents
     # [
     #     allie.Document(
@@ -197,6 +197,6 @@ delete_document_result = alation.document.delete_documents(
     # ]
  )
 
-if delete_document_result.status == "successful":
-    print(f"Number of documents deleted: {delete_document_result.result.deleted_document_count}")
-    print(f"The following documents were deleted (IDs): {delete_document_result.result.deleted_document_ids}")
+if delete_document_response.status == "successful":
+    print(f"Number of documents deleted: {delete_document_response.result.deleted_document_count}")
+    print(f"The following documents were deleted (IDs): {delete_document_response.result.deleted_document_ids}")
