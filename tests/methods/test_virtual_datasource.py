@@ -210,14 +210,13 @@ class TestVirtualDataSource(unittest.TestCase):
         # no job response since it failed
         # job_response =
 
-        expected_response = None
-        # expected_response = [
-        #     JobDetailsVirtualDatasourcePost(
-        #         status='failed'
-        #         , msg=None
-        #         , result={'error': 'Cannot find Datasource'}
-        #     )
-        # ]
+        expected_response = [
+            JobDetailsVirtualDatasourcePost(
+                status='failed'
+                , msg=None
+                , result={'error': 'Cannot find Datasource'}
+            )
+        ]
 
         m.register_uri(
             method = 'POST'
