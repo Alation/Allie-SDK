@@ -44,7 +44,7 @@ There are at least **three error types** that an **Allie-SDK based request call*
 
 We made an effort make the **data structure** of these error messages **consistent** by mapping them to a **data class** of type `JobDetails` or similar. In a nutshell, the top level structure will always contain the following **properties**:
 
-- `status`: this is either `success` or `failed`
+- `status`: this is either `successful` or `failed`
 - `msg`: a brief error message.
 - `result`: any other details
 

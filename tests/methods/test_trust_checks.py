@@ -2,7 +2,6 @@
 
 import requests_mock
 import unittest
-from datetime import datetime
 from allie_sdk.methods.trust_check import *
 
 MOCK_TRUST_CHECK = AlationTrustChecks(
