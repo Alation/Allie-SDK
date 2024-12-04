@@ -104,8 +104,8 @@ class TestVirtualFileSystem(unittest.TestCase):
         # no job response since it failed
         # job_response =
 
-        # expected_response = [JobDetails(status='failed', msg=None, result={'error': 'Cannot find FileSystem id: 0'})]
-        expected_response = None
+        expected_response = [JobDetails(status='failed', msg=None, result={'error': 'Cannot find FileSystem id: 0'})]
+
 
         m.register_uri(
             method = 'POST'
