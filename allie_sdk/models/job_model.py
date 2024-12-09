@@ -157,8 +157,13 @@ class JobDetailsCustomFieldPost(JobDetails):
             if len(self.result) > 0:
                 for value in self.result:
                     if type(value) is dict:
-                        # validation errors from the Data Model get returned as a dict
-                        # e.g. errors like "field_type RICH_TEXTS is not supported."
+                        if all(var in value.keys() for var in ("msg", "data")):
+                            result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
+                        else:
+                            # validation errors from the Data Model get returned as a dict
+                            # e.g. errors like "field_type RICH_TEXTS is not supported."
+                            result_out.append(value)
+                    elif isinstance(value, JobDetailsCustomFieldPostResult):
                         result_out.append(value)
                     else:
                         # somehow the job status returns a string representation of a dict

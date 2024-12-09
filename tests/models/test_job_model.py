@@ -8,10 +8,14 @@ class TestGroupModels(unittest.TestCase):
 
         # Expected input
         input = {
-            "deleted_document_count": 2,
-            "deleted_document_ids": [
-                11, 12
-            ]
+            'status': 'successful'
+            , 'msg': 'Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
+            , 'result': {
+                "deleted_document_count": 2,
+                "deleted_document_ids": [
+                    11, 12
+                ]
+            }
         }
 
         # Transformation
@@ -19,10 +23,14 @@ class TestGroupModels(unittest.TestCase):
 
         # Expected Output
         output = JobDetailsDocumentDelete(
-            deleted_document_count = 2
-            , deleted_document_ids = [
-                11, 12
-            ]
+            status='successful'
+            , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
+            , result= JobDetailsDocumentDeleteResult(
+                deleted_document_count = 2
+                , deleted_document_ids = [
+                    11, 12
+                ]
+            )
         )
 
         self.assertEqual(input_transformed, output)
@@ -649,10 +657,14 @@ class TestGroupModels(unittest.TestCase):
 
         # Expected input
         input = {
-            "deleted_folder_count": 2,
-            "deleted_folder_ids": [
-                11, 12
-            ]
+            'status': 'successful'
+            , 'msg': 'Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00'
+            , 'result': {
+                "deleted_folder_count": 2,
+                "deleted_folder_ids": [
+                    11, 12
+                ]
+            }
         }
 
         # Transformation
@@ -660,10 +672,14 @@ class TestGroupModels(unittest.TestCase):
 
         # Expected Output
         output = JobDetailsDocumentHubFolderDelete(
-            deleted_folder_count = 2
-            , deleted_folder_ids = [
-                11, 12
-            ]
+            status='successful'
+            , msg='Job finished in 0.40343 seconds at 2024-08-16 16:19:11.482905+00:00'
+            , result= JobDetailsDocumentHubFolderDeleteResult(
+                deleted_folder_count = 2
+                , deleted_folder_ids = [
+                    11, 12
+                ]
+            )
         )
 
         self.assertEqual(input_transformed, output)

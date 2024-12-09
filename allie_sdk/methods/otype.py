@@ -23,7 +23,7 @@ class AlationOtype(AsyncHandler):
         """
         super().__init__(access_token, session, host)
 
-    def get_otypes(self) -> list:
+    def get_otypes(self) -> list[Otype]:
         """Get the details of all allowed Alation Otypes.
 
         Returns:
