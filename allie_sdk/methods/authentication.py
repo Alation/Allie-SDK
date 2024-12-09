@@ -29,7 +29,7 @@ class AlationAuthentication(RequestHandler):
         self.refresh_token = refresh_token
         self.user_id = user_id
 
-    def validate_refresh_token(self) -> RefreshToken | JobDetails:
+    def validate_refresh_token(self, refresh_token = None) -> RefreshToken | JobDetails:
         """Validate the Alation API Refresh Token.
 
         Returns:
@@ -37,6 +37,8 @@ class AlationAuthentication(RequestHandler):
             JobDetails: Error details if request fails
 
         """
+        ref_token = refresh_token if refresh_token else self.refresh_token
+
         validate_body = {
             'refresh_token': self.refresh_token
             , 'user_id': self.user_id
@@ -59,8 +61,7 @@ class AlationAuthentication(RequestHandler):
         """Create an Alation API Access Token.
 
         Returns:
-            AccessToken: Alation API Access Token if request succeeded.
-            JobDetails: Error details if request failed.
+            AccessToken: Alation API Access Token.
 
         """
         validate_refresh_token_response = self.validate_refresh_token()
