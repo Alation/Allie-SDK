@@ -69,7 +69,7 @@ Returns:
 ### assign_objects_to_domain
 
 ```
-assign_objects_to_domain(self, domain_membership: DomainMembership) -> DomainMembership
+assign_objects_to_domain(self, domain_membership: DomainMembership) -> list[JobDetails]
 ```
 
 Enables you to assign Alation objects (e.g. documents) to a given domain.
@@ -78,4 +78,4 @@ Args:
 - `domain_membership`: Alation `DomainMembership` object
 
 Returns:
-- In async mode it will return the job details (`JobDetails`) otherwise the result of the domain assignment (which includes the domain id and the id of the assigned objects).
+- List of Job Details

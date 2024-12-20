@@ -58,10 +58,11 @@ Attributes:
 | otype | set   | The applied object's object type. An otype is used in conjunction with its oid to uniquely identify an object in Alation.  |
 
 ## Methods
+
 ### get_trust_checks
 
 ```
-get_trust_checks(query_params: TrustCheckFlagParams = None) -> list
+get_trust_checks(query_params: TrustCheckFlagParams = None) -> list[TrustCheckFlag]
 ```
 
 Query multiple Alation trust check flags
@@ -75,7 +76,7 @@ Returns:
 ### post_trust_check_flag
 
 ```
-post_trust_check_flag(trust_check: TrustCheckFlagItem) -> TrustCheckFlag
+post_trust_check_flag(trust_check: TrustCheckFlagItem) -> JobDetails
 ```
 
 Post (Create) an Alation trust check flag.
@@ -84,12 +85,12 @@ Args:
 * trust_check (TrustCheckFlagItem): Alation Trust Check Flag to be created.
 
 Returns:
-* TrustCheckFlag: Alation Trust Check Flag.
+* job details
 
 ### put_trust_check
 
 ```
-put_trust_check(trust_check: TrustCheckFlag) -> TrustCheckFlag
+put_trust_check(trust_check: TrustCheckFlag) -> JobDetails
 ```
 
 Put (Update) an Alation trust check flag reason only if the flag_type is DEPRECATION or WARNING.
@@ -98,12 +99,12 @@ Args:
 * trust_check (TrustCheckFlag): Alation Trust Check Flag to be updated.
 
 Returns:
-* TrustCheckFlag: Alation Trust Check Flag.
+* job details
 
 ### delete_trust_check
 
 ```
-delete_trust_check(trust_check: TrustCheckFlag) -> bool
+delete_trust_check(trust_check: TrustCheckFlag) -> JobDetails
 ```
 
 Delete an Alation trust check flag.
@@ -112,7 +113,7 @@ Args:
 * trust_check (TrustCheckFlag): Alation trust check flag to be deleted.
   
 Returns:
-* bool: Success of the API DELETE call.
+* JobDetails
 
 ## Examples
 ### Create a trust check flag

@@ -67,7 +67,7 @@ Attributes:
 ### get_documents
 
 ```
-get_documents(query_params:DocumentParams = None) -> list
+get_documents(query_params:DocumentParams = None) -> list[Document]
 ```
 
 Query multiple Alation Documents and return their details
@@ -80,7 +80,7 @@ Returns:
 ### create_documents
 
 ```
-create_documents(documents: list[DocumentPostItem]) -> bool
+create_documents(documents: list[DocumentPostItem]) -> list[JobDetailsDocumentPost]
 ```
 
 Create documents in Bulk
@@ -95,7 +95,7 @@ Returns:
 ### update_documents
 
 ```
-update_documents(documents: list[DocumentPutItem]) -> bool
+update_documents(documents: list[DocumentPutItem]) -> list[JobDetailsDocumentPut]
 ```
 
 Update Documents in Bulk
@@ -109,7 +109,7 @@ Returns:
 ### delete_documents
 
 ```
-delete_documents(documents:list[Document]) -> bool:
+delete_documents(documents:list[Document]) -> JobDetailsDocumentDelete:
 ```
 
 Bulk delete documents
@@ -118,7 +118,7 @@ Args:
 * documents (list): List of `Document` objects
 
 Returns:
-* bool: Success of the API DELETE Call(s)
+* List of JobDetails: Status report of the executed background jobs.
 
 
 ## Examples

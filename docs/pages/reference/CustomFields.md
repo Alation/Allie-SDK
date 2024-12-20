@@ -199,7 +199,7 @@ Returns:
 ### post_custom_fields
 
 ```
-post_custom_fields(custom_fields: list) -> bool:
+post_custom_fields(custom_fields: list) -> list[JobDetailsCustomFieldPost]:
 ```
 
 Post (Create) Alation Custom Fields.
@@ -208,12 +208,12 @@ Args:
 * custom_fields (list): Alation Custom Fields to be created.
 
 Returns:
-* bool: Success of the API POST Call(s).
+* list of job details
 
 ### put_custom_field_values
 
 ```
-put_custom_field_values(custom_field_values: list, batch_size: int = 10000) -> bool:
+put_custom_field_values(custom_field_values: list, batch_size: int = 10000) -> list[JobDetails]:
 ```
 
 Put (Update) Alation Custom Field Values.
@@ -223,7 +223,7 @@ Args:
 * batch_size (int): REST API PUT Body Size Limit.
 
 Returns:
-* bool: Success of the API PUT Call(s).
+* list of job details
 
 ## Examples
 ### Get a custom field

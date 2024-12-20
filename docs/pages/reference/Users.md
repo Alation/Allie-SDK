@@ -53,7 +53,7 @@ Attributes:
 ### get_authenticated_user
 
 ```
-get_authenticated_user() -> list:
+get_authenticated_user() -> User:
 ```
 
 Query the currently authenticated user and return their details
@@ -65,7 +65,7 @@ Returns:
 ### get_users
 
 ```
-get_users(query_params:UserParams = None) -> list:
+get_users(query_params:UserParams = None) -> list[User]:
 ```
 
 Query multiple Alation Users and return their details
@@ -105,7 +105,7 @@ Returns:
 ### post_remove_dup_users_accts
 
 ```
-post_remove_dup_users_accts(csv_file: str) -> bool
+post_remove_dup_users_accts(csv_file: str) -> JobDetails
 ```
 
 Remove duplicate users using the 'SUSPEND/RETAIN' user list in a CSV file
@@ -113,7 +113,7 @@ Args:
 * csv_file: CSV List of users to be suspended (removed) or retained.
   
 Returns:
-* bool: Success of the API call.
+* job details
 
 ## Examples
 ### get_authenticated_user

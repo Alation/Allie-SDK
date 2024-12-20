@@ -47,7 +47,7 @@ class AlationCustomField(AsyncHandler):
         if custom_fields:
             return [CustomField.from_api_response(custom_field) for custom_field in custom_fields]
 
-    def get_custom_field_values(self, query_params: CustomFieldValueParams = None) -> list:
+    def get_custom_field_values(self, query_params: CustomFieldValueParams = None) -> list[CustomFieldValue]:
         """Get the details of all Alation Custom Field Values.
 
         Args:

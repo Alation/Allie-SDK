@@ -60,7 +60,7 @@ Attributes:
 ### get_glossary_terms
 
 ```
-get_glossary_terms(query_params: GlossaryTermParams = None) -> list
+get_glossary_terms(query_params: GlossaryTermParams = None) -> list[GlossaryTerm]
 ```
 
 Get the details of all Alation Glossary Terms.
@@ -74,7 +74,7 @@ Returns:
 ### post_glossary_terms
 
 ```
-post_glossary_terms(glossary_terms: list) -> bool
+post_glossary_terms(glossary_terms: list) -> list[JobDetailsDocumentPost]
 ```
 
 Post (Create) Alation Glossary Terms.
@@ -89,7 +89,7 @@ Returns:
 ### put_glossary_terms
 
 ```
-put_glossary_terms(glossary_terms: list) -> bool
+put_glossary_terms(glossary_terms: list) -> list[JobDetailsDocumentPut]
 ```
 
 Put (Update) Alation Glossary Terms.
@@ -103,7 +103,7 @@ Returns:
 ### delete_glossary_terms
 
 ```
-delete_glossary_terms(glossary_terms: list) -> bool
+delete_glossary_terms(glossary_terms: list) -> JobDetailsTermDelete
 ```
 
 Delete Alation Glossary Terms.
@@ -112,7 +112,7 @@ Args:
 * glossary_terms (list): Alation Glossary Terms to be deleted.
 
 Returns:
-* bool: Success of the API DELETE Call(s)
+* Job details
 
 
 ## Examples

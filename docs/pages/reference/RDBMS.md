@@ -217,10 +217,11 @@ Attributes:
 | schema_id__lte | set   | filter by schema id lesser than or equal to a value |
 
 ## Methods
+
 ### get_schemas
 
 ```
-get_schemas(query_params: SchemaParams = None) -> list
+get_schemas(query_params: SchemaParams = None) -> list[Schema]
 ```
 
 Query multiple Alation RDBMS Schemas.
@@ -234,7 +235,7 @@ Returns:
 ### post_schemas
 
 ```
-post_schemas(ds_id: int, schemas: list) -> bool
+post_schemas(ds_id: int, schemas: list) -> list[JobDetailsRdbms]
 ```
 
 Post (Create or Update) Alation Schema Objects.
@@ -245,12 +246,12 @@ Args:
 * schemas (list): Alation Schemas to be created or updated.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 ### get_tables
 
 ```
-get_tables(query_params: TableParams = None) -> list
+get_tables(query_params: TableParams = None) -> list[Table]
 ```
 
 Query multiple Alation RDBMS Tables.
@@ -264,7 +265,7 @@ Returns:
 ### post_tables
 
 ```
-post_tables(ds_id: int, tables: list) -> bool
+post_tables(ds_id: int, tables: list) -> list[JobDetailsRdbms]
 ```
 
 Post (Create or Update) Alation Table Objects.
@@ -275,12 +276,12 @@ Args:
 * tables (list): Alation Tables to be created or updated.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 ### get_columns
 
 ```
-get_columns(query_params: ColumnParams = None) -> list
+get_columns(query_params: ColumnParams = None) -> list[Column]
 ```
 
 Query multiple Alation RDBMS Columns.
@@ -294,7 +295,7 @@ Returns:
 ### post_columns
 
 ```
-post_columns(ds_id: int, columns: list) -> bool
+post_columns(ds_id: int, columns: list) -> list[JobDetailsRdbms]
 ```
 
 Post (Create or Update) Alation Column Objects.
@@ -305,11 +306,12 @@ Args:
 * columns (list): Alation Columns to be created or updated.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 
 ## Examples
 ### Get Schemas
+
 ```python
 import allie_sdk as allie
 

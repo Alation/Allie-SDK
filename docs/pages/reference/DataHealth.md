@@ -116,7 +116,7 @@ Returns:
 ###  get_data_quality_values
 
 ```
-get_data_quality_values(query_params: DataQualityValueParams = None) -> list
+get_data_quality_values(query_params: DataQualityValueParams = None) -> list[DataQualityValue]
 ```
 
 Query multiple Alation data quality values.
@@ -130,7 +130,7 @@ Returns:
 ###  post_data_quality_fields
 
 ```
-post_data_quality_fields(dq_fields: list) -> bool
+post_data_quality_fields(dq_fields: list) -> list[JobDetailsDataQuality]
 ```
 
 Post (Create) Alation data quality fields.
@@ -139,12 +139,12 @@ Args:
 * dq_fields (list): Alation data quality fields to be created. Each item in the list must be a `DataQualityFieldItem` object
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 ###  delete_data_quality_fields
 
 ```
-delete_data_quality_fields(dq_fields: list) -> bool:
+delete_data_quality_fields(dq_fields: list) -> list[JobDetailsDataQuality]:
 ```
 
 Delete Alation data quality fields.
@@ -153,12 +153,12 @@ Args:
 * dq_fields (list): Alation data quality fields to be deleted. Each item in the list must be a `DataQualityField` object
 
 Returns:
-* bool: Success of the API DELETE Call(s)
+* list of job details
 
 ###  post_data_quality_values
 
 ```
-post_data_quality_values(dq_values: list) -> bool
+post_data_quality_values(dq_values: list) -> list[JobDetailsDataQuality]
 ```
 
 Post (Create) Alation data quality values.
@@ -167,12 +167,12 @@ Args:
 * dq_values (list): Alation data quality values to be created. Each item in the list must be a `DataQualityValueItem` object
 
 Returns:
-* bool: Success of the API POST Call(s)
+* bool: list of job details
 
 ###  delete_data_quality_values
 
 ```
-delete_data_quality_values(dq_values: list) -> bool
+delete_data_quality_values(dq_values: list) -> list[JobDetailsDataQuality]
 ```
 
 Delete Alation data quality values.
@@ -181,7 +181,7 @@ Args:
 * dq_values (list): Alation data quality values to be deleted. Each item in the list must be a `DataQualityValue` object
   
 Returns:
-* bool: Success of the API DELETE Call(s)
+* bool: list of job details
 
 ## Examples
 ###  Create a data health field and value

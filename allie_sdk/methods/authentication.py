@@ -40,7 +40,7 @@ class AlationAuthentication(RequestHandler):
         ref_token = refresh_token if refresh_token else self.refresh_token
 
         validate_body = {
-            'refresh_token': self.refresh_token
+            'refresh_token': ref_token
             , 'user_id': self.user_id
         }
 

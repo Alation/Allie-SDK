@@ -38,6 +38,6 @@ val_ref_token_res = alation.authentication.validate_refresh_token(refresh_token=
 print(val_ref_token_res)
 ```
 
-Argument `disable_authentication=True` can be passed into the `Alation` class to initialize it without authenticating first into the Alation instance. This feature is specifically for two endpoints `validate_access_token` and `validate_refresh_token` since these two endpoints do not require an API Acess Token to be passed in the header when making the API requests to validate the API tokens.
+Argument `disable_authentication=True` can be passed into the `Alation` class to initialize it without authenticating first into the Alation instance. This feature is specifically for two endpoints `validate_access_token` and `validate_refresh_token` since these two endpoints do not require an API Access Token to be passed in the header when making the API requests to validate the API tokens.
 
-NOTE: When passing in `disable_authentication=True` into the `Alation` instance, only use that instance for validating tokens and nothing else. To use the rest of the Allie SDK endpoints, you will have to instantiate a new `Alation` instance and pass in a refresh token or access token when initializing `Alation`. 
+> **NOTE**: When passing in `disable_authentication=True` into the `Alation` instance, only use that instance for validating tokens and nothing else. To use the rest of the Allie SDK endpoints, you will have to instantiate a new `Alation` instance and pass in a refresh token or access token when initializing `Alation`. 
