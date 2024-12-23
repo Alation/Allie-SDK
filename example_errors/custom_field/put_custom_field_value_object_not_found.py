@@ -1,5 +1,5 @@
 """
-Example of the post request failing because of invalid payload caught by the api endpoint validation process
+Example of the put request failing because of invalid payload caught by the api endpoint validation process
 
 Prerequisites:
 
