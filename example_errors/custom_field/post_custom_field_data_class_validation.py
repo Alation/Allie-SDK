@@ -73,8 +73,6 @@ create_result = alation.custom_field.post_custom_fields(
     custom_fields = payload
 )
 
-print()
-
 """
 Expected response: None
 
