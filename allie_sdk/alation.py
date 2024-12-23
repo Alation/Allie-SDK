@@ -2,6 +2,8 @@
 
 import logging.config
 import os
+import sys
+
 import requests
 import time
 
@@ -28,6 +30,8 @@ from .methods import (
     , AlationTrustChecks
     , AlationVirtualDataSource
 )
+
+from .models import JobDetails
 
 os.makedirs('logs', exist_ok=True)
 for log_file in os.listdir('logs'):
@@ -67,15 +71,31 @@ class Alation(object):
         if not disable_authentication:
             # Initialize the Authentication Class and generate the Access Token
             self.authentication = AlationAuthentication(
-                refresh_token=refresh_token, user_id=user_id, session=session, host=host)
+                refresh_token=refresh_token
+                , user_id=user_id
+                , session=session
+                , host=host
+            )
             if access_token:
                 self.access_token = self.authentication.validate_access_token(
                     access_token).api_access_token
             else:
-                self.access_token = self.authentication.create_access_token().api_access_token
+                create_access_token_response = self.authentication.create_access_token()
+                if isinstance(create_access_token_response, JobDetails):
+                    if create_access_token_response.status == "failed":
+                        cat_response_error_detail = create_access_token_response.result.get("detail")
+                        if cat_response_error_detail:
+                            LOGGER.error(cat_response_error_detail)
+                            sys.exit(1)
+                else:
+                    self.access_token = create_access_token_response.api_access_token
         else:
             self.authentication = AlationAuthentication(
-                refresh_token=refresh_token, user_id=user_id, session=session, host=host)
+                refresh_token=refresh_token
+                , user_id=user_id
+                , session=session
+                , host=host
+            )
 
         # Initialize Remaining Alation API Methods
         self.connector = AlationConnector(
