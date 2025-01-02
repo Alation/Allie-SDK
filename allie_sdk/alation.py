@@ -86,7 +86,6 @@ class Alation(object):
                         cat_response_error_detail = create_access_token_response.result.get("detail")
                         if cat_response_error_detail:
                             LOGGER.error(cat_response_error_detail)
-                            sys.exit(1)
                 else:
                     self.access_token = create_access_token_response.api_access_token
         else:
