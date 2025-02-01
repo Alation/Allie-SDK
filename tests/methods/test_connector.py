@@ -2,6 +2,9 @@
 
 import requests_mock
 import unittest
+
+from requests import HTTPError
+
 from allie_sdk.methods.connector import *
 
 MOCK_CONNECTOR = AlationConnector(
@@ -45,9 +48,11 @@ class TestConnector(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v2/connectors/', json=failed_response, status_code=403)
-        connectors = MOCK_CONNECTOR.get_connectors()
 
-        self.assertIsNone(connectors)
+        with self.assertRaises(HTTPError) as context:
+            connectors = MOCK_CONNECTOR.get_connectors()
+
+        self.assertEqual(context.exception.response.status_code, 403)
 
 if __name__ == '__main__':
     unittest.main()

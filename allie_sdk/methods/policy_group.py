@@ -25,7 +25,17 @@ class AlationPolicyGroup(RequestHandler):
             self
             , query_params: PolicyGroupParams = None
         ) -> list[PolicyGroup]:
+        """Get policy groups.
 
+        Args:
+            query_params (PolicyGroupParams): REST API Get Filter Values.
+
+        Returns:
+            list[PolicyGroup]: List of policy groups.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
         validate_query_params(query_params, PolicyGroupParams)
         params = query_params.generate_params_dict() if query_params else None
 
@@ -35,3 +45,4 @@ class AlationPolicyGroup(RequestHandler):
         if policy_groups:
             policy_groups_result = [PolicyGroup.from_api_response(pg) for pg in policy_groups]
             return policy_groups_result
+        return []

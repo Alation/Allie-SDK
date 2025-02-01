@@ -55,9 +55,10 @@ class TestRDBMS(unittest.TestCase):
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/schema/', json=failed_response, status_code=400)
-        schemas = MOCK_RDBMS.get_schemas()
-
-        self.assertIsNone(schemas)
+        
+        # The method should now raise an HTTPError for non-200 status codes
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_RDBMS.get_schemas()
 
     @requests_mock.Mocker()
     def test_success_post_schemas(self, m):
@@ -95,7 +96,6 @@ class TestRDBMS(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_post_schemas(self, m):
-
         mock_schema = SchemaItem()
         mock_schema.key = '1.schema.test'
         mock_schema.title = 'Test Title'
@@ -114,22 +114,14 @@ class TestRDBMS(unittest.TestCase):
             "code": "400010"
         }
         m.register_uri('POST', '/integration/v2/schema/?ds_id=1',
-                       json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_schemas(ds_id = 1, schemas = mock_schema_list)
-
-        expected_response = [
-            JobDetailsRdbms(
-                status='failed'
-                , msg=None
-                , result={
-                    'detail': 'Incorrect input data. Please fix the errors and post the data.'
-                    , 'errors': [{'key': ['400068: API Key is a required input']}]
-                    , 'code': '400010'
-                }
-            )
-        ]
-
-        self.assertEqual(expected_response, async_response)
+                      json=failed_response, status_code=400)
+        
+        # Now we expect an HTTPError to be raised
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            MOCK_RDBMS.post_schemas(ds_id=1, schemas=mock_schema_list)
+        
+        # Verify the error response contains expected information
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_get_tables(self, m):
@@ -181,9 +173,10 @@ class TestRDBMS(unittest.TestCase):
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/table/', json=failed_response, status_code=400)
-        tables = MOCK_RDBMS.get_tables()
-
-        self.assertIsNone(tables)
+        
+        # The method should now raise an HTTPError for non-200 status codes
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_RDBMS.get_tables()
 
     @requests_mock.Mocker()
     def test_success_post_tables(self, m):
@@ -229,7 +222,6 @@ class TestRDBMS(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_post_tables(self, m):
-
         mock_table = TableItem()
         mock_table.key = '1.schema.test'
         mock_table.title = 'Test Title'
@@ -248,22 +240,14 @@ class TestRDBMS(unittest.TestCase):
             "code": "400010"
         }
         m.register_uri('POST', '/integration/v2/table/?ds_id=1',
-                       json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_tables(ds_id = 1, tables = mock_table_list)
-
-        expected_result = [
-            JobDetailsRdbms(
-                status='failed'
-                , msg=None
-                , result={
-                    'detail': 'Incorrect input data. Please fix the errors and post the data.'
-                    , 'errors': [{'key': ['400068: API Key is a required input']}]
-                    , 'code': '400010'
-                }
-            )
-        ]
-
-        self.assertEqual(expected_result, async_response)
+                      json=failed_response, status_code=400)
+        
+        # Now we expect an HTTPError to be raised
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            MOCK_RDBMS.post_tables(ds_id=1, tables=mock_table_list)
+        
+        # Verify the error response contains expected information
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_get_columns(self, m):
@@ -331,9 +315,10 @@ class TestRDBMS(unittest.TestCase):
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/column/', json=failed_response, status_code=400)
-        columns = MOCK_RDBMS.get_columns()
-
-        self.assertIsNone(columns)
+        
+        # The method should now raise an HTTPError for non-200 status codes
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_RDBMS.get_columns()
 
     @requests_mock.Mocker()
     def test_success_post_columns(self, m):
@@ -373,7 +358,6 @@ class TestRDBMS(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_post_columns(self, m):
-
         mock_column = ColumnItem()
         mock_column.key = '1.schema.test'
         mock_column.title = 'Test Title'
@@ -393,22 +377,14 @@ class TestRDBMS(unittest.TestCase):
             "code": "400010"
         }
         m.register_uri('POST', '/integration/v2/column/?ds_id=1',
-                       json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_columns(ds_id = 1, columns = mock_column_list)
-
-        expected_result = [
-            JobDetailsRdbms(
-                status='failed'
-                , msg=None
-                , result={
-                    'detail': 'Incorrect input data. Please fix the errors and post the data.'
-                    , 'errors': [{'key': ['400068: API Key is a required input']}]
-                    , 'code': '400010'
-                }
-            )
-        ]
-
-        self.assertEqual(expected_result, async_response)
+                      json=failed_response, status_code=400)
+        
+        # Now we expect an HTTPError to be raised
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            MOCK_RDBMS.post_columns(ds_id=1, columns=mock_column_list)
+        
+        # Verify the error response contains expected information
+        self.assertEqual(context.exception.response.status_code, 400)
 
 
 if __name__ == '__main__':
