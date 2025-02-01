@@ -2,6 +2,7 @@
 
 import requests_mock
 import unittest
+from requests.exceptions import HTTPError
 
 from allie_sdk.methods.authentication import *
 
@@ -37,10 +38,11 @@ class TestAuthentication(unittest.TestCase):
             "code": "401000"
         }
         m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=failed_response, status_code=401)
-        test_token = MOCK_AUTHENTICATION.validate_refresh_token()
 
-        self.assertIsNone(test_token)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_AUTHENTICATION.validate_refresh_token()
 
+        self.assertEqual(context.exception.response.status_code, 401)
     @requests_mock.Mocker()
     def test_success_create_access_token(self, m):
 
@@ -85,10 +87,11 @@ class TestAuthentication(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v1/createAPIAccessToken/', json=failed_response, status_code=401)
         m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=refresh_success_response)
-        test_token = MOCK_AUTHENTICATION.create_access_token()
 
-        self.assertIsNone(test_token)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_AUTHENTICATION.create_access_token()
 
+        self.assertEqual(context.exception.response.status_code, 401)
     @requests_mock.Mocker()
     def test_failed_create_access_token_expired_refresh_token(self, m):
 
@@ -101,11 +104,12 @@ class TestAuthentication(unittest.TestCase):
             "name": "Postman",
             "refresh_token": "test"
         }
-        m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=refresh_response)
-        test_token = MOCK_AUTHENTICATION.create_access_token()
+        m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=refresh_response, status_code=401)
 
-        self.assertIsNone(test_token)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_AUTHENTICATION.create_access_token()
 
+        self.assertEqual(context.exception.response.status_code, 401)
     @requests_mock.Mocker()
     def test_success_validate_access_token(self, m):
 
@@ -131,10 +135,11 @@ class TestAuthentication(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v1/validateAPIAccessToken/', json=failed_response,
                        status_code=401)
-        test_token = MOCK_AUTHENTICATION.validate_access_token('test')
 
-        self.assertIsNone(test_token)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_AUTHENTICATION.validate_access_token('test')
 
+        self.assertEqual(context.exception.response.status_code, 401)
     @requests_mock.Mocker()
     def test_success_revoke_access_tokens(self, m):
 
@@ -154,10 +159,11 @@ class TestAuthentication(unittest.TestCase):
             "code": "401000"
         }
         m.register_uri('POST', '/integration/v1/revokeAPIAccessTokens/', json=failed_response, status_code=401)
-        result = MOCK_AUTHENTICATION.revoke_access_tokens()
 
-        self.assertEqual(result, False)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_AUTHENTICATION.revoke_access_tokens()
 
+        self.assertEqual(context.exception.response.status_code, 401)
 
 if __name__ == '__main__':
     unittest.main()

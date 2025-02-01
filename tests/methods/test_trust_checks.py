@@ -2,6 +2,9 @@
 
 import requests_mock
 import unittest
+
+from requests import HTTPError
+
 from allie_sdk.methods.trust_check import *
 
 MOCK_TRUST_CHECK = AlationTrustChecks(
@@ -49,9 +52,10 @@ class TestTrustChecks(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/flag/', json=failed_response, status_code=403)
-        flags = MOCK_TRUST_CHECK.get_trust_checks()
 
-        self.assertIsNone(flags)
+        with self.assertRaises(HTTPError) as context:
+            flags = MOCK_TRUST_CHECK.get_trust_checks()
+        self.assertEqual(context.exception.response.status_code, 403)
 
     @requests_mock.Mocker()
     def test_success_post_trust_check(self, m):
@@ -97,9 +101,10 @@ class TestTrustChecks(unittest.TestCase):
             ]
         }
         m.register_uri('POST', '/integration/flag/', json=failed_response, status_code=400)
-        flag = MOCK_TRUST_CHECK.post_trust_check(mock_item)
 
-        self.assertIsNone(flag)
+        with self.assertRaises(HTTPError) as context:
+            flag = MOCK_TRUST_CHECK.post_trust_check(mock_item)
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_put_trust_check(self, m):
@@ -143,9 +148,9 @@ class TestTrustChecks(unittest.TestCase):
             "detail": "Not found."
         }
         m.register_uri('PUT', '/integration/flag/1/', json=failed_response, status_code=404)
-        flag = MOCK_TRUST_CHECK.put_trust_check(mock_item)
-
-        self.assertIsNone(flag)
+        with self.assertRaises(HTTPError) as context:
+            flag = MOCK_TRUST_CHECK.put_trust_check(mock_item)
+        self.assertEqual(context.exception.response.status_code, 404)
 
     @requests_mock.Mocker()
     def test_success_delete_trust_check(self, m):
@@ -167,9 +172,9 @@ class TestTrustChecks(unittest.TestCase):
             "detail": "Not found."
         }
         m.register_uri('DELETE', '/integration/flag/1/', json=failed_response, status_code=404)
-        flag = MOCK_TRUST_CHECK.delete_trust_check(mock_item)
-
-        self.assertIsNone(flag)
+        with self.assertRaises(HTTPError) as context:
+            flag = MOCK_TRUST_CHECK.delete_trust_check(mock_item)
+        self.assertEqual(context.exception.response.status_code, 404)
 
 
 if __name__ == '__main__':

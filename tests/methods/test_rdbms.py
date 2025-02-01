@@ -3,6 +3,7 @@
 import requests_mock
 import unittest
 from allie_sdk.methods.rdbms import *
+from requests.exceptions import HTTPError
 
 MOCK_RDBMS = AlationRDBMS(
     access_token='test', session=requests.session(), host='https://test.com'
@@ -55,9 +56,10 @@ class TestRDBMS(unittest.TestCase):
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/schema/', json=failed_response, status_code=400)
-        schemas = MOCK_RDBMS.get_schemas()
 
-        self.assertIsNone(schemas)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_RDBMS.get_schemas()
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_post_schemas(self, m):
@@ -115,9 +117,10 @@ class TestRDBMS(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v2/schema/?ds_id=1',
                        json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_schemas(1, mock_schema_list)
 
-        self.assertFalse(async_response)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_RDBMS.post_schemas(1, mock_schema_list)
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_get_tables(self, m):
@@ -169,9 +172,10 @@ class TestRDBMS(unittest.TestCase):
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/table/', json=failed_response, status_code=400)
-        tables = MOCK_RDBMS.get_tables()
 
-        self.assertIsNone(tables)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_RDBMS.get_tables()
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_post_tables(self, m):
@@ -237,9 +241,9 @@ class TestRDBMS(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v2/table/?ds_id=1',
                        json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_tables(1, mock_table_list)
-
-        self.assertFalse(async_response)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_RDBMS.post_tables(1, mock_table_list)
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_get_columns(self, m):
@@ -307,9 +311,9 @@ class TestRDBMS(unittest.TestCase):
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/column/', json=failed_response, status_code=400)
-        columns = MOCK_RDBMS.get_columns()
-
-        self.assertIsNone(columns)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_RDBMS.get_columns()
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_post_columns(self, m):

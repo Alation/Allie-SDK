@@ -77,7 +77,7 @@ def test_create_business_policies(requests_mock):
             , 'status': 'NA'
             , 'ts_started': '2023-12-08T10:08:35.974963Z'
             , 'links': []
-        }    
+        }
     }
 
     # Override the policy API call
@@ -97,7 +97,7 @@ def test_create_business_policies(requests_mock):
             , 'All total 1 batches with a limit of 250 items attempted. [Succeeded: 2, Failed: 0, Total: 2]'
         ]
     }
-    
+
     """
     OPEN/CONCERN: Here we don't get any details about the created policies back.
     With terms in example the job response includes details about the created terms within
@@ -120,7 +120,7 @@ def test_create_business_policies(requests_mock):
             BusinessPolicyPostItem(
                 title = "BP3"
                 , template_id = 158
-                , policy_group_ids = [1] 
+                , policy_group_ids = [1]
                 , fields = [
                     CustomFieldValueItem(
                         field_id = 8
@@ -136,7 +136,7 @@ def test_create_business_policies(requests_mock):
             , BusinessPolicyPostItem(
                 title = "BP4"
                 , template_id = 158
-                , policy_group_ids = [1] 
+                , policy_group_ids = [1]
                 , fields = [
                     CustomFieldValueItem(
                         field_id = 8
@@ -217,7 +217,7 @@ def test_update_business_policies(requests_mock):
 
     # --- TEST THE FUNCTION --- #
     bulk_update_business_policies_result = MOCK_USER.update_business_policies(
-        business_policies = 
+        business_policies =
         [
             BusinessPolicyPutItem(
                 id = 26
@@ -251,7 +251,7 @@ def test_update_business_policies(requests_mock):
             ]
         )
     ]
-    assert function_expected_result == bulk_update_business_policies_result  
+    assert function_expected_result == bulk_update_business_policies_result
 
 def test_delete_business_policies(requests_mock):
 

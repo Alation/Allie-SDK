@@ -4,12 +4,11 @@ import json
 import logging
 import requests
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from requests.adapters import HTTPAdapter, Retry
 
 API_LOGGER = logging.getLogger("allie_sdk_logger")
 RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
-SUCCESS_CODES = [200, 201, 202, 204]
 
 
 class RequestHandler(object):
@@ -50,32 +49,10 @@ class RequestHandler(object):
             dict | list: API Response Body.
 
         """
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
+        response = self._request('DELETE', url, body)
+        data = self._process_response(response)
 
-        api_response = self.s.delete(self.host + url, data=body, headers=self.headers)
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'PATCH', 'URL': api_response.url,
-                       'Response': api_response.status_code}
-
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the DELETE Request to: {log_url}')
-
-        else:
-            self._log_success(log_details,
-                              f'Succesfully submitted the DELETE Request to: {log_url}')
-
-            return response_data if response_data else True
+        return data if data else True
 
     def get(self, url: str, query_params: dict = None, pagination: bool = True) -> any:
         """API Get Request.
@@ -89,32 +66,22 @@ class RequestHandler(object):
             any: API Response Body in JSON.
 
         """
-        returned_items = None
-        if query_params is None:
-            query_params = {}
+        query_params = query_params or {}
+
         if pagination:
             query_params['limit'] = self.page_size
 
-        api_response = self._api_single_get(self.host + url, params=query_params)
-        if api_response.status_code in SUCCESS_CODES:
-            try:
-                returned_items = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                try:
-                    return api_response.content.decode("utf-8")
-                except UnicodeDecodeError:
-                    return api_response.content
+        response = self._request('GET', url, query_params=query_params)
+        data = self._process_response(response)
 
         if pagination:
-            while 'X-Next-Page' in api_response.headers:
-                next_url = api_response.headers.get('X-Next-Page')
-                api_response = self._api_single_get(self.host + next_url)
+            while 'X-Next-Page' in response.headers:
+                next_url = response.headers.get('X-Next-Page')
+                response = self._request('GET', next_url, query_params=query_params)
+                data.extend(self._process_response(response))
 
-                if api_response.status_code in SUCCESS_CODES:
-                    response_data = api_response.json()
-                    returned_items.extend(response_data)
 
-        return returned_items
+        return data
 
     def patch(self, url: str, body: any, query_params: dict = None, headers: dict = None) -> dict:
         """API Patch Request.
@@ -129,40 +96,12 @@ class RequestHandler(object):
             dict: API Response Body in JSON.
 
         """
-        if query_params is None:
-            query_params = {}
+        headers = headers or {}
+        query_params = query_params or {}
 
-        if headers:
-            headers['Token'] = self.access_token
-        else:
-            headers = self.headers
+        response = self._request('PATCH', url, body, query_params=query_params, headers=headers)
 
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
-
-        api_response = self.s.patch(self.host + url, data=body, params=query_params, headers=headers)
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                return api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                return api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'PATCH', 'URL': api_response.url,
-                       'Response': api_response.status_code}
-
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the PATCH Request to: {log_url}')
-
-        else:
-            self._log_success(log_details,
-                              f'Successfully submitted the PATCH Request to: {log_url}')
-
-            return response_data
+        return self._process_response(response)
 
     def post(self, url: str, body: any, query_params: dict = None, headers: dict = None,
              files: dict = None) -> dict | list:
@@ -179,40 +118,13 @@ class RequestHandler(object):
             dict | list: API Response Body.
 
         """
-        if query_params is None:
-            query_params = {}
+        headers = headers or {}
+        query_params = query_params or {}
+        files = files or {}
 
-        if headers:
-            headers['Token'] = self.access_token
-        else:
-            headers = self.headers
+        response = self._request('POST', url, body, query_params=query_params, headers=headers, files=files)
 
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
-
-        api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers, files=files)
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'POST', 'URL': api_response.url,
-                       'Response': api_response.status_code}
-
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the POST Request to: {log_url}')
-
-        else:
-            self._log_success(log_details,
-                              f'Successfully submitted the POST Request to: {log_url}')
-
-            return response_data
+        return self._process_response(response)
 
     def put(self, url: str, body: any, query_params: dict = None) -> dict | list:
         """API Put Request.
@@ -226,76 +138,80 @@ class RequestHandler(object):
             dict | list: API Response Body.
 
         """
+        query_params = query_params or {}
+        
+        response = self._request('PUT', url, body, query_params=query_params)
 
-        if query_params is None:
-            query_params = {}
+        return self._process_response(response)
+
+    def _request(
+            self,
+            method: str,
+            url: str,
+            body: any = None,
+            query_params: dict = {},
+            headers: dict = {},
+            files: dict = {}
+    ) -> any:
+        """Decode the API Response.
+
+        Args:
+            method (str): API Request Method.
+            url (str): API Request URL, without the base URL.
+            body (any): API Request Body.
+            query_params (dict): API Request Query Parameters.
+            headers (dict): API Request Headers.
+            files (dict): API Request Files.
+
+        Returns:
+            any: API Response Body.
+
+        """
+        headers.update(self.headers)
 
         if isinstance(body, dict) or isinstance(body, list):
             body = json.dumps(body, default=str)
 
-        api_response = self.s.put(self.host + url, data=body, params=query_params, headers=self.headers)
+        response = self.s.request(
+            method,
+            urljoin(self.host, url),
+            data=body,
+            params=query_params,
+            headers=headers,
+            files=files
+        )
+
+        return response
+
+    def _process_response(self, response):
+        method = response.request.method.upper()
+        log_url = self._format_log_url(response.url)
+
+        log_details = {
+            'Method': method,
+            'URL': response.url,
+            'Response': response.status_code
+        }
 
         try:
-            response_data = api_response.json()
+            response_data = response.json()
         except requests.exceptions.JSONDecodeError:
             try:
-                response_data = api_response.content.decode("utf-8")
+                response_data = response.content.decode("utf-8")
             except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'PUT', 'URL': api_response.url,
-                       'Response': api_response.status_code}
-
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the PUT Request to: {log_url}')
-
-        else:
-            self._log_success(log_details,
-                              f'Successfully submitted the PUT Request to: {log_url}')
-
-            return response_data
-
-    def _api_single_get(self, url: str, params: dict = None) -> requests.Response:
-        """Run a Single REST API Get Call. Helper function for paginated results.
-
-        Args:
-            url (str): GET API Call URL.
-            params (dict): GET API Call Query Parameters.
-
-        Returns:
-            requests.Response: API GET Response.
-
-        """
-        if params:
-            api_response = self.s.get(url, params=params, headers=self.headers)
-        else:
-            api_response = self.s.get(url, headers=self.headers)
+                response_data = response.content
 
         try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as http_error:
+            self._log_error(response_data, log_details, f'Error submitting the {method} Request to: {log_url}')
+            raise http_error
 
-        log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'GET', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        if method == 'GET':
+            log_details['Objects Returned'] = len(response_data) if isinstance(response_data, list) else 1
+        self._log_success(log_details, f'Successfully submitted the {method} Request to: {log_url}')
 
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the GET Request to: {log_url}')
-
-        else:
-            response_objects = len(response_data) if isinstance(response_data, list) else 1
-            log_details['Objects Returned'] = response_objects
-            self._log_success(log_details,
-                              f'Successfully submitted the GET Request to: {log_url}')
-
-        return api_response
+        return response_data
 
     @staticmethod
     def _log_success(details: dict, message: str):
