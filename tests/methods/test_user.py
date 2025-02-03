@@ -3,6 +3,9 @@
 import requests_mock
 import os
 import unittest
+
+from requests import HTTPError
+
 from allie_sdk.methods.user import *
 
 MOCK_USER = AlationUser(
@@ -97,9 +100,10 @@ class TestUser(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v1/user/', json=failed_response, status_code=403)
-        users = MOCK_USER.get_users()
 
-        self.assertIsNone(users)
+        with self.assertRaises(HTTPError) as context:
+            users = MOCK_USER.get_users()
+        self.assertEqual(context.exception.response.status_code, 403)
 
     @requests_mock.Mocker()
     def test_success_get_a_user_v1(self, m):
@@ -127,9 +131,10 @@ class TestUser(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v1/user/1/', json=failed_response, status_code=403)
-        user = MOCK_USER.get_a_user(1)
+        with self.assertRaises(HTTPError) as context:
+            user = MOCK_USER.get_a_user(1)
+        self.assertEqual(context.exception.response.status_code, 403)
 
-        self.assertIsNone(user)
 
     @requests_mock.Mocker()
     def test_success_get_users_v2(self, m):
@@ -179,9 +184,9 @@ class TestUser(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v2/user/', json=failed_response, status_code=403)
-        users = MOCK_USER.get_users()
-
-        self.assertIsNone(users)
+        with self.assertRaises(HTTPError) as context:
+            users = MOCK_USER.get_users()
+        self.assertEqual(context.exception.response.status_code, 403)
 
     @requests_mock.Mocker()
     def test_success_get_a_user_v2(self, m):
@@ -211,9 +216,9 @@ class TestUser(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v2/user/1/', json=failed_response, status_code=403)
-        user = MOCK_USER.get_a_user(1)
-
-        self.assertIsNone(user)
+        with self.assertRaises(HTTPError) as context:
+            users = MOCK_USER.get_a_user(1)
+        self.assertEqual(context.exception.response.status_code, 403)
 
     @requests_mock.Mocker()
     def test_success_get_authenticated_user(self, m):
@@ -241,9 +246,9 @@ class TestUser(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v1/userinfo/', json=failed_response, status_code=403)
-        details = MOCK_USER.get_authenticated_user()
-
-        self.assertIsNone(details)
+        with self.assertRaises(HTTPError) as context:
+            users = MOCK_USER.get_authenticated_user()
+        self.assertEqual(context.exception.response.status_code, 403)
 
 
 if __name__ == '__main__':
