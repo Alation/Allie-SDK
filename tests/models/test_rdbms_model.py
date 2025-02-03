@@ -206,7 +206,7 @@ class TestRDBMSModels(unittest.TestCase):
                 {"value": "No", "field_id": 10088, "field_name": "PHI (Protected Health Information)"}
             ],
             "column_type": "VARCHAR(100)",
-            "column_comment": None,
+            "column_comment": "This is a comment",
             "index": {"isPrimaryKey": False, "isForeignKey": False,
                       "referencedColumnId": None, "isOtherIndex": False,},
             "nullable": True,
@@ -238,6 +238,7 @@ class TestRDBMSModels(unittest.TestCase):
             nullable=True,
             schema_id=5,
             table_id=91,
+            column_comment="This is a comment",
             table_name="superstore.public.superstore_reporting",
             position=7
         )
