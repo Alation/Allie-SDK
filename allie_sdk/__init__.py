@@ -1,5 +1,6 @@
 from .alation import Alation
 from .models import (
+    AccessToken,
     BusinessPolicyPostItem,
     BusinessPolicy,
     BusinessPolicyPutItem,
@@ -83,6 +84,7 @@ from .models import (
     Otype,
     PolicyGroup,
     PolicyGroupParams,
+    RefreshToken,
     Schema,
     SchemaItem,
     SchemaParams,

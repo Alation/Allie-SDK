@@ -55,7 +55,9 @@ alation = allie.Alation(
 
 ocf_connectors = alation.connector.get_connectors()
 
-if ocf_connectors:
-    print(f"All OCF Connectors fetched successfully:")
+if ocf_connectors is None:
+    logging.warning("No OCF connectors found.")
+else:
+    logging.info(f"All OCF Connectors fetched successfully:")
     for c in ocf_connectors:
-        print(c.name)
+        logging.info(c.name)

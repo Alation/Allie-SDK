@@ -19,6 +19,8 @@ import configparser
 
 # Define the *unique* name of the custom text field that will be created
 CUSTOM_RICH_TEXT_FIELD_NAME = "Rich Text Test 10"
+# Define the name of one built-in field
+BUILT_IN_FIELD_NAME = "description"
 
 # ================================
 # Define Logging Config
@@ -56,7 +58,7 @@ alation = allie.Alation(
 # CREATE CUSTOM FIELD
 # ================================
 
-create_response = alation.custom_field.post_custom_fields(
+response = alation.custom_field.post_custom_fields(
     custom_fields = [
         allie.CustomFieldItem(
             field_type = "RICH_TEXT"
@@ -65,24 +67,35 @@ create_response = alation.custom_field.post_custom_fields(
     ]
 )
 
-if create_response:
-    if create_response[0].status == "successful":
-        for r in create_response[0].result:
-            if r.data.field_ids:
-                field_id = r.data.field_ids[0]
-                logging.info(f"Created custom field with id: {field_id}")
+if response:
+    for r in response:
+        if r.status == "successful":
+            for rslt in r.result:
+                if rslt.data.field_ids:
+                    field_id = rslt.data.field_ids[0]
+                    logging.info(f"Created custom field with id: {field_id}")
+        elif r.status == "failed":
+            logging.error(f"Failed to create custom field: {r.result}")
+            sys.exit(1)
+        else:
+            logging.error(f"Unexpected result. I don't know how to handle this ...")
+            sys.exit(1)
+
 
 
 # ================================
 # GET CUSTOM FIELD BY ID
 # ================================
 
-get_field_response = alation.custom_field.get_a_custom_field(
+custom_field = alation.custom_field.get_a_custom_field(
     field_id = field_id
 )
 
-if get_field_response:
-    logging.info(f"Managed to fetch custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' by ID.")
+if custom_field is None:
+    logging.warning(f"Custom field with id {field_id} could not be found!")
+    sys.exit(1)
+else:
+    logging.info(f"Managed to fetch custom field {custom_field.name_singular} by ID.")
 
 # ================================
 # GET CUSTOM FIELD BY NAME
@@ -95,16 +108,33 @@ my_custom_fields = alation.custom_field.get_custom_fields(
     )
 )
 
-if my_custom_fields:
-    logging.info(f"Managed to fetch custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' by name.")
+if my_custom_fields is None:
+    logging.warning(f"Custom field with name '{CUSTOM_RICH_TEXT_FIELD_NAME}' could not be found!")
+elif isinstance(my_custom_fields, list):
+    no_fields_found = len(my_custom_fields)
+    logging.info(f"Managed to fetch {no_fields_found} custom field(s) with the name '{CUSTOM_RICH_TEXT_FIELD_NAME}'.")
+    logging.info("The ID of the custom field(s):")
+    for cf in my_custom_fields:
+        logging.info(f" Custom field id: {cf.id}")
+else:
+    logging.error("Unexpected result. I don't know how to handle this ...")
+    sys.exit(1)
 
 # ================================
 # GET A BUILD-IN CUSTOM FIELD
 # ================================
 
 builtin_custom_field = alation.custom_field.get_a_builtin_custom_field(
-    field_name = "description"
+    field_name = BUILT_IN_FIELD_NAME
 )
 
-if builtin_custom_field:
-    logging.info("Managed to fetch builtin custom field 'description'.")
+if builtin_custom_field is None:
+    logging.warning(f"No built-in field by name of '{BUILT_IN_FIELD_NAME}' found!")
+elif isinstance(builtin_custom_field, allie.CustomField):
+    logging.info(f"Managed to fetch builtin custom field 'BUILT_IN_FIELD_NAME'.")
+    logging.info(f"The ID of the builtin field: {builtin_custom_field.id}")
+else:
+    logging.error("Unexpected result. I don't know how to handle this ...")
+    sys.exit(1)
+
+

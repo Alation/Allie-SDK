@@ -1,5 +1,5 @@
 """
-Example of creating, listing, updating and deleting one document.
+Example of listing custom templates.
 
 Prerequisites:
 
@@ -61,7 +61,9 @@ templates = alation.custom_template.get_custom_templates(
     )
 
 
-if len(templates) > 1:
+if templates is None:
+    logging.warning(f"No custom template with the name '{CUSTOM_TEMPLATE_NAME}' found.")
+elif len(templates) > 1:
     logging.error(f"More than one document template with the name {CUSTOM_TEMPLATE_NAME} found.")
     logging.error("How to resolve: Make sure the template name is unique!")
     sys.exit(1)
@@ -76,3 +78,12 @@ else:
 
 all_templates = alation.custom_template.get_custom_templates(
 )
+
+if all_templates is None:
+    logging.warning("No custom templates found.")
+    sys.exit(1)
+elif isinstance(all_templates, list):
+    logging.info(f"Found {len(all_templates)} custom templates.")
+else:
+    logging.error("Unexpected result.")
+    sys.exit(1)

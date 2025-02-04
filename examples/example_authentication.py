@@ -60,8 +60,35 @@ alation = allie.Alation(
     , disable_authentication = True
 )
 
-val_access_token_res = alation.authentication.validate_access_token(access_token = "xawe9q8")
-print(val_access_token_res)
+val_access_token_res = alation.authentication.validate_access_token(access_token = "qsdasc")
 
-val_ref_token_res = alation.authentication.validate_refresh_token(refresh_token = "asdad9we")
-print(val_ref_token_res)
+if val_access_token_res:
+    # a JobDetails object will only be returned if something went wrong, e.g. token is not valid
+    if isinstance(val_access_token_res, allie.JobDetails):
+        if val_access_token_res.status == "failed":
+            error_reason = val_access_token_res.result["detail"]
+            logging.warning(error_reason)
+            if error_reason == "API Access Token provided is invalid.":
+                # you could go ahead here and get a new API access token
+                pass
+    elif isinstance(val_access_token_res, allie.AccessToken):
+        logging.info("Access Token is valid.")
+    else:
+        logging.info("Unexpected result.")
+
+
+
+val_ref_token_res = alation.authentication.validate_refresh_token(refresh_token = "hasdafx")
+if val_ref_token_res:
+    # a JobDetails object will only be returned if something went wrong, e.g. token is not valid
+    if isinstance(val_ref_token_res, allie.JobDetails):
+        if val_ref_token_res.status == "failed":
+            error_reason = val_ref_token_res.result["detail"]
+            logging.warning(error_reason)
+            if error_reason == "Refresh token provided is invalid.":
+                # you could go ahead here and get a new API access token
+                pass
+    elif isinstance(val_ref_token_res, allie.RefreshToken):
+        logging.info("Refresh Token is valid.")
+    else:
+        logging.info("Unexpected result.")

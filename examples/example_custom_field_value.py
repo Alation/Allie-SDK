@@ -21,11 +21,11 @@ import configparser
 
 # Define the object type and id of the object that you want to update
 OBJECT_TYPE = "glossary_term"
-OBJECT_OID = 17
+OBJECT_OID = 5
 # Define the name of the custom text field that you want to update
-CUSTOM_RICH_TEXT_FIELD_NAME = "Source(s)"
+CUSTOM_RICH_TEXT_FIELD_NAME = "Formula"
 # Define the value that you want to set the custom field to
-CUSTOM_RICH_TEXT_FIELD_VALUE = "Test Value"
+CUSTOM_RICH_TEXT_FIELD_VALUE = "a + b"
 
 
 # ================================
@@ -69,18 +69,26 @@ my_custom_fields = alation.custom_field.get_custom_fields(
     )
 )
 
-if my_custom_fields:
-    logging.info(f"Managed to fetch custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' by name.")
-    if len(my_custom_fields) > 1:
-        logging.warning(f"More than one custom field found with name: '{CUSTOM_RICH_TEXT_FIELD_NAME}'.")
-        sys.exit(1)
+if my_custom_fields is None:
+    logging.info(f"No custom field by the name of '{CUSTOM_RICH_TEXT_FIELD_NAME}' could be found!")
+    sys.exit(1)
+else:
+    if isinstance(my_custom_fields, list):
+        if len(my_custom_fields) > 1:
+            logging.warning(f"More than one custom field found with name: '{CUSTOM_RICH_TEXT_FIELD_NAME}'.")
+            sys.exit(1)
+        else:
+            field_id = my_custom_fields[0].id
+            logging.info(f"Managed to fetch custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' by name.")
+            logging.info(f"The field id is: {field_id}.")
     else:
-        field_id = my_custom_fields[0].id
-        logging.info(f"The field id is: {field_id}.")
+        logging.warning(f"Unexpected result ... I don't know how to handle this!")
+        sys.exit(1)
 
 # ================================
 # SET CUSTOM FIELD VALUE
 # ================================
+
 
 populate_custom_field_response = alation.custom_field.put_custom_field_values(
     [
@@ -95,12 +103,16 @@ populate_custom_field_response = alation.custom_field.put_custom_field_values(
     ]
 )
 
-if populate_custom_field_response[0].result == "successful":
-    logging.info(f"Custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' successfully populated.")
-elif populate_custom_field_response[0].result == "failed":
-    logging.error(f"Execution failed: {populate_custom_field_response[0].msg}")
-    logging.error(populate_custom_field_response[0].result.errors)
-    sys.exit(1)
+if populate_custom_field_response:
+    for r in populate_custom_field_response:
+        if r.status == "successful":
+            logging.info(f"Custom field '{CUSTOM_RICH_TEXT_FIELD_NAME}' successfully populated.")
+        elif r.status == "failed":
+            logging.error(f"Execution failed: {r.msg}")
+            logging.error(r.result.errors)
+            sys.exit(1)
+        else:
+            logging.warning(f"Hm, that's odd, we didn't expect to get a status of '{populate_custom_field_response[0].status}'!")
 
 # ================================
 # GET CUSTOM FIELD VALUE
@@ -117,5 +129,7 @@ get_field_values_response = alation.custom_field.get_custom_field_values(
     params
 )
 
-if get_field_values_response:
+if get_field_values_response is None:
+    logging.info("No custom field value found!")
+else:
     logging.info("Managed to fetch custom field value.")
