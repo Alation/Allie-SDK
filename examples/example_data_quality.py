@@ -17,8 +17,11 @@ import datetime
 # ================================
 # Set Global Variables
 # ================================
+
+# define the name of the data quality rule
 DQ_RULE_NAME = "sdk-test-1"
-TABLE_KEY = "1.public.parts" # <data-source-id>.<schema-name>.<table-name>
+# specify the key of the table
+TABLE_KEY = "2.camera_club.lenses" # <data-source-id>.<schema-name>.<table-name>
 
 # ================================
 # Define Logging Config
@@ -68,8 +71,17 @@ result_0 = alation.data_quality.post_data_quality_fields(
     dq_fields
 )
 
-if result_0[0].status == "successful":
-    logging.info("Data quality rule created successfully.")
+
+if result_0 is None:
+    logging.error("Tried to create Data quality field, but somehow received no response!")
+    sys.exit(1)
+elif isinstance(result_0, list):
+    for r in result_0:
+        if r.status == "successful":
+            logging.info("Data quality rule created successfully.")
+        else:
+            logging.error(f"Data quality rule creation failed: {r.result}")
+            sys.exit(1)
 else:
     logging.error("Data quality rule creation failed.")
     sys.exit(1)
@@ -89,10 +101,18 @@ value_item = allie.DataQualityValueItem(
 dq_values.append(value_item)
 result_1 = alation.data_quality.post_data_quality_values(dq_values)
 
-if result_1[0].status == "successful":
-    logging.info("Data quality value submitted successfully.")
+if result_1 is None:
+    logging.error("Tried to create Data quality value, but somehow received no response!")
+    sys.exit(1)
+elif isinstance(result_1, list):
+    for r in result_1:
+        if r.status == "successful":
+            logging.info("Data quality value created successfully.")
+        else:
+            logging.error(f"Data quality value creation failed: {r.result}")
+            sys.exit(1)
 else:
-    logging.error("Data quality value submission failed.")
+    logging.error("Data quality value creation failed.")
     sys.exit(1)
 
 # ================================
@@ -105,12 +125,30 @@ dq_fields = alation.data_quality.get_data_quality_fields(
     )
 )
 
+if dq_fields is None:
+    logging.warning("No data quality rules/fields found.")
+elif isinstance(dq_fields, list):
+    logging.info("Following data quality rules/fields found:")
+    for f in dq_fields:
+        logging.info(f"Name: {f.name}, Key: {f.key}")
+else:
+    logging.error("Unexpected result when fetching data quality fields.")
+    sys.exit(1)
+
 
 dq_values = alation.data_quality.get_data_quality_values(
     allie.DataQualityValueParams(
         field_key = DQ_RULE_NAME
     )
 )
+
+if dq_values is None:
+    logging.warning("No data quality values found.")
+elif isinstance(dq_values, list):
+    logging.info(f"{len(dq_values)} data quality values found.")
+else:
+    logging.error("Unexpected result when fetching data quality values.")
+    sys.exit(1)
 
 # ================================
 # Delete a data health rule and child values
@@ -120,18 +158,31 @@ result_2 = alation.data_quality.delete_data_quality_values(
     dq_values
 )
 
-if result_2[0].status == "successful":
-    logging.info("Data quality value deleted successfully.")
+
+if result_2 is None:
+    logging.error("Tried to delete Data quality value, but somehow received no response!")
+elif isinstance(result_2, list):
+    for r in result_2:
+        if r.status == "successful":
+            logging.info("Data quality value deleted successfully.")
+        else:
+            logging.error(f"Failed to delete data quality value: {r.result}")
 else:
-    logging.error("Failed to delete data quality value.")
+    logging.error("Unexpected result when deleting data quality value.")
     sys.exit(1)
 
 result_3 = alation.data_quality.delete_data_quality_fields(
     dq_fields
 )
 
-if result_3[0].status == "successful":
-    logging.info("Data quality rule deleted successfully.")
+if result_3 is None:
+    logging.error("Tried to delete Data quality fields, but somehow received no response!")
+elif isinstance(result_3, list):
+    for r in result_3:
+        if r.status == "successful":
+            logging.info("Data quality fields deleted successfully.")
+        else:
+            logging.error(f"Failed to delete data quality fields: {r.result}")
 else:
-    logging.error("Failed to delete data quality rule.")
+    logging.error("Unexpected result when deleting data quality fields.")
     sys.exit(1)

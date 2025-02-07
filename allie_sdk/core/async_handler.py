@@ -246,24 +246,26 @@ class AsyncHandler(RequestHandler):
                         job = AlationJob(self.access_token, self.session, self.host, async_response)
                         job_status = job.check_job_status()
                         results.extend(job_status)
+
                         # the custom fields values endpoint returns additionally a legacy job id
                         # see also https://github.com/Alation/Allie-SDK/issues/26
-                        r = re.compile(r"\(can be tracked using jobs API\)\:\s([0-9]+)$")
-                        m = r.search(job_status[0]["result"][0])
+                        if isinstance(job_status[0]["result"], list):
+                            r = re.compile(r"\(can be tracked using jobs API\)\:\s([0-9]+)$")
+                            m = r.search(job_status[0]["result"][0])
 
-                        if m is None:
-                            LOGGER.debug("No legacy job_id found")
-                        else:
-                            legacy_job_id = m.groups()[0]
-                            LOGGER.debug(f"Following legacy job id found: {legacy_job_id}")
-                            legacy_job = AlationJob(
-                                session=self.session
-                                , host=self.host
-                                , access_token=self.access_token
-                                , job_response={'job_id': legacy_job_id}
-                            )
-                            legacy_job_status = legacy_job.check_job_status()
-                            results.extend(legacy_job_status)
+                            if m is None:
+                                LOGGER.debug("No legacy job_id found")
+                            else:
+                                legacy_job_id = m.groups()[0]
+                                LOGGER.debug(f"Following legacy job id found: {legacy_job_id}")
+                                legacy_job = AlationJob(
+                                    session=self.session
+                                    , host=self.host
+                                    , access_token=self.access_token
+                                    , job_response={'job_id': legacy_job_id}
+                                )
+                                legacy_job_status = legacy_job.check_job_status()
+                                results.extend(legacy_job_status)
                     else:
                         # add the error details to the results list
                         results.append(async_response)

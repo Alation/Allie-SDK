@@ -71,12 +71,17 @@ domain_id:int
 
 domains = alation.domain.get_domains()
 
-if domains:
-    print("Successfully fetched domains")
+if domains is None:
+    logging.error("No domains found!")
+    sys.exit(1)
+elif isinstance(domains, list):
+    logging.info("Successfully fetched domains")
     for d in domains:
         if d.title == DOMAIN_NAME:
             domain_id = d.id
-
+else:
+    logging.error("Unexpected result ... I don't know what to do")
+    sys.exit(1)
 
 # ================================
 # ASSIGN OBJECTS TO DOMAINS
@@ -91,8 +96,15 @@ if domain_id:
         )
     )
 
-
-    if result[0].status == "successful":
-        print("Successfully assigned objects to domain.")
+    if result is None:
+        logging.error("Unable to assign objects to domain")
+        sys.exit(1)
+    elif isinstance(result, list):
+        for r in result:
+            if r.status == "successful":
+                logging.info("Successfully assigned objects to domain.")
+            else:
+                logging.error("Unable to assign objects to domain")
     else:
-        print("Something went wrong while assigning objects to domain.")
+        logging.info("Unexpected result ... I don't know what to do")
+        sys.exit(1)

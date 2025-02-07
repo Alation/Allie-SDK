@@ -66,7 +66,10 @@ templates = alation.custom_template.get_custom_templates(
         )
     )
 
-if templates:
+if templates is None:
+    logging.error("No template by the name of '{DOCUMENT_TEMPLATE_NAME}' was found.")
+    sys.exit(1)
+elif isinstance(templates, list):
     if len(templates) > 1:
         logging.error(f"More than one document template with the name {DOCUMENT_TEMPLATE_NAME} found.")
         logging.error("How to resolve: Make sure the template name is unique!")
@@ -74,8 +77,9 @@ if templates:
     else:
         my_template_id = templates[0].id
 else:
-    logging.error("No template by the name of '{DOCUMENT_TEMPLATE_NAME}' was found.")
+    logging.error("Unexpected result ... I don't know what to do ...")
     sys.exit(1)
+
 
 status_field_details = alation.custom_field.get_custom_fields(
     query_params = allie.CustomFieldParams(
@@ -128,10 +132,20 @@ create_document_response = alation.document.create_documents(
     ]
 )
 
-if create_document_response[0].status == "successful":
-    created_document_id = create_document_response[0].result.created_terms[0].id
-    print(f"Number of documents created: {create_document_response[0].result.created_term_count}")
-    print(f"The following documents were created (IDs): {created_document_id}")
+if create_document_response is None:
+    logging.error("Tried to create documents but received no response ...")
+    sys.exit(1)
+elif isinstance(create_document_response, list):
+    for d in create_document_response:
+        if d.status == "successful":
+            created_document_id = d.result.created_terms[0].id
+            logging.info(f"Number of documents created: {d.result.created_term_count}")
+            logging.info(f"The following documents were created (IDs): {created_document_id}")
+        else:
+            logging.error(f"Tried to create documents but received {d.status}: {d.result}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # ================================
 # GET DOCUMENTS
@@ -143,8 +157,15 @@ existing_documents = alation.document.get_documents(
     )
 )
 
-if existing_documents:
-    print(f"Retrieved document with id {created_document_id}.")
+if existing_documents is None:
+    logging.warning("No document was found.")
+elif isinstance(existing_documents, list):
+    logging.info(f"Found {len(existing_documents)} documents:")
+    for d in existing_documents:
+        logging.info(f"{d.title}")
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # Misc other examples:
 # docs = alation.document.get_documents()

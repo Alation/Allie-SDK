@@ -19,7 +19,8 @@ import configparser
 # Set Global Variables
 # ================================
 
-DOCUMENT_HUB_ID = 5
+# specify the document hub id
+DOCUMENT_HUB_ID = 4
 
 # ================================
 # Define Logging Config
@@ -59,7 +60,7 @@ alation = allie.Alation(
 
 status_field_details = alation.custom_field.get_custom_fields(
     query_params = allie.CustomFieldParams(
-        name_singular = 'Status'
+        name_singular = 'Description'
     )
 )
 
@@ -91,10 +92,22 @@ create_folder_response = alation.document_hub_folder.create_document_hub_folders
     ]
 )
 
-if create_folder_response[0].status == "successful":
-    created_folder_id = create_folder_response[0].result.created_folders[0].id
-    logging.info(f"Number of folders created: {create_folder_response[0].result.created_folder_count}")
-    logging.info(f"The following folders were created (IDs): {created_folder_id}")
+
+if create_folder_response is None:
+    logging.error("Tried to create doc hub folder but somehow got no feedback ...")
+    sys.exit(1)
+elif isinstance(create_folder_response, list):
+    for r in create_folder_response:
+        if r.status == "successful":
+            created_folder_id = create_folder_response[0].result.created_folders[0].id
+            logging.info(f"Number of folders created: {create_folder_response[0].result.created_folder_count}")
+            logging.info(f"The following folders were created (IDs): {created_folder_id}")
+        else:
+            logging.info(f"Something went wrong while creating folder: {r.result}")
+            sys.exit(1)
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 
 # ================================
@@ -107,8 +120,15 @@ existing_folders = alation.document_hub_folder.get_document_hub_folders(
     )
 )
 
-if existing_folders:
-    logging.info(f"Retrieved folder with id {created_folder_id}.")
+if existing_folders is None:
+    logging.warning(f"No existing document hub folder was found with id {created_folder_id}.")
+elif isinstance(existing_folders, list):
+    logging.info(f"Retrieved folder(s):")
+    for f in existing_folders:
+        logging.info(f.title)
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # Misc other examples
 # folders = alation.document_hub_folder.get_document_hub_folders(
@@ -146,9 +166,19 @@ update_folder_response = alation.document_hub_folder.update_document_hub_folders
     ]
 )
 
-if update_folder_response[0].status == "successful":
-    logging.info(f"Number of folders updated: {update_folder_response[0].result.updated_folder_count}")
-    logging.info(f"The following folders were updated (IDs): {update_folder_response[0].result.updated_folders[0].id}")
+if update_folder_response is None:
+    logging.error("Tried to update doc hub folder but somehow got no feedback ...")
+elif isinstance(update_folder_response, list):
+    for f in update_folder_response:
+        if f.status == "successful":
+            logging.info(f"Number of folders updated: {update_folder_response[0].result.updated_folder_count}")
+            logging.info(f"The following folders were updated (IDs): {update_folder_response[0].result.updated_folders[0].id}")
+        else:
+            logging.error(f"Something went wrong while updating folder: {f.result}")
+            sys.exit(1)
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # ================================
 # DELETE DOCUMENT HUB FOLDERS
@@ -158,6 +188,16 @@ delete_folder_response = alation.document_hub_folder.delete_document_hub_folders
     document_hub_folders = existing_folders
 )
 
-if delete_folder_response.status == "successful":
-    logging.info(f"Number of folders deleted: {delete_folder_response.result.deleted_folder_count}")
-    logging.info(f"The following folders were deleted (IDs): {delete_folder_response.result.deleted_folder_ids}")
+if delete_folder_response is None:
+    logging.error("Tried to delete doc hub folder but somehow got no feedback ...")
+    sys.exit(1)
+elif isinstance(delete_folder_response, allie.JobDetailsDocumentHubFolderDelete):
+    if delete_folder_response.status == "successful":
+        logging.info(f"Number of folders deleted: {delete_folder_response.result.deleted_folder_count}")
+        logging.info(f"The following folders were deleted (IDs): {delete_folder_response.result.deleted_folder_ids}")
+    else:
+        logging.error("Something went wrong while deleting doc hub folder: {delete_folder_response.result}")
+        sys.exit(1)
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)

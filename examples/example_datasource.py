@@ -59,8 +59,16 @@ ocf_datasources = alation.datasource.get_ocf_datasources(
     )
 )
 
-if ocf_datasources:
-    print("Successfully retrieved list of OCF datasources")
+if ocf_datasources is None:
+    logging.warning("No OCF datasources found.")
+elif isinstance(ocf_datasources, list):
+    logging.info("Successfully retrieved list of OCF datasources:")
+    for od in ocf_datasources:
+        logging.info(od.title)
+else:
+    logging.error("Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
 
 # ================================
 # Get a list of native data sources configured in Alation
@@ -68,5 +76,12 @@ if ocf_datasources:
 
 native_datasources = alation.datasource.get_native_datasources()
 
-if native_datasources:
-    print("Successfully retrieved list of native datasources")
+if native_datasources is None:
+    logging.warning("No native datasources found.")
+elif isinstance(native_datasources, list):
+    logging.info("Successfully retrieved list of native datasources:")
+    for nd in native_datasources:
+        logging.info(nd.title)
+else:
+    logging.error("Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
