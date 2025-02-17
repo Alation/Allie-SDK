@@ -39,14 +39,14 @@ class AlationTrustChecks(RequestHandler):
         if trust_checks:
             return [TrustCheckFlag.from_api_response(check) for check in trust_checks]
 
-    def post_trust_check(self, trust_check: TrustCheckFlagItem) -> TrustCheckFlag:
+    def post_trust_check(self, trust_check: TrustCheckFlagItem) -> JobDetails:
         """Post (Create) an Alation Trust Check Flag
 
         Args:
             trust_check (TrustCheckItem): Alation Trust Check Flag to be created.
 
         Returns:
-            TrustCheckFlag: Alation Trust Check Flag.
+            JobDetails:
 
         """
         validate_rest_payload(payload = [trust_check], expected_types = (TrustCheckFlagItem,))
@@ -64,14 +64,14 @@ class AlationTrustChecks(RequestHandler):
                 mapped_trust_check = self._map_request_success_to_job_details(TrustCheckFlag.from_api_response(trust_check))
                 return JobDetails.from_api_response(mapped_trust_check)
 
-    def put_trust_check(self, trust_check: TrustCheckFlag) -> TrustCheckFlag:
+    def put_trust_check(self, trust_check: TrustCheckFlag) -> JobDetails:
         """Put (Update) an Alation Trust Check Flag Reason only if the Flag Type is DEPRECATION or WARNING
 
         Args:
             trust_check (TrustCheckFlag): Alation Trust Check Flag to be updated.
 
         Returns:
-            TrustCheckFlag: Updated Alation Trust Check Flag.
+            JobDetails
 
         """
         validate_rest_payload(payload = [trust_check], expected_types = (TrustCheckFlag,))
@@ -89,14 +89,14 @@ class AlationTrustChecks(RequestHandler):
                 mapped_updated_trust_check = self._map_request_success_to_job_details(TrustCheckFlag.from_api_response(updated_trust_check))
                 return JobDetails.from_api_response(mapped_updated_trust_check)
 
-    def delete_trust_check(self, trust_check: TrustCheckFlag) -> bool:
+    def delete_trust_check(self, trust_check: TrustCheckFlag) -> JobDetails:
         """Delete an Alation Trust Check Flag.
 
         Args:
             trust_check (TrustCheckFlag): Alation Trust Check Flag to be deleted.
 
         Returns:
-            bool: Success of the API DELETE Call.
+            JobDetails
 
         """
         validate_rest_payload(payload = [trust_check], expected_types = (TrustCheckFlag,))

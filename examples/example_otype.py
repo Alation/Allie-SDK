@@ -56,4 +56,6 @@ alation = allie.Alation(
 otypes = alation.otype.get_otypes()
 
 if otypes:
-    print(f"All Otypes fetched successfully.")
+    logging.info(f"All Otypes fetched successfully:")
+    for o in otypes:
+        logging.info(f"\t{o.name}")

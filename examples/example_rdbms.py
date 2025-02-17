@@ -14,12 +14,14 @@ import logging
 import sys
 import configparser
 
+from allie_sdk import JobDetailsRdbmsResult
+
 # ================================
 # Set Global Variables
 # ================================
 
 # adjust to your requirements
-DATA_SOURCE_ID = 1
+DATA_SOURCE_ID = 3
 
 # ================================
 # Define Logging Config
@@ -62,11 +64,12 @@ steward_field =  alation.custom_field.get_custom_fields(
     )
 )
 
-if steward_field:
-    steward_field_id = steward_field[0].id
-else:
+if steward_field is None:
     logging.error("No Steward custom field found")
     sys.exit(1)
+else:
+    steward_field_id = steward_field[0].id
+
 
 # ================================
 # CREATE SCHEMA WITH TECHNICAL AND LOGICAL METADATA
@@ -99,10 +102,21 @@ Example response content:
 [JobDetailsRdbms(status='successful', msg='Job finished in 0.445766 seconds at 2024-09-24 14:28:19.300729+00:00', result=[JobDetailsRdbmsResult(response='Upserted 1 schema objects.', mapping=[JobDetailsRdbmsResultMapping(id=218, key='193.ORDERS')], errors=[])])]
 """
 
-if post_schema_response[0].status == "successful":
-    created_schema_id = post_schema_response[0].result[0].mapping[0].id
-    print(post_schema_response[0].result[0].response)
-    print(f"The following documents were created (IDs): {created_schema_id}")
+if post_schema_response is None:
+    logging.error("Tried to submit request ... but somehow heard nothing back!")
+    sys.exit(1)
+else:
+    if isinstance(post_schema_response, list):
+        for r in post_schema_response:
+            if r.status == "successful":
+                created_schema_id = r.result[0].mapping[0].id
+                logging.info(r.result[0].response)
+                logging.info(f"The following documents were created (IDs): {created_schema_id}")
+            else:
+                logging.error(f"Finished with status {r.status}: {r.result}")
+    else:
+        logging.error("Unexpected result ... I don't know how to handle this ...")
+        sys.exit(1)
 
 # ================================
 # CREATE TABLE WITH TECHNICAL AND LOGICAL METADATA
@@ -125,10 +139,21 @@ Example response content:
 [JobDetailsRdbms(status='successful', msg='Job finished in 0.313928 seconds at 2024-09-24 14:30:52.634298+00:00', result=[JobDetailsRdbmsResult(response='Upserted 1 table objects.', mapping=[JobDetailsRdbmsResultMapping(id=115164, key='193.ORDERS.refunds')], errors=[])])]
 """
 
-if post_table_response[0].status == "successful":
-    created_table_id = post_table_response[0].result[0].mapping[0].id
-    print(post_table_response[0].result[0].response)
-    print(f"The following documents were created (IDs): {created_table_id}")
+if post_table_response is None:
+    logging.error("Tried to submit request ... but somehow heard nothing back!")
+    sys.exit(1)
+else:
+    if isinstance(post_table_response, list):
+        for r in post_table_response:
+            if r.status == "successful":
+                created_table_id = r.result[0].mapping[0].id
+                logging.info(r.result[0].response)
+                logging.info(f"The following documents were created (IDs): {created_table_id}")
+            else:
+                logging.error(f"Finished with status {r.status}: {r.result}")
+    else:
+        logging.error("Unexpected result ... I don't know how to handle this ...")
+        sys.exit(1)
 
 # ================================
 # CREATE COLUMN WITH TECHNICAL AND LOGICAL METADATA
@@ -152,8 +177,18 @@ Example response content:
 [JobDetailsRdbms(status='successful', msg='Job finished in 0.586626 seconds at 2024-09-24 14:32:38.439446+00:00', result=[JobDetailsRdbmsResult(response='Upserted 1 attribute objects.', mapping=[JobDetailsRdbmsResultMapping(id=848418, key='193.ORDERS.refunds.id')], errors=[])])]
 """
 
-if post_column_response[0].status == "successful":
-    created_column_id = post_column_response[0].result[0].mapping[0].id
-    print(post_column_response[0].result[0].response)
-    print(f"The following documents were created (IDs): {created_column_id}")
-
+if post_column_response is None:
+    logging.error("Tried to submit request ... but somehow heard nothing back!")
+    sys.exit(1)
+else:
+    if isinstance(post_column_response, list):
+        for r in post_column_response:
+            if r.status == "successful":
+                created_column_id = r.result[0].mapping[0].id
+                logging.info(r.result[0].response)
+                logging.info(f"The following columns were created (IDs): {created_column_id}")
+            else:
+                logging.error(f"Finished with status {r.status}: {r.result}")
+    else:
+        logging.error("Unexpected result ... I don't know how to handle this ...")
+        sys.exit(1)

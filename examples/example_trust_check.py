@@ -74,12 +74,20 @@ post_trust_check_response = alation.trust_checks.post_trust_check(
     )
 )
 
-if post_trust_check_response:
+if post_trust_check_response is None:
+    logging.error("Tried to post trust check but somehow received no response ...")
+    sys.exit(1)
+elif isinstance(post_trust_check_response, allie.JobDetails):
     if post_trust_check_response.status == "successful":
         trust_check_flag_id = post_trust_check_response.result.id
         print(f"Posted info to trust check flag with id: {trust_check_flag_id}")
     else:
+        logging.error(f"The job ended with following status: {post_trust_check_response.status}.")
+        logging.error(f"More details: {post_trust_check_response.result}")
         sys.exit(1)
+else:
+    logging.error("Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # ================================
 # GET TRUST CHECK
@@ -92,8 +100,11 @@ get_trust_check_response = alation.trust_checks.get_trust_checks(
     )
 )
 
-if get_trust_check_response:
-    print("Trust checks successfully fetched.")
+if get_trust_check_response is None:
+    logging.error("Tried to get trust check but somehow received no response ...")
+    sys.exit(1)
+else:
+    logging.info("Trust checks successfully fetched.")
 
 # ================================
 # UPDATE TRUST CHECK
@@ -109,12 +120,20 @@ update_trust_check_response = alation.trust_checks.put_trust_check(
     )
 )
 
-if update_trust_check_response:
+if update_trust_check_response is None:
+    logging.error("Tried to update trust check but somehow received no response ...")
+    sys.exit(1)
+elif isinstance(update_trust_check_response, allie.JobDetails):
     if update_trust_check_response.status == "successful":
         trust_check_flag_id = update_trust_check_response.result.id
         print(f"Updated trust check flag with id: {trust_check_flag_id}")
     else:
+        logging.error(f"The job ended with following status: {update_trust_check_response.status}.")
+        logging.error(f"More details: {update_trust_check_response.result}")
         sys.exit(1)
+else:
+    logging.error("Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # ================================
 # DELETE TRUST CHECK
@@ -126,5 +145,16 @@ delete_trust_check_response = alation.trust_checks.delete_trust_check(
     )
 )
 
-if delete_trust_check_response:
-    print("Trust check successfully deleted.")
+if delete_trust_check_response is None:
+    logging.error("Tried to delete trust check but somehow received no response ...")
+    sys.exit(1)
+elif isinstance(delete_trust_check_response, allie.JobDetails):
+    if delete_trust_check_response.status == "successful":
+        print(f"Deleted trust check flag.")
+    else:
+        logging.error(f"The job ended with following status: {delete_trust_check_response.status}.")
+        logging.error(f"More details: {delete_trust_check_response.result}")
+        sys.exit(1)
+else:
+    logging.error("Unexpected result ... I don't know what to do ...")
+    sys.exit(1)

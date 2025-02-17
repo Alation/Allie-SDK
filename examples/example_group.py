@@ -61,4 +61,4 @@ stewards_group = alation.group.get_groups(
 
 if stewards_group:
     stewards_group_id = stewards_group[0].id
-    print(f"The group id for the Stewards group is {stewards_group_id}")
+    logging.info(f"The group id for the Stewards group is {stewards_group_id}")
