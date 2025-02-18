@@ -5,6 +5,13 @@ Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
 
+Note:
+
+This file is not meant to be run in one go. Run up until the
+"POST CSV TO REMOVE DUPLICATE ALATION USERS" section, then adjust
+the contents of the users csv file and run the rest.
+
+
 """
 
 import allie_sdk as allie
@@ -59,16 +66,24 @@ get_users_response = alation.user.get_users(
     )
 )
 
-if get_users_response:
+if get_users_response is None:
+    logging.warning("No users found.")
+    sys.exit(1)
+elif isinstance(get_users_response, list):
     display_name = get_users_response[0].display_name
-    print(f"The display name of user with id 1 is: {display_name}")
+    logging.info(f"The display name of user with id 1 is: {display_name}")
+else:
+    logging.error(f"Unexpected response ... I don't know what to do ...")
+    sys.exit(1)
 
 # or alternatively you can use this method as well
 get_users_response = alation.user.get_a_user(
     user_id = 1
 )
 
-if get_users_response:
+if get_users_response is None:
+    logging.warning("No users found.")
+else:
     display_name = get_users_response.display_name
     print(f"The display name of user with id 1 is: {display_name}")
 
@@ -80,7 +95,7 @@ get_authenticated_user_response = alation.user.get_authenticated_user()
 
 if get_authenticated_user_response:
     email = get_authenticated_user_response.email
-    print(f"The email of the authenticated user is: {email}")
+    logging.info(f"The email of the authenticated user is: {email}")
 
 # ================================
 # GET DUPLICATE ALATION USERS AS CSV
@@ -88,11 +103,14 @@ if get_authenticated_user_response:
 
 get_duplicated_users_response = alation.user.get_generate_dup_users_accts_csv()
 
-if isinstance(get_duplicated_users_response, allie.JobDetails):
+if get_duplicated_users_response is None:
+    logging.warning("No response received.")
+elif isinstance(get_duplicated_users_response, allie.JobDetails):
     if get_duplicated_users_response.status == "successful":
-        print(get_duplicated_users_response.msg)
+        logging.info(get_duplicated_users_response.msg)
     else:
-        print(get_duplicated_users_response.result)
+        logging.error(f"Something went wrong: {get_duplicated_users_response.result}")
+        sys.exit(1)
 else:
     # write get_csv_result CSV into a file
     with open('/tmp/dup_users.csv', 'w') as csv_file:
@@ -122,6 +140,6 @@ SN,Username,email,Action,Group\r\n
 
 if remove_duplicated_users_response:
     if remove_duplicated_users_response.status == "successful":
-        print(remove_duplicated_users_response.msg)
+        logging.info(remove_duplicated_users_response.msg)
     else:
-        print(remove_duplicated_users_response.result)
+        logging.info(remove_duplicated_users_response.result)

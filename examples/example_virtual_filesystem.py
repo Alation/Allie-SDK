@@ -21,7 +21,7 @@ import configparser
 
 # Note: this is for uploading the technical metadata
 # You have to create the Alation virtual data source beforehand
-FILE_SYSTEM_ID = 1
+FILE_SYSTEM_ID = 3
 
 # ================================
 # Define Logging Config
@@ -90,11 +90,19 @@ vfs4 = allie.VirtualFileSystemItem(
 
 vfs_response = alation.virtual_filesystem.post_metadata(fs_id=FILE_SYSTEM_ID, vfs_objects=[vfs1, vfs2, vfs3, vfs4])
 
-if vfs_response[0].status == "successful":
-    print("Status for creating virtual objects: successful")
-    print(vfs_response[0].result[0])
-elif vfs_response[0].status == "failed":
-    print(vfs_response[0].result)
+if vfs_response is None:
+    logging.error(f"Unable to create objects within virtual datasource.")
+    sys.exit(1)
+elif isinstance(vfs_response, list):
+    for r in vfs_response:
+        if r.status == "successful":
+            logging.info("Status for creating virtual objects: successful")
+        else:
+            logging.error(f"Job ended with status {r.status}: {r.result}")
+            sys.exit(1)
+else:
+    logging.error(f"Received unexpected response ... I don't know what to do ...")
+    sys.exit(1)
 
 
 # ================================
@@ -110,6 +118,16 @@ vfs_response = alation.virtual_filesystem.post_metadata(fs_id=FILE_SYSTEM_ID, vf
 # Remove All Objects
 vfs_response = alation.virtual_filesystem.post_metadata(fs_id=FILE_SYSTEM_ID, vfs_objects=[])
 
-if vfs_response[0].status == "successful":
-    print("Status for deleting virtual objects: successful")
-    print(vfs_response[0].result[0])
+if vfs_response is None:
+    logging.error(f"Unable to delete objects within virtual datasource.")
+    sys.exit(1)
+elif isinstance(vfs_response, list):
+    for r in vfs_response:
+        if r.status == "successful":
+            logging.info("Status for creating virtual objects: successful")
+        else:
+            logging.error(f"Job ended with status {r.status}: {r.result}")
+            sys.exit(1)
+else:
+    logging.error(f"Received unexpected response ... I don't know what to do ...")
+    sys.exit(1)

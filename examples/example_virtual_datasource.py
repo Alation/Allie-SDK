@@ -62,7 +62,7 @@ alation = allie.Alation(
 # Add/Update Objects
 ds_schema = "test"
 
-# create the schema first and then submit the payload, otherwise the parser throws and error
+# create the schema first and then submit the payload, otherwise the parser throws an error
 s1 = allie.VirtualDataSourceSchema()
 s1.key = f'{DATA_SOURCE_ID}.{ds_schema}'
 s1.description = "New Schema for API testing"
@@ -111,10 +111,21 @@ vds_response = alation.virtual_datasource.post_metadata(
     , query_params=params
 )
 
-if vds_response[0].status == "successful":
-    print("Status for creating virtual objects: successful")
-    print(f"> Received {vds_response[0].result.number_received} objects")
-    print(f"> Updated {vds_response[0].result.updated_objects} objects")
+if vds_response is None:
+    logging.error(f"Unable to create objects within virtual datasource.")
+    sys.exit(1)
+elif isinstance(vds_response, list):
+    for r in vds_response:
+        if r.status == "successful":
+            logging.info("Status for creating virtual objects: successful")
+            logging.info(f"> Received {r.result.number_received} objects")
+            logging.info(f"> Updated {r.result.updated_objects} objects")
+        else:
+            logging.error(f"Job ended with status {r.status}: {r.result}")
+            sys.exit(1)
+else:
+    logging.error(f"Received unexpected response ... I don't know what to do ...")
+    sys.exit(1)
 
 # ================================
 # DELETE VIRTUAL OBJECTS
@@ -131,7 +142,18 @@ vds_response = alation.virtual_datasource.post_metadata(
     , query_params=params
 )
 
-if vds_response[0].status == "successful":
-    print("Status for deleting virtual objects: successful")
-    print(f"> Received {vds_response[0].result.number_received} objects")
-    print(f"> Updated {vds_response[0].result.updated_objects} objects")
+if vds_response is None:
+    logging.error(f"Unable to delete objects within virtual datasource.")
+    sys.exit(1)
+elif isinstance(vds_response, list):
+    for r in vds_response:
+        if r.status == "successful":
+            logging.info("Status for creating virtual objects: successful")
+            logging.info(f"> Received {r.result.number_received} objects")
+            logging.info(f"> Updated {r.result.updated_objects} objects")
+        else:
+            logging.error(f"Job ended with status {r.status}: {r.result}")
+            sys.exit(1)
+else:
+    logging.error(f"Received unexpected response ... I don't know what to do ...")
+    sys.exit(1)

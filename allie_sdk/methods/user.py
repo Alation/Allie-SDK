@@ -105,7 +105,7 @@ class AlationUser(RequestHandler):
 
         return final_result
 
-    def get_generate_dup_users_accts_csv(self) -> str:
+    def get_generate_dup_users_accts_csv(self) -> str | JobDetails:
         """Get duplicate Alation Users as CSV.
 
         Returns:
