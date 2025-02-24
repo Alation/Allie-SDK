@@ -111,7 +111,7 @@ else:
             if r.status == "successful":
                 created_schema_id = r.result[0].mapping[0].id
                 logging.info(r.result[0].response)
-                logging.info(f"The following documents were created (IDs): {created_schema_id}")
+                logging.info(f"The following schemas were created (IDs): {created_schema_id}")
             else:
                 logging.error(f"Finished with status {r.status}: {r.result}")
     else:
@@ -148,7 +148,7 @@ else:
             if r.status == "successful":
                 created_table_id = r.result[0].mapping[0].id
                 logging.info(r.result[0].response)
-                logging.info(f"The following documents were created (IDs): {created_table_id}")
+                logging.info(f"The following tables were created (IDs): {created_table_id}")
             else:
                 logging.error(f"Finished with status {r.status}: {r.result}")
     else:

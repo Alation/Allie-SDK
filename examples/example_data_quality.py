@@ -78,7 +78,13 @@ if result_0 is None:
 elif isinstance(result_0, list):
     for r in result_0:
         if r.status == "successful":
-            logging.info("Data quality rule created successfully.")
+            # Checking for success here is not enough - we need to analyse the content of the returned
+            # message to understand whether the fields got created
+            if r.result.fields.created.count > 0:
+                logging.info("Data quality rule created successfully.")
+            else:
+                logging.error("Data quality rule request status successful but nothing was created.")
+                sys.exit(1)
         else:
             logging.error(f"Data quality rule creation failed: {r.result}")
             sys.exit(1)
@@ -107,7 +113,13 @@ if result_1 is None:
 elif isinstance(result_1, list):
     for r in result_1:
         if r.status == "successful":
-            logging.info("Data quality value created successfully.")
+            # Checking for success here is not enough - we need to analyse the content of the returned
+            # message to understand whether the values got created
+            if r.result.values.created.count > 0:
+                logging.info("Data quality value created successfully.")
+            else:
+                logging.error("Data quality value request status successful but nothing was created.")
+                sys.exit(1)
         else:
             logging.error(f"Data quality value creation failed: {r.result}")
             sys.exit(1)
@@ -164,9 +176,16 @@ if result_2 is None:
 elif isinstance(result_2, list):
     for r in result_2:
         if r.status == "successful":
-            logging.info("Data quality value deleted successfully.")
+            # Checking for success here is not enough - we need to analyse the content of the returned
+            # message to understand whether the fields got created
+            if r.result.values.deleted.count > 0:
+                logging.info("Data quality value deleted successfully.")
+            else:
+                logging.error("Data quality value request status successful but nothing was deleted.")
+                sys.exit(1)
         else:
             logging.error(f"Failed to delete data quality value: {r.result}")
+            sys.exit(1)
 else:
     logging.error("Unexpected result when deleting data quality value.")
     sys.exit(1)
@@ -180,9 +199,16 @@ if result_3 is None:
 elif isinstance(result_3, list):
     for r in result_3:
         if r.status == "successful":
-            logging.info("Data quality fields deleted successfully.")
+            # Checking for success here is not enough - we need to analyse the content of the returned
+            # message to understand whether the fields got created
+            if r.result.fields.deleted.count > 0:
+                logging.info("Data quality fields deleted successfully.")
+            else:
+                logging.error("Data quality fields request status successful but nothing was deleted.")
+                sys.exit(1)
         else:
             logging.error(f"Failed to delete data quality fields: {r.result}")
+            sys.exit(1)
 else:
     logging.error("Unexpected result when deleting data quality fields.")
     sys.exit(1)
