@@ -79,3 +79,7 @@ Args:
 
 Returns:
 - List of Job Details
+
+## Examples
+
+See `/examples/example_domain.py`.

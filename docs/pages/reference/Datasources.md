@@ -195,3 +195,7 @@ Args:
 * query_params (`NativeDatasourceParams`): REST API Native Datasource Query Parameters.
 Returns:
 * list: Alation Native Data Sources
+
+## Examples
+
+See `/examples/example_data_source.py`.

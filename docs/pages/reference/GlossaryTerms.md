@@ -116,33 +116,7 @@ Returns:
 
 
 ## Examples
-### Get Terms
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get Terms  
-params = allie.GlossaryTerm(title='My Term')
-get_terms_response = alation.glossary_term.get_glossary_terms(query_params=params)
-```
-
-### Create Terms
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create Terms 
-term = allie.GlossaryTermItem(title='My Term', description='KPI Metrics')
-post_terms_response = alation.glossary_term.post_glossary_terms(glossary_terms=[term])
-```
-
+See `/examples/example_glossary_term.py`.
 
 

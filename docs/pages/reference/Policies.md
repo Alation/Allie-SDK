@@ -159,20 +159,7 @@ Returns:
 * Job details
 
 ## Examples
+
 ### Create a policy
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create a Policy 
-policy_item = allie.BusinessPolicyPostItem(
-    title='PII Policy',
-    description='Policy outlining PII in our organization',
-    template_id=1
-)
-create_policy_result = alation.business_policy.create_business_policies(policy_item)
-```
+See `/examples/example_policy.py`.

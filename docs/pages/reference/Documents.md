@@ -122,33 +122,8 @@ Returns:
 
 
 ## Examples
-### Get documents
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get documents  
-params = allie.DocumentParams(document_hub_id=5)
-get_documents_result = alation.document.get_documents(query_params=params)
-```
-
-### Create Documents
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create Documents 
-document = allie.DocumentPostItem(title='Finance Document', folder_ids=[1,4], document_hub_id=5)
-create_documents_result = alation.document.create_documents(documents=[document])
-```
+See `/examples/example_document.py`.
 
 
 

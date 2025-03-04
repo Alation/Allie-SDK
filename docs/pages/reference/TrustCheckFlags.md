@@ -116,39 +116,5 @@ Returns:
 * JobDetails
 
 ## Examples
-### Create a trust check flag
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create a Trust Check Flag
-trust_check_item = allie.TrustCheckFlagItem(
-    flag_type='WARNING',
-    flag_reason='The nightly ETL Job Failed. Data Engineering team looking to resolve',
-    subject=allie.TrustCheckFlagSubject(id=6, otype='table')
-)
-alation.trust_checks.post_trust_check(trust_check_item)
-```
-
-### Delete all trust check flags set by a certain user
-```python
-import allie_dq_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get all the Trust Check Flags
-trust_check_flags = alation.trust_checks.get_trust_checks()
-
-# Loop through the list and delete if Author ID = 1
-for flag in trust_check_flags:
-    flag: allie.TrustCheckFlag
-    if flag.user.id == 1:
-        alation.trust_checks.delete_trust_check(flag)
-```
+See `/examples/example_trust_check.py`.

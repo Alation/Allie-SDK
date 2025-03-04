@@ -310,34 +310,8 @@ Returns:
 
 
 ## Examples
-### Get Schemas
 
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get Schemas  
-params = allie.SchemaParams(ds_id=3)
-    get_schemas_result = alation.rdbms.get_schemas(query_params=params)
-```
-
-### Create Schemas
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create Schemas 
-schema = allie.SchemaItem(title='Finance Schema', description='This is the Finance schema', key='2.finance')
-post_schemas_result = alation.rdbms.post_schemas(ds_id=2, schemas=[schema])
-```
+See `/examples/example_rdbms.py`.
 
 
 

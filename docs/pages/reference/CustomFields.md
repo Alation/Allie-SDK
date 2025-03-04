@@ -226,32 +226,8 @@ Returns:
 * list of job details
 
 ## Examples
-### Get a custom field
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get custom field  
-get_field_result = alation.custom_field.get_a_custom_field(field_id=7)
-```
-
-### Get custom field values
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get custom field values 
-params = allie.CustomFieldValueParams(otype='table', oid=2, field_id=5)
-get_field_values_result = alation.custom_field.get_custom_field_values(params)
-```
+See `/examples/example_custom_field.py`.
 
 
 
