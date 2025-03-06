@@ -164,6 +164,7 @@ class ColumnIndex(BaseClass):
 @dataclass
 class Column(BaseRDBMS):
     column_type: str = field(default=None)
+    column_comment: str = field(default=None)
     index: ColumnIndex = field(default=None)
     nullable: bool = field(default=None)
     schema_id: int = field(default=None)

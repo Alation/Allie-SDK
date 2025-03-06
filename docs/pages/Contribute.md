@@ -11,6 +11,24 @@ This topic describes how to contribute to the Allie SDK project.
 * TOC
 {:toc}
 
+## Setup
+
+Before you can contribute to the Allie SDK project, you need to have the following installed:
+ - Python 3.10+
+
+Install package and dev dependencies:
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+Run the test suite using:
+
+```bash
+python -m pytest
+```
+
 ## Get the source code and set up a branch
 
 ## Code and commit
