@@ -2,6 +2,9 @@
 
 import requests_mock
 import unittest
+
+from requests import HTTPError
+
 from allie_sdk.methods.glossary_term import *
 
 MOCK_GLOSSARY_TERM = AlationGlossaryTerm(
@@ -47,9 +50,11 @@ class TestGlossaryTerm(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v2/term/', json=failed_response, status_code=403)
-        terms = MOCK_GLOSSARY_TERM.get_glossary_terms()
+        with self.assertRaises(HTTPError) as context:
+            MOCK_GLOSSARY_TERM.get_glossary_terms()
 
-        self.assertIsNone(terms)
+        self.assertEqual(context.exception.response.status_code, 403)
+
 
     @requests_mock.Mocker()
     def test_success_post_glossary_terms(self, m):
@@ -115,9 +120,11 @@ class TestGlossaryTerm(unittest.TestCase):
             ]
         }
         m.register_uri('POST', '/integration/v2/term/', json=failed_response, status_code=400)
-        async_response = MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
 
-        self.assertFalse(async_response)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
+
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_put_glossary_terms(self, m):
@@ -222,9 +229,10 @@ class TestGlossaryTerm(unittest.TestCase):
         }
 
         m.register_uri('DELETE', '/integration/v2/term/', json=failed_response, status_code=400)
-        async_response = MOCK_GLOSSARY_TERM.delete_glossary_terms(mock_term_list)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_GLOSSARY_TERM.delete_glossary_terms(mock_term_list)
 
-        self.assertFalse(async_response)
+        self.assertEqual(context.exception.response.status_code, 400)
 
 
 if __name__ == '__main__':

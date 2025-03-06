@@ -1,8 +1,7 @@
-"""Test the Alation REST API Custom Field Methods."""
-
 import requests_mock
 import unittest
 from allie_sdk.methods.custom_field import *
+from requests.exceptions import HTTPError
 
 MOCK_CUSTOM_FIELD = AlationCustomField(
     access_token='test', session=requests.session(), host='https://test.com'
@@ -13,7 +12,6 @@ class TestCustomField(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_success_get_custom_fields(self, m):
-
         mock_params = CustomFieldParams()
         mock_params.field_type.add('MULTI_PICKER')
         success_response = [
@@ -39,19 +37,18 @@ class TestCustomField(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_get_custom_fields(self, m):
-
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v2/custom_field/', json=failed_response, status_code=403)
-        custom_fields = MOCK_CUSTOM_FIELD.get_custom_fields()
 
-        self.assertIsNone(custom_fields)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_CUSTOM_FIELD.get_custom_fields()
+        self.assertEqual(context.exception.response.status_code, 403)
 
     @requests_mock.Mocker()
     def test_success_get_custom_field_values(self, m):
-
         mock_params = CustomFieldValueParams()
         mock_params.field_id.add(10006)
         success_response = [
@@ -71,19 +68,18 @@ class TestCustomField(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_get_custom_field_values(self, m):
-
         failed_response = {
             "detail": "Invalid query parameters: [test]",
             "code": "400006"
         }
         m.register_uri('GET', '/integration/v2/custom_field_value/', json=failed_response, status_code=400)
-        field_values = MOCK_CUSTOM_FIELD.get_custom_field_values()
 
-        self.assertIsNone(field_values)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_CUSTOM_FIELD.get_custom_field_values()
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_get_a_builtin_custom_field(self, m):
-
         success_response = {
             "allow_multiple": True,
             "allowed_otypes": ["groupprofile", "user"],
@@ -105,19 +101,18 @@ class TestCustomField(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_get_a_builtin_custom_field(self, m):
-
         failed_response = {
             "detail": "Not found.",
             "code": "404000"
         }
         m.register_uri('GET', '/integration/v2/custom_field/builtin/stewards/', json=failed_response, status_code=404)
-        custom_field = MOCK_CUSTOM_FIELD.get_a_builtin_custom_field('stewards')
 
-        self.assertIsNone(custom_field)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_CUSTOM_FIELD.get_a_builtin_custom_field('stewards')
+        self.assertEqual(context.exception.response.status_code, 404)
 
     @requests_mock.Mocker()
     def test_success_get_a_custom_field(self, m):
-
         success_response = {
             "allow_multiple": False,
             "allowed_otypes": None,
@@ -139,19 +134,18 @@ class TestCustomField(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_failed_get_a_custom_filed(self, m):
-
         failed_response = {
             "detail": "Not found.",
             "code": "404000"
         }
         m.register_uri('GET', '/integration/v2/custom_field/10012/', json=failed_response, status_code=404)
-        custom_field = MOCK_CUSTOM_FIELD.get_a_custom_field(10012)
 
-        self.assertIsNone(custom_field)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_CUSTOM_FIELD.get_a_custom_field(10012)
+        self.assertEqual(context.exception.response.status_code, 404)
 
     @requests_mock.Mocker()
     def test_success_post_custom_fields(self, m):
-
         mock_field_1 = CustomFieldItem()
         mock_field_1.field_type = 'RICH_TEXT'
         mock_field_1.name_singular = 'Testing'
@@ -180,12 +174,10 @@ class TestCustomField(unittest.TestCase):
         async_result = MOCK_CUSTOM_FIELD.post_custom_fields(mock_fields_list)
 
         input_transformed = [JobDetailsCustomFieldPost(**job_response)]
-        # self.assertTrue(async_result)
         self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_custom_fields(self, m):
-
         mock_field_1 = CustomFieldItem()
         mock_field_1.field_type = 'RICH_TEXT'
         mock_field_1.name_singular = 'Testing'
@@ -200,13 +192,13 @@ class TestCustomField(unittest.TestCase):
         ]
 
         m.register_uri('POST', '/integration/v2/custom_field/', json=failed_response, status_code=400)
-        async_result = MOCK_CUSTOM_FIELD.post_custom_fields(mock_fields_list)
 
-        self.assertFalse(async_result)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_CUSTOM_FIELD.post_custom_fields(mock_fields_list)
+        self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
     def test_success_post_custom_field_values(self, m):
-
         mock_value_1 = CustomFieldValueItem()
         mock_value_1.field_id = 1
         mock_value_1.otype = 'Table'
@@ -241,12 +233,10 @@ class TestCustomField(unittest.TestCase):
         async_result = MOCK_CUSTOM_FIELD.put_custom_field_values(mock_values_list)
 
         input_transformed = [JobDetails(**job_response)]
-        # self.assertTrue(async_result)
         self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
     def test_failed_post_custom_field_value(self, m):
-
         mock_value_1 = CustomFieldValueItem()
         mock_value_1.field_id = 1
         mock_value_1.otype = 'Table'
@@ -269,9 +259,10 @@ class TestCustomField(unittest.TestCase):
         }
 
         m.register_uri('PUT', '/integration/v2/custom_field_value/async/', json=failed_response, status_code=400)
-        failed_response = MOCK_CUSTOM_FIELD.put_custom_field_values(mock_values_list)
 
-        self.assertFalse(failed_response)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_CUSTOM_FIELD.put_custom_field_values(mock_values_list)
+        self.assertEqual(context.exception.response.status_code, 400)
 
 if __name__ == '__main__':
     unittest.main()
