@@ -217,10 +217,11 @@ Attributes:
 | schema_id__lte | set   | filter by schema id lesser than or equal to a value |
 
 ## Methods
+
 ### get_schemas
 
 ```
-get_schemas(query_params: SchemaParams = None) -> list
+get_schemas(query_params: SchemaParams = None) -> list[Schema]
 ```
 
 Query multiple Alation RDBMS Schemas.
@@ -234,7 +235,7 @@ Returns:
 ### post_schemas
 
 ```
-post_schemas(ds_id: int, schemas: list) -> bool
+post_schemas(ds_id: int, schemas: list) -> list[JobDetailsRdbms]
 ```
 
 Post (Create or Update) Alation Schema Objects.
@@ -245,12 +246,12 @@ Args:
 * schemas (list): Alation Schemas to be created or updated.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 ### get_tables
 
 ```
-get_tables(query_params: TableParams = None) -> list
+get_tables(query_params: TableParams = None) -> list[Table]
 ```
 
 Query multiple Alation RDBMS Tables.
@@ -264,7 +265,7 @@ Returns:
 ### post_tables
 
 ```
-post_tables(ds_id: int, tables: list) -> bool
+post_tables(ds_id: int, tables: list) -> list[JobDetailsRdbms]
 ```
 
 Post (Create or Update) Alation Table Objects.
@@ -275,12 +276,12 @@ Args:
 * tables (list): Alation Tables to be created or updated.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 ### get_columns
 
 ```
-get_columns(query_params: ColumnParams = None) -> list
+get_columns(query_params: ColumnParams = None) -> list[Column]
 ```
 
 Query multiple Alation RDBMS Columns.
@@ -294,7 +295,7 @@ Returns:
 ### post_columns
 
 ```
-post_columns(ds_id: int, columns: list) -> bool
+post_columns(ds_id: int, columns: list) -> list[JobDetailsRdbms]
 ```
 
 Post (Create or Update) Alation Column Objects.
@@ -305,37 +306,12 @@ Args:
 * columns (list): Alation Columns to be created or updated.
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 
 ## Examples
-### Get Schemas
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get Schemas  
-params = allie.SchemaParams(ds_id=3)
-    get_schemas_result = alation.rdbms.get_schemas(query_params=params)
-```
-
-### Create Schemas
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create Schemas 
-schema = allie.SchemaItem(title='Finance Schema', description='This is the Finance schema', key='2.finance')
-post_schemas_result = alation.rdbms.post_schemas(ds_id=2, schemas=[schema])
-```
+See `/examples/example_rdbms.py`.
 
 
 

@@ -43,7 +43,7 @@ class AlationDocument(AsyncHandler):
     def create_documents (
         self
         , documents: list[DocumentPostItem]
-    )->list[JobDetailsDocumentPost]:
+    ) -> list[JobDetailsDocumentPost]:
 
         """Create documents in Bulk
         Args:
@@ -76,7 +76,7 @@ class AlationDocument(AsyncHandler):
     def update_documents (
             self
             , documents: list[DocumentPutItem]
-        )->list[JobDetailsDocumentPut]:
+        ) -> list[JobDetailsDocumentPut]:
 
         """Bulk Update Documents in Bulk
         Args:
@@ -106,7 +106,7 @@ class AlationDocument(AsyncHandler):
     def delete_documents(
             self
             , documents: list[Document]
-    ) -> JobDetailsDocumentDelete|None:
+    ) -> JobDetailsDocumentDelete:
         """Bulk delete documents
 
         Args:
@@ -119,7 +119,11 @@ class AlationDocument(AsyncHandler):
             validate_rest_payload(payload = documents, expected_types = (Document,))
             payload = {'id': [item.id for item in documents]}
 
-            delete_result = self.delete('/integration/v2/document/', payload)
+            delete_result = self.delete(
+                url = '/integration/v2/document/'
+                , body = payload
+            )
             # There's no job ID returned here
             if delete_result:
+                # make sure result conforms to JobDetails structure
                 return JobDetailsDocumentDelete.from_api_response(delete_result)

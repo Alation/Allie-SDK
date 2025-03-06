@@ -21,7 +21,7 @@ class AlationCustomTemplate(RequestHandler):
         """
         super().__init__(session = session, host = host, access_token = access_token)
         
-    def get_custom_templates (self, query_params:CustomTemplateParams = None) -> list:
+    def get_custom_templates (self, query_params:CustomTemplateParams = None) -> list[CustomTemplate]:
         """Use the Custom Template API to retrieve details on all Custom Templates
         Args:
             query_params (dict): REST API Glossary Term Query Parameters.
@@ -33,7 +33,7 @@ class AlationCustomTemplate(RequestHandler):
         validate_query_params(query_params, CustomTemplateParams)
         params = query_params.generate_params_dict() if query_params else None
 
-        custom_templates = self.get('/integration/v1/custom_template/', query_params = params)
+        custom_templates = self.get(url = '/integration/v1/custom_template/', query_params = params)
         
         if custom_templates:
             custom_template_checked = [CustomTemplate.from_api_response(ct) for ct in custom_templates]

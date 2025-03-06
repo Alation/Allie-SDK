@@ -70,7 +70,7 @@ class TestVirtualDataSource(unittest.TestCase):
         assert expected_job_response == async_result
 
     @requests_mock.Mocker()
-    def test_success_failed_post_virtual_datasource_no_query_params(self, m):
+    def test_failed_post_virtual_datasource_no_query_params(self, m):
 
         vds_id = 99
         mock_vds_1 = VirtualDataSourceSchema()
@@ -185,6 +185,49 @@ class TestVirtualDataSource(unittest.TestCase):
                                                               query_params=mock_params)
 
         assert expected_job_response == async_result
+
+    @requests_mock.Mocker()
+    def test_failed_post_virtual_datasource_invalid_data_source_id(self, m):
+
+        vds_id = 0
+
+        # Add/Update Objects
+        ds_schema = "test"
+
+        # create the schema first and then submit the payload, otherwise the parser throws and error
+        s1 = VirtualDataSourceSchema()
+        s1.key = f'{vds_id}.{ds_schema}'
+        s1.description = "New Schema for API testing"
+
+        vds_objects = [s1]
+
+        params = VirtualDataSourceParams()
+        params.set_title_descs = "true"
+        params.remove_not_seen = "false"
+
+        async_response = {'error': 'Cannot find Datasource'}
+
+        # no job response since it failed
+        # job_response =
+
+        expected_response = [
+            JobDetailsVirtualDatasourcePost(
+                status='failed'
+                , msg=None
+                , result={'error': 'Cannot find Datasource'}
+            )
+        ]
+
+        m.register_uri(
+            method = 'POST'
+            , url = f'/api/v1/bulk_metadata/extraction/{vds_id}'
+            , json = async_response
+            , status_code = 400
+        )
+
+        async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=vds_objects)
+
+        assert async_result == expected_response
 
 if __name__ == '__main__':
     unittest.main()

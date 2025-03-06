@@ -30,7 +30,7 @@ class AlationCustomField(AsyncHandler):
         self.host = host
         self.session = session
 
-    def get_custom_fields(self, query_params: CustomFieldParams = None) -> list:
+    def get_custom_fields(self, query_params: CustomFieldParams = None) -> list[CustomField]:
         """Get the details of all Alation Custom Fields.
 
         Args:
@@ -47,7 +47,7 @@ class AlationCustomField(AsyncHandler):
         if custom_fields:
             return [CustomField.from_api_response(custom_field) for custom_field in custom_fields]
 
-    def get_custom_field_values(self, query_params: CustomFieldValueParams = None) -> list:
+    def get_custom_field_values(self, query_params: CustomFieldValueParams = None) -> list[CustomFieldValue]:
         """Get the details of all Alation Custom Field Values.
 
         Args:
@@ -106,7 +106,7 @@ class AlationCustomField(AsyncHandler):
 
         """
         item: CustomFieldItem
-        validate_rest_payload(custom_fields, (CustomFieldItem,))
+        validate_rest_payload(custom_fields, expected_types = (CustomFieldItem,))
         payload = [item.generate_api_post_payload() for item in custom_fields]
         async_results = self.async_post('/integration/v2/custom_field/', payload)
 

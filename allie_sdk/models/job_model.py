@@ -31,13 +31,17 @@ to do the transformation/mapping in the specific methods. This provides the nece
 
 
 @dataclass(kw_only = True)
+class JobDetails(BaseClass):
+    status: str = field(default = None)
+    msg: str = field(default = None)
+    result: str | dict | list = field(default = None)
+
+# --- DOCUMENT POST --- #
+
+@dataclass(kw_only = True)
 class JobDetailsDocumentPostResultDetails(BaseClass):
     id: int = field(default = None)
     title: str = field(default = None)
-
-@dataclass(kw_only = True)
-class JobDetailsDocumentPutResultDetails(BaseClass):
-    id: int = field(default = None)
 
 @dataclass(kw_only = True)
 class JobDetailsDocumentPostResult(BaseClass):
@@ -63,7 +67,19 @@ class JobDetailsDocumentPostResult(BaseClass):
                 if created_objects_dict_counter > 0:
                     self.created_terms = created_terms_out
 
+@dataclass(kw_only = True)
+class JobDetailsDocumentPost(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("created_term_count", "created_terms") for var in self.result.keys()):
+                self.result = JobDetailsDocumentPostResult.from_api_response(self.result)
 
+# --- DOCUMENT PUT --- #
+
+@dataclass(kw_only = True)
+class JobDetailsDocumentPutResultDetails(BaseClass):
+    id: int = field(default = None)
 @dataclass(kw_only = True)
 class JobDetailsDocumentPutResult(BaseClass):
     updated_term_count: int = field(default = None)
@@ -74,41 +90,49 @@ class JobDetailsDocumentPutResult(BaseClass):
         if self.updated_terms:
             if isinstance(self.updated_terms, list):
                 updated_terms_out = []
-                updated_objects_dict_counter = 0
-                for value in self.updated_terms:
-                    if isinstance(value, dict):
-                        updated_objects_dict_counter += 1
-                        updated_terms_out.append(JobDetailsDocumentPutResultDetails.from_api_response(value))
-                if updated_objects_dict_counter > 0:
+                if len(self.updated_terms) > 0:
+                    for value in self.updated_terms:
+                        if isinstance(value, dict):
+                            updated_terms_out.append(JobDetailsDocumentPutResultDetails.from_api_response(value))
+                        else:
+                            updated_terms_out.append(value)
                     self.updated_terms = updated_terms_out
-
-# --- DOCUMENT DELETE --- #
-@dataclass(kw_only = True)
-class JobDetailsDocumentDelete(BaseClass):
-    deleted_document_count:int = field(default = None)
-    deleted_document_ids:list = field(default_factory = list)
-
-@dataclass(kw_only = True)
-class JobDetails(BaseClass):
-    status: str = field(default = None)
-    msg: str = field(default = None)
-    result: str | dict | list = field(default = None)
-
-
-@dataclass(kw_only = True)
-class JobDetailsDocumentPost(JobDetails):
-    def __post_init__(self):
-        # Make sure the nested result gets converted to the proper data class
-        if isinstance(self.result, dict):
-            self.result = JobDetailsDocumentPostResult.from_api_response(self.result)
 
 @dataclass(kw_only = True)
 class JobDetailsDocumentPut(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
-            self.result = JobDetailsDocumentPutResult.from_api_response(self.result)
+            if all(var in ("updated_term_count", "updated_terms") for var in self.result.keys()):
+                self.result = JobDetailsDocumentPutResult.from_api_response(self.result)
 
+# --- DOCUMENT DELETE --- #
+@dataclass(kw_only = True)
+class JobDetailsDocumentDeleteResult(BaseClass):
+    deleted_document_count: int = field(default=None)
+    deleted_document_ids: list = field(default_factory=list)
+@dataclass(kw_only = True)
+class JobDetailsDocumentDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("deleted_document_count", "deleted_document_ids") for var in self.result.keys()):
+                self.result = JobDetailsDocumentDeleteResult.from_api_response(self.result)
+
+# --- TERM DELETE --- #
+# Interestingly enough the term delete response is not in line with the document responses.
+@dataclass(kw_only = True)
+class JobDetailsTermDeleteResult(BaseClass):
+    deleted_term_count: int = field(default=None)
+    deleted_term_ids: list = field(default_factory=list)
+@dataclass(kw_only = True)
+class JobDetailsTermDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("deleted_term_count", "deleted_term_ids") for var in self.result.keys()):
+                self.result = JobDetailsTermDeleteResult.from_api_response(self.result)
+# --- CUSTOM FIELD POST --- #
 
 @dataclass(kw_only = True)
 class JobDetailsCustomFieldPostResultData(BaseClass):
@@ -128,19 +152,42 @@ class JobDetailsCustomFieldPost(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, list):
+
             result_out = []
-            result_counter = 0
-            for value in self.result:
-                if isinstance(value, dict):
-                    result_counter += 1
-                    result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
-            if result_counter > 0:
+            if len(self.result) > 0:
+                for value in self.result:
+                    if type(value) is dict:
+                        if all(var in value.keys() for var in ("msg", "data")):
+                            result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value))
+                        else:
+                            # validation errors from the Data Model get returned as a dict
+                            # e.g. errors like "field_type RICH_TEXTS is not supported."
+                            result_out.append(value)
+                    elif isinstance(value, JobDetailsCustomFieldPostResult):
+                        result_out.append(value)
+                    else:
+                        # somehow the job status returns a string representation of a dict
+                        try:
+                            value_dict = json.loads(value)
+
+                            if isinstance(value_dict, dict):
+                                if all(var in value_dict.keys() for var in ("msg", "data")):
+                                    result_out.append(JobDetailsCustomFieldPostResult.from_api_response(value_dict))
+                                else:
+                                    result_out.append(value)
+                        except json.JSONDecodeError:
+                            # handle anything coming from errors
+                            result_out.append(value)
+
                 self.result = result_out
+
+# --- RDBMS ALL --- #
 
 @dataclass(kw_only = True)
 class JobDetailsRdbmsResultMapping(BaseClass):
     id: int = field(default = None)
     key: str = field(default = None)
+
 @dataclass(kw_only = True)
 class JobDetailsRdbmsResult(BaseClass):
     response: str = field(default = None)
@@ -150,27 +197,32 @@ class JobDetailsRdbmsResult(BaseClass):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.mapping, list):
             mapping_out = []
-            mapping_counter = 0
-            for value in self.mapping:
-                if isinstance(value, dict):
-                    mapping_counter += 1
-                    mapping_out.append(JobDetailsRdbmsResultMapping.from_api_response(value))
-            if mapping_counter > 0:
+            if len(self.mapping) > 0:
+                for value in self.mapping:
+                    if isinstance(value, dict):
+                        mapping_out.append(JobDetailsRdbmsResultMapping.from_api_response(value))
+                    else:
+                        mapping_out.append(value)
+
                 self.mapping = mapping_out
+
 @dataclass(kw_only = True)
 class JobDetailsRdbms(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, list):
             result_out = []
-            result_counter = 0
-            for value in self.result:
-                if isinstance(value, dict):
-                    result_counter += 1
-                    result_out.append(JobDetailsRdbmsResult.from_api_response(value))
-            if result_counter > 0:
+            if len(self.result) > 0:
+                for value in self.result:
+                    if isinstance(value, dict):
+                        if all(var in value.keys() for var in ("response", "mapping", "errors")):
+                            result_out.append(JobDetailsRdbmsResult.from_api_response(value))
+                    else:
+                        # handle anything coming from errors
+                        result_out.append(value)
                 self.result = result_out
 
+# --- VIRTUAL DATASOURCE POST --- #
 
 @dataclass(kw_only = True)
 class JobDetailsVirtualDatasourcePostResult(BaseClass):
@@ -218,6 +270,7 @@ class JobDetailsDataQualityResultCreatedObjectAttribution(BaseClass):
     failure_count: int = field(default = 0)
     success_sample: list = field(default_factory = list)
     failure_sample: list = field(default_factory = list)
+
 @dataclass(kw_only=True)
 class JobDetailsDataQualityResult(BaseClass):
     fields: dict | JobDetailsDataQualityResultAction = field(default_factory = dict)
@@ -240,7 +293,8 @@ class JobDetailsDataQuality(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
-            self.result = JobDetailsDataQualityResult.from_api_response(self.result)
+            if all(var in ("fields", "values", "created_object_attribution", "flag_counts", "total_duration") for var in self.result.keys()):
+                self.result = JobDetailsDataQualityResult.from_api_response(self.result)
 
 # --- DOCUMENT HUB FOLDER POST --- #
 
@@ -269,7 +323,8 @@ class JobDetailsDocumentHubFolderPost(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
-            self.result = JobDetailsDocumentHubFolderPostResult.from_api_response(self.result)
+            if all(var in ("created_folder_count", "created_folders") for var in self.result.keys()):
+                self.result = JobDetailsDocumentHubFolderPostResult.from_api_response(self.result)
 
 # --- DOCUMENT HUB FOLDER PUT --- #
 
@@ -296,10 +351,18 @@ class JobDetailsDocumentHubFolderPut(JobDetails):
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class
         if isinstance(self.result, dict):
-            self.result = JobDetailsDocumentHubFolderPutResult.from_api_response(self.result)
+            if all(var in ("updated_folder_count", "updated_folders") for var in self.result.keys()):
+                self.result = JobDetailsDocumentHubFolderPutResult.from_api_response(self.result)
 
 # --- DOCUMENT HUB FOLDER DELETE --- #
 @dataclass(kw_only = True)
-class JobDetailsDocumentHubFolderDelete(BaseClass):
-    deleted_folder_count:int = field(default = None)
-    deleted_folder_ids:list = field(default_factory = list)
+class JobDetailsDocumentHubFolderDeleteResult(BaseClass):
+    deleted_folder_count: int = field(default=None)
+    deleted_folder_ids: list = field(default_factory=list)
+@dataclass(kw_only = True)
+class JobDetailsDocumentHubFolderDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            if all(var in ("deleted_folder_count", "deleted_folder_ids") for var in self.result.keys()):
+                self.result = JobDetailsDocumentHubFolderDeleteResult.from_api_response(self.result)

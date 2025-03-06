@@ -102,10 +102,11 @@ Attributes:
 | deleted | bool   | Will return only deleted entities when set to true.  |
 
 ## Methods
+
 ### get_business_policies
 
 ```
-get_business_policies(query_params:BusinessPolicyParams = None) -> list:
+get_business_policies(query_params:BusinessPolicyParams = None) -> list[BusinessPolicy]:
 ```
 
 Query multiple Alation Business Policies and return their details
@@ -118,7 +119,7 @@ Returns:
 ### create_business_policies
 
 ```
-create_business_policies(business_policies: list[BusinessPolicyPostItem]) -> bool
+create_business_policies(business_policies: list[BusinessPolicyPostItem]) -> list[JobDetails]
 ```
 
 Create Business Policies in Bulk
@@ -132,7 +133,7 @@ Returns:
 ### update_business_policies
 
 ```
-update_business_policies(business_policies: list[BusinessPolicyPutItem]) -> list
+update_business_policies(business_policies: list[BusinessPolicyPutItem]) -> list[JobDetails]
 ```
 
 Bulk Update Business Policies in Bulk
@@ -146,7 +147,7 @@ Returns:
 ### delete_business_policies
 
 ```
-delete_business_policies(business_policies: list[BusinessPolicy]) -> bool
+delete_business_policies(business_policies: list[BusinessPolicy]) -> list[JobDetails]
 ```
 
 Delete an Alation policy.
@@ -155,23 +156,10 @@ Args:
 * business_policies: list of `BusinessPolicy` objects to be deleted.
   
 Returns:
-* bool: Success of the API DELETE call.
+* Job details
 
 ## Examples
+
 ### Create a policy
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create a Policy 
-policy_item = allie.BusinessPolicyPostItem(
-    title='PII Policy',
-    description='Policy outlining PII in our organization',
-    template_id=1
-)
-create_policy_result = alation.business_policy.create_business_policies(policy_item)
-```
+See `/examples/example_policy.py`.

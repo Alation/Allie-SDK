@@ -29,8 +29,12 @@ class AlationVirtualDataSource(AsyncHandler):
 
         self._vds_endpoint = '/api/v1/bulk_metadata/extraction/'
 
-    def post_metadata(self, ds_id: int, vds_objects: list,
-                      query_params: VirtualDataSourceParams = None) -> list[JobDetailsVirtualDatasourcePost]:
+    def post_metadata(
+            self
+            , ds_id: int
+            , vds_objects: list
+            , query_params: VirtualDataSourceParams = None
+    ) -> list[JobDetailsVirtualDatasourcePost]:
         """Post (Create/Update/Delets) Alation Virtual Data source objects
 
         Args:
@@ -49,12 +53,16 @@ class AlationVirtualDataSource(AsyncHandler):
 
         validate_query_params(query_params, VirtualDataSourceParams)
         params = query_params.generate_params_dict() if query_params else None
-        validate_rest_payload(vds_objects,
-                              (VirtualDataSourceSchema,
-                               VirtualDataSourceTable,
-                               VirtualDataSourceView,
-                               VirtualDataSourceColumn,
-                               VirtualDataSourceIndex))
+        validate_rest_payload(
+            vds_objects
+            , expected_types = (
+                VirtualDataSourceSchema
+                , VirtualDataSourceTable
+                , VirtualDataSourceView
+                , VirtualDataSourceColumn
+                , VirtualDataSourceIndex
+            )
+        )
 
         item: VirtualDataSourceItem
         payload_d = [item.generate_api_post_payload() for item in vds_objects]
@@ -67,8 +75,12 @@ class AlationVirtualDataSource(AsyncHandler):
         if async_results:
             return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
 
-    def post_metadata_jsonl(self, ds_id: int, payload: str,
-                           query_params: VirtualDataSourceParams = None) -> list[JobDetailsVirtualDatasourcePost]:
+    def post_metadata_jsonl(
+            self
+            , ds_id: int
+            , payload: str
+            , query_params: VirtualDataSourceParams = None
+    ) -> list[JobDetailsVirtualDatasourcePost]:
         """Post (Create/Update/Delets) Alation Virtual Data source objects
 
         Args:

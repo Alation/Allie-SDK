@@ -44,11 +44,80 @@ class TestVirtualFileSystem(unittest.TestCase):
             )
         ]
 
-        m.register_uri('POST', f'/api/v1/bulk_metadata/file_upload/{vfs_id}/', json=async_response)
-        m.register_uri('GET','/api/v1/bulk_metadata/job/?id=14391', json=job_response)
+        m.register_uri(
+            method='POST'
+            , url=f'/api/v1/bulk_metadata/file_upload/{vfs_id}/'
+            , json=async_response
+            , status_code=200
+        )
+        m.register_uri(
+            method='GET'
+            , url='/api/v1/bulk_metadata/job/?id=14391'
+            , json=job_response
+            , status_code=200
+        )
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(fs_id=vfs_id, vfs_objects=mock_vfs_list)
 
         assert expected_job_response == async_result
+
+    @requests_mock.Mocker()
+    def test_fail_post_virtual_filesystem(self, m):
+        """
+        MAKE IT FAIL:
+
+        - use data source id that doesn't exist.
+        """
+        vfs_id = 0
+
+        # Add/Update Objects
+
+        vfs1 = VirtualFileSystemItem(
+            path="/"
+            , name="var"
+            , is_directory=True
+        )
+        vfs2 = VirtualFileSystemItem(
+            path="/var"
+            , name="log"
+            , is_directory=True
+        )
+        vfs3 = VirtualFileSystemItem(
+            path="/var"
+            , name="File 2"
+            , is_directory=False
+        )
+        vfs4 = VirtualFileSystemItem(
+            path="/var/log"
+            , name="boot.log"
+            , is_directory=False
+            , size_in_bytes=98800
+            , ts_last_modified="2024-06-20T18:26:54.663432Z"
+            , ts_last_accessed="2024-06-20T18:26:54.663432Z"
+            , owner="root"
+            , group="root"
+            , permission_bits=755
+        )
+        mock_vfs_list = [vfs1, vfs2, vfs3, vfs4]
+
+        async_response = {'error': 'Cannot find FileSystem id: 0'}
+
+        # no job response since it failed
+        # job_response =
+
+        expected_response = [JobDetails(status='failed', msg=None, result={'error': 'Cannot find FileSystem id: 0'})]
+
+
+        m.register_uri(
+            method = 'POST'
+            , url = f'/api/v1/bulk_metadata/file_upload/{vfs_id}/'
+            , json = async_response
+            , status_code = 400
+        )
+        # no job response since it failed
+        # m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=14391', json=job_response)
+        async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(fs_id=vfs_id, vfs_objects=mock_vfs_list)
+
+        assert async_result == expected_response
 
 if __name__ == '__main__':
     unittest.main()

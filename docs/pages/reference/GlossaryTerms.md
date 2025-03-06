@@ -60,7 +60,7 @@ Attributes:
 ### get_glossary_terms
 
 ```
-get_glossary_terms(query_params: GlossaryTermParams = None) -> list
+get_glossary_terms(query_params: GlossaryTermParams = None) -> list[GlossaryTerm]
 ```
 
 Get the details of all Alation Glossary Terms.
@@ -74,7 +74,7 @@ Returns:
 ### post_glossary_terms
 
 ```
-post_glossary_terms(glossary_terms: list) -> bool
+post_glossary_terms(glossary_terms: list) -> list[JobDetailsDocumentPost]
 ```
 
 Post (Create) Alation Glossary Terms.
@@ -89,7 +89,7 @@ Returns:
 ### put_glossary_terms
 
 ```
-put_glossary_terms(glossary_terms: list) -> bool
+put_glossary_terms(glossary_terms: list) -> list[JobDetailsDocumentPut]
 ```
 
 Put (Update) Alation Glossary Terms.
@@ -103,7 +103,7 @@ Returns:
 ### delete_glossary_terms
 
 ```
-delete_glossary_terms(glossary_terms: list) -> bool
+delete_glossary_terms(glossary_terms: list) -> JobDetailsTermDelete
 ```
 
 Delete Alation Glossary Terms.
@@ -112,37 +112,11 @@ Args:
 * glossary_terms (list): Alation Glossary Terms to be deleted.
 
 Returns:
-* bool: Success of the API DELETE Call(s)
+* Job details
 
 
 ## Examples
-### Get Terms
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get Terms  
-params = allie.GlossaryTerm(title='My Term')
-get_terms_response = alation.glossary_term.get_glossary_terms(query_params=params)
-```
-
-### Create Terms
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create Terms 
-term = allie.GlossaryTermItem(title='My Term', description='KPI Metrics')
-post_terms_response = alation.glossary_term.post_glossary_terms(glossary_terms=[term])
-```
-
+See `/examples/example_glossary_term.py`.
 
 

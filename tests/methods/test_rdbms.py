@@ -115,9 +115,21 @@ class TestRDBMS(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v2/schema/?ds_id=1',
                        json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_schemas(1, mock_schema_list)
+        async_response = MOCK_RDBMS.post_schemas(ds_id = 1, schemas = mock_schema_list)
 
-        self.assertFalse(async_response)
+        expected_response = [
+            JobDetailsRdbms(
+                status='failed'
+                , msg=None
+                , result={
+                    'detail': 'Incorrect input data. Please fix the errors and post the data.'
+                    , 'errors': [{'key': ['400068: API Key is a required input']}]
+                    , 'code': '400010'
+                }
+            )
+        ]
+
+        self.assertEqual(expected_response, async_response)
 
     @requests_mock.Mocker()
     def test_success_get_tables(self, m):
@@ -237,9 +249,21 @@ class TestRDBMS(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v2/table/?ds_id=1',
                        json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_tables(1, mock_table_list)
+        async_response = MOCK_RDBMS.post_tables(ds_id = 1, tables = mock_table_list)
 
-        self.assertFalse(async_response)
+        expected_result = [
+            JobDetailsRdbms(
+                status='failed'
+                , msg=None
+                , result={
+                    'detail': 'Incorrect input data. Please fix the errors and post the data.'
+                    , 'errors': [{'key': ['400068: API Key is a required input']}]
+                    , 'code': '400010'
+                }
+            )
+        ]
+
+        self.assertEqual(expected_result, async_response)
 
     @requests_mock.Mocker()
     def test_success_get_columns(self, m):
@@ -370,9 +394,21 @@ class TestRDBMS(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v2/column/?ds_id=1',
                        json=failed_response, status_code=400)
-        async_response = MOCK_RDBMS.post_columns(1, mock_column_list)
+        async_response = MOCK_RDBMS.post_columns(ds_id = 1, columns = mock_column_list)
 
-        self.assertFalse(async_response)
+        expected_result = [
+            JobDetailsRdbms(
+                status='failed'
+                , msg=None
+                , result={
+                    'detail': 'Incorrect input data. Please fix the errors and post the data.'
+                    , 'errors': [{'key': ['400068: API Key is a required input']}]
+                    , 'code': '400010'
+                }
+            )
+        ]
+
+        self.assertEqual(expected_result, async_response)
 
 
 if __name__ == '__main__':

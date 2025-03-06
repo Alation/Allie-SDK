@@ -67,7 +67,13 @@ class TestUser(unittest.TestCase):
         m.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
         users = MOCK_USER.get_generate_dup_users_accts_csv()
 
-        self.assertEqual(success_response, users)
+        expected_response = JobDetails(
+            status='successful'
+            , msg='No duplicate user accounts with mixed case usernames.'
+            , result=''
+        )
+
+        self.assertEqual(expected_response, users)
 
     @requests_mock.Mocker()
     def test_success_post_remove_dup_users_accts(self, m):
@@ -86,7 +92,13 @@ class TestUser(unittest.TestCase):
         users = MOCK_USER.post_remove_dup_users_accts("/tmp/temp.csv")
         os.remove("/tmp/temp.csv")
 
-        self.assertEqual(success_response, users)
+        expected_response = JobDetails(
+            status='successful'
+            , msg='Total number of users got updated with temp username and suspended: 1'
+            , result=''
+        )
+
+        self.assertEqual(expected_response, users)
 
     @requests_mock.Mocker()
     def test_failed_get_users_v1(self, m):

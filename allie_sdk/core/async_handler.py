@@ -5,6 +5,7 @@ import requests
 import re
 from .request_handler import RequestHandler
 from ..methods.job import AlationJob
+from ..models.job_model import *
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
@@ -47,12 +48,17 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.delete(url, body=batch)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
 
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-
+                results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -67,11 +73,24 @@ class AsyncHandler(RequestHandler):
             list: job execution results
 
         """
-        results = []
-        async_response = self.delete(url, body=payload)
+
+        # Note: batching is implemented on a higher level since the structure of the payload is not standardised
+
+        async_response = self.delete(
+            url = url
+            , body=payload
+            , is_async = True
+        )
+
         if async_response:
-            job = AlationJob(self.access_token, self.session, self.host, async_response)
-            results.extend(job.check_job_status())
+            # check if the response includes a job_id and only then fetch job details
+            if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                job = AlationJob(self.access_token, self.session, self.host, async_response)
+                results = job.check_job_status()
+            else:
+                # add the error details
+                # this needs to be a list here since results above is also a list
+                results = [ async_response ]
 
         return results
 
@@ -95,12 +114,17 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.patch(url, body=batch)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
 
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                # results.append(batch_error) => this won't map to JobDetail
+                results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -125,12 +149,17 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.post(url, body=batch, query_params=query_params)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    results.extend(job.check_job_status())
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        results.extend(job.check_job_status())
+                    else:
+                        # add the error details to the results list
+                        results.append(async_response)
 
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                # results.append(batch_error) => this won't map to JobDetail
+                results.append(self._map_batch_error_to_job_details(batch_error))
         return results
 
     def async_post_data_payload(self, url: str, data: any, query_params: dict = None) -> list:
@@ -151,12 +180,17 @@ class AsyncHandler(RequestHandler):
             LOGGER.debug(data)
             async_response = self.post(url, body=data, query_params=query_params)
             if async_response:
-                job = AlationJob(self.access_token, self.session, self.host, async_response)
-                results.extend(job.check_job_status())
+                # check if the response includes a job_id and only then fetch job details
+                if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                    job = AlationJob(self.access_token, self.session, self.host, async_response)
+                    results.extend(job.check_job_status())
+                else:
+                    # add the error details to the results list
+                    results.append(async_response)
 
         except Exception as batch_error:
             LOGGER.error(batch_error, exc_info=True)
-            # results.append(batch_error) => this won't map to JobDetail
+            results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 
@@ -172,12 +206,20 @@ class AsyncHandler(RequestHandler):
 
         """
 
+        # Note: batching is implemented on a higher level since the structure of the payload is not standardised
+
         async_response = self.post(url, body=payload)
         if async_response:
-            job = AlationJob(self.access_token, self.session, self.host, async_response)
-            result = job.check_job_status()
+            # check if the response includes a job_id and only then fetch job details
+            if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                job = AlationJob(self.access_token, self.session, self.host, async_response)
+                results = job.check_job_status()
+            else:
+                # add the error details to the results list
+                # this needs to be a list here since results above is also a list
+                results = [ async_response ]
 
-            return result
+            return results
 
     def async_put(self, url: str, payload: list, batch_size: int = None) -> list:
         """Put Alation Objects via an Async Job Process.
@@ -199,27 +241,34 @@ class AsyncHandler(RequestHandler):
                 LOGGER.debug(batch)
                 async_response = self.put(url, body=batch)
                 if async_response:
-                    job = AlationJob(self.access_token, self.session, self.host, async_response)
-                    job_status = job.check_job_status()
-                    results.extend(job_status)
-                    # the custom fields values endpoint returns additionally a legacy job id
-                    # see also https://github.com/Alation/Allie-SDK/issues/26
-                    r = re.compile(r"\(can be tracked using jobs API\)\:\s([0-9]+)$")
-                    m = r.search(job_status[0]["result"][0])
+                    # check if the response includes a job_id and only then fetch job details
+                    if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                        job = AlationJob(self.access_token, self.session, self.host, async_response)
+                        job_status = job.check_job_status()
+                        results.extend(job_status)
 
-                    if m is None:
-                        LOGGER.debug("No legacy job_id found")
+                        # the custom fields values endpoint returns additionally a legacy job id
+                        # see also https://github.com/Alation/Allie-SDK/issues/26
+                        if isinstance(job_status[0]["result"], list):
+                            r = re.compile(r"\(can be tracked using jobs API\)\:\s([0-9]+)$")
+                            m = r.search(job_status[0]["result"][0])
+
+                            if m is None:
+                                LOGGER.debug("No legacy job_id found")
+                            else:
+                                legacy_job_id = m.groups()[0]
+                                LOGGER.debug(f"Following legacy job id found: {legacy_job_id}")
+                                legacy_job = AlationJob(
+                                    session=self.session
+                                    , host=self.host
+                                    , access_token=self.access_token
+                                    , job_response={'job_id': legacy_job_id}
+                                )
+                                legacy_job_status = legacy_job.check_job_status()
+                                results.extend(legacy_job_status)
                     else:
-                        legacy_job_id = m.groups()[0]
-                        LOGGER.debug(f"Following legacy job id found: {legacy_job_id}")
-                        legacy_job = AlationJob(
-                            session = self.session
-                            , host = self.host
-                            , access_token = self.access_token
-                            , job_response={'job_id': legacy_job_id}
-                        )
-                        legacy_job_status = legacy_job.check_job_status()
-                        results.extend(legacy_job_status)
+                        # add the error details to the results list
+                        results.append(async_response)
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
                 # results.append(batch_error) => this won't map to JobDetail
@@ -247,3 +296,15 @@ class AsyncHandler(RequestHandler):
         LOGGER.debug(f'Batching complete. {len(batch_payload)} batches created.')
 
         return batch_payload
+
+    @staticmethod
+    def _map_batch_error_to_job_details(batch_error:Exception) -> dict:
+
+        # conform with JobDetails structure
+        error_data = dict(
+            status = "failed"
+            , msg = ""
+            , result = batch_error
+        )
+
+        return error_data

@@ -177,7 +177,7 @@ get_a_builtin_custom_field(field_name: str) -> CustomField:
 Get the details of a Builtin Alation Custom Field.
 
 Args:
-* field_name (str): Name of the Builtin Custom Field.
+* field_name (str): Name of the Builtin Custom Field. Possible values: title, description, business_glossary_status, steward.
 
 Returns:
 * `CustomField`: Alation Custom Field.
@@ -199,7 +199,7 @@ Returns:
 ### post_custom_fields
 
 ```
-post_custom_fields(custom_fields: list) -> bool:
+post_custom_fields(custom_fields: list) -> list[JobDetailsCustomFieldPost]:
 ```
 
 Post (Create) Alation Custom Fields.
@@ -208,12 +208,12 @@ Args:
 * custom_fields (list): Alation Custom Fields to be created.
 
 Returns:
-* bool: Success of the API POST Call(s).
+* list of job details
 
 ### put_custom_field_values
 
 ```
-put_custom_field_values(custom_field_values: list, batch_size: int = 10000) -> bool:
+put_custom_field_values(custom_field_values: list, batch_size: int = 10000) -> list[JobDetails]:
 ```
 
 Put (Update) Alation Custom Field Values.
@@ -223,35 +223,11 @@ Args:
 * batch_size (int): REST API PUT Body Size Limit.
 
 Returns:
-* bool: Success of the API PUT Call(s).
+* list of job details
 
 ## Examples
-### Get a custom field
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get custom field  
-get_field_result = alation.custom_field.get_a_custom_field(field_id=7)
-```
-
-### Get custom field values
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get custom field values 
-params = allie.CustomFieldValueParams(otype='table', oid=2, field_id=5)
-get_field_values_result = alation.custom_field.get_custom_field_values(params)
-```
+See `/examples/example_custom_field.py`.
 
 
 

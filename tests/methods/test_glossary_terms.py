@@ -117,7 +117,24 @@ class TestGlossaryTerm(unittest.TestCase):
         m.register_uri('POST', '/integration/v2/term/', json=failed_response, status_code=400)
         async_response = MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
 
-        self.assertFalse(async_response)
+        expected_result = [
+            JobDetailsDocumentPost(
+                status='failed'
+                , msg=None
+                , result={
+                    'job_id': None
+                    , 'invalid_terms': [
+                        {
+                            'index': 0
+                            , 'errors': [{'title': ['This field is required.']}]
+                            , 'term': {'title': 'Testing', 'description': 'Testing the API'}
+                        }
+                    ]
+                }
+            )
+        ]
+
+        self.assertEqual(expected_result, async_response)
 
     @requests_mock.Mocker()
     def test_success_put_glossary_terms(self, m):
@@ -181,7 +198,24 @@ class TestGlossaryTerm(unittest.TestCase):
         m.register_uri('PUT', '/integration/v2/term/', json=failed_response, status_code=400)
         async_response = MOCK_GLOSSARY_TERM.put_glossary_terms(mock_term_list)
 
-        self.assertFalse(async_response)
+        expected_result = [
+            JobDetailsDocumentPut(
+                status='failed'
+                , msg=None
+                , result={
+                    'job_id': None
+                    , 'invalid_terms': [
+                        {
+                            'index': 0
+                            , 'errors': [{'id': ['This field is required.']}]
+                            , 'term': {'title': 'Updated Title'}
+                        }
+                    ]
+                }
+            )
+        ]
+
+        self.assertEqual(expected_result, async_response)
 
     @requests_mock.Mocker()
     def test_success_delete_glossary_terms(self, m):
@@ -200,7 +234,16 @@ class TestGlossaryTerm(unittest.TestCase):
         m.register_uri('DELETE', '/integration/v2/term/', json=success_response)
         delete_result = MOCK_GLOSSARY_TERM.delete_glossary_terms(mock_term_list)
 
-        self.assertTrue(delete_result)
+        expected_result = JobDetailsTermDelete(
+            status = 'successful'
+            , msg = ''
+            , result = JobDetailsTermDeleteResult(
+                deleted_term_ids = [1]
+                , deleted_term_count = 1
+            )
+        )
+
+        self.assertEqual(expected_result, delete_result)
 
     @requests_mock.Mocker()
     def test_failed_delete_glossary_terms(self, m):
@@ -224,7 +267,17 @@ class TestGlossaryTerm(unittest.TestCase):
         m.register_uri('DELETE', '/integration/v2/term/', json=failed_response, status_code=400)
         async_response = MOCK_GLOSSARY_TERM.delete_glossary_terms(mock_term_list)
 
-        self.assertFalse(async_response)
+        expected_response = JobDetailsTermDelete(
+            status='failed'
+            , msg=None
+            , result={
+                'id': ['Expected a list of items but got type "int".']
+                , 'detail': {'id': ['Expected a list of items but got type "int".']}
+                , 'code': '400000'
+            }
+        )
+
+        self.assertEqual(expected_response, async_response)
 
 
 if __name__ == '__main__':

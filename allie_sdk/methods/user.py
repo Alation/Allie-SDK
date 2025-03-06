@@ -6,6 +6,7 @@ import requests
 from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import validate_query_params
 from ..models.user_model import *
+from ..models.job_model import *
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
@@ -33,7 +34,7 @@ class AlationUser(RequestHandler):
         else:
             self._user_endpoint = '/integration/v1/user/'
 
-    def get_users(self, query_params: UserParams = None) -> list:
+    def get_users(self, query_params: UserParams = None) -> list[User]:
         """Get multiple Alation Users.
 
         Args:
@@ -88,9 +89,23 @@ class AlationUser(RequestHandler):
         result = self.post('/integration/v1/remove_dup_users_accts/', files=files, body=None,
                            headers={"accept": "application/json"})
 
-        return result
+        if isinstance(result, dict):
+            success = result.get("Success")
+            if success:
+                final_result = JobDetails(
+                    status="successful"
+                    , msg = success
+                    , result=""
+                )
+            else:
+                final_result = JobDetails.from_api_response(result)
+        # catch anything else
+        else:
+            final_result = result
 
-    def get_generate_dup_users_accts_csv(self) -> str:
+        return final_result
+
+    def get_generate_dup_users_accts_csv(self) -> str | JobDetails:
         """Get duplicate Alation Users as CSV.
 
         Returns:
@@ -99,7 +114,25 @@ class AlationUser(RequestHandler):
         """
         result = self.get('/integration/v1/generate_dup_users_accts_csv_file/')
 
-        return result
+        if isinstance(result, dict):
+            success = result.get("Success")
+            if success:
+                final_result = JobDetails(
+                    status = "successful"
+                    , msg = success
+                    , result = ""
+                )
+            else:
+                final_result = JobDetails(
+                    status="failed"
+                    , msg=""
+                    , result = result
+                )
+        # it's a CSV
+        else:
+            final_result = result
+
+        return final_result
 
 
     @property

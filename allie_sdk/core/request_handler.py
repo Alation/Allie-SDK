@@ -3,9 +3,11 @@
 import json
 import logging
 import requests
+import json
 
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
+from ..models.job_model import *
 
 API_LOGGER = logging.getLogger("allie_sdk_logger")
 RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
@@ -39,7 +41,12 @@ class RequestHandler(object):
             self.access_token = access_token
             self.headers['Token'] = access_token
 
-    def delete(self, url: str, body: any = None) -> dict | list:
+    def delete(
+        self
+        , url: str
+        , body: any = None
+        , is_async: bool = False
+    ) -> dict | list:
         """API Delete Request.
 
         Args:
@@ -64,18 +71,39 @@ class RequestHandler(object):
                 response_data = api_response.content
 
         log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'PATCH', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        log_details = {
+            'Method': 'DELETE'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
 
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the DELETE Request to: {log_url}')
+            self._log_error(
+                response_data
+                , log_details
+                , message = f'Error submitting the DELETE Request to: {log_url}'
+            )
+
+            # return error details
+            # conform with JobDetails structure
+            mapped_response_data = self._map_request_error_to_job_details(response_data)
+            return mapped_response_data
 
         else:
-            self._log_success(log_details,
-                              f'Succesfully submitted the DELETE Request to: {log_url}')
+            self._log_success(
+                log_details
+                , message = f'Succesfully submitted the DELETE Request to: {log_url}'
+            )
 
-            return response_data if response_data else True
+            if is_async:
+                # return response data as is since we still need to extract the job id in async_handler.py
+                return response_data
+            else:
+                # make sure result conforms to JobDetails structure
+                mapped_response_data = self._map_request_success_to_job_details(response_data)
+                return mapped_response_data
+
+            
 
     def get(self, url: str, query_params: dict = None, pagination: bool = True) -> any:
         """API Get Request.
@@ -151,16 +179,28 @@ class RequestHandler(object):
                 return api_response.content
 
         log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'PATCH', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        log_details = {
+            'Method': 'PATCH'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
 
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the PATCH Request to: {log_url}')
+            self._log_error(
+                response_data
+                , log_details
+                , message = f'Error submitting the PATCH Request to: {log_url}'
+            )
+
+            # return error details
+            # conform with JobDetails structure
+            mapped_response_data = self._map_request_error_to_job_details(response_data)
+            return mapped_response_data
 
         else:
-            self._log_success(log_details,
-                              f'Successfully submitted the PATCH Request to: {log_url}')
+            self._log_success(
+                log_details
+                , message = f'Successfully submitted the PATCH Request to: {log_url}')
 
             return response_data
 
@@ -201,16 +241,29 @@ class RequestHandler(object):
                 response_data = api_response.content
 
         log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'POST', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        log_details = {
+            'Method': 'POST'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
 
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the POST Request to: {log_url}')
+            self._log_error(
+                response_data
+                , log_details
+                , message = f'Error submitting the POST Request to: {log_url}'
+            )
+
+            # return error details
+            # conform with JobDetails structure
+            mapped_response_data = self._map_request_error_to_job_details(response_data)
+            return mapped_response_data
 
         else:
-            self._log_success(log_details,
-                              f'Successfully submitted the POST Request to: {log_url}')
+            self._log_success(
+                log_details
+                , message = f'Successfully submitted the POST Request to: {log_url}'
+            )
 
             return response_data
 
@@ -244,16 +297,29 @@ class RequestHandler(object):
                 response_data = api_response.content
 
         log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'PUT', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        log_details = {
+            'Method': 'PUT'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
 
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the PUT Request to: {log_url}')
+            self._log_error(
+                response_data
+                , log_details
+                , message = f'Error submitting the PUT Request to: {log_url}'
+            )
+
+            # return error details
+            # conform with JobDetails structure
+            mapped_response_data = self._map_request_error_to_job_details(response_data)
+            return mapped_response_data
 
         else:
-            self._log_success(log_details,
-                              f'Successfully submitted the PUT Request to: {log_url}')
+            self._log_success(
+                log_details
+                , message = f'Successfully submitted the PUT Request to: {log_url}'
+            )
 
             return response_data
 
@@ -282,18 +348,26 @@ class RequestHandler(object):
                 response_data = api_response.content
 
         log_url = self._format_log_url(api_response.url)
-        log_details = {'Method': 'GET', 'URL': api_response.url,
-                       'Response': api_response.status_code}
+        log_details = {
+            'Method': 'GET'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
 
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(response_data, log_details,
-                            f'Error submitting the GET Request to: {log_url}')
+            self._log_error(
+                response_data
+                , log_details
+                , message = f'Error submitting the GET Request to: {log_url}'
+            )
 
         else:
             response_objects = len(response_data) if isinstance(response_data, list) else 1
             log_details['Objects Returned'] = response_objects
-            self._log_success(log_details,
-                              f'Successfully submitted the GET Request to: {log_url}')
+            self._log_success(
+                log_details
+                , message = f'Successfully submitted the GET Request to: {log_url}'
+            )
 
         return api_response
 
@@ -322,6 +396,7 @@ class RequestHandler(object):
             error_code = response_data.get('code', None)
             error_title = response_data.get('title', None)
             error_detail = response_data.get('detail', None)
+            error_errors = response_data.get('errors', None)
 
             if error_code:
                 details['Error Code'] = error_code
@@ -334,6 +409,12 @@ class RequestHandler(object):
             if error_detail:
                 details['Error Details'] = error_detail
                 message = f'{message}\nERROR DETAIL: {error_detail}'
+
+            if error_errors:
+                details['More Error info'] = error_errors
+                # since every API endpoint quite likely has their own nested structure
+                # we just simply dump the output here
+                message = f'{message}\nERRORS: {json.dumps(error_errors)}'
 
             if all(var is None for var in (error_code, error_title, error_title)):
                 details['Error'] = response_data
@@ -362,3 +443,32 @@ class RequestHandler(object):
             url += f'?{parsed_url.query}'
 
         return url
+
+
+    @staticmethod
+    def _map_request_error_to_job_details(response_data) -> dict:
+
+        if isinstance(response_data, dict):
+            msg = response_data.get("title", None)
+        else:
+            msg = ""
+
+        error_data = dict(
+            status = "failed"
+            , msg = msg
+            , result = response_data
+        )
+
+        return error_data
+
+    @staticmethod
+    def _map_request_success_to_job_details(response_data=None) -> dict:
+        # some API endpoints don't return any response content (e.g. for business policies)
+        # hence we made the reponse_data argument optional here
+        success_data = dict(
+            status = "successful"
+            , msg = ""
+            , result = response_data
+        )
+
+        return success_data

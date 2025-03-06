@@ -143,17 +143,6 @@ def test_create_documents(requests_mock):
     )
 
     function_expected_result = [
-        # MOCK_USER.JobDetails(
-        #     status='successful'
-        #     , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
-        #     , result={
-        #         'created_term_count': 2
-        #         , 'created_terms': [
-        #             {'id': 1325, 'title': 'My KPI 1'}
-        #             , {'id': 1326, 'title': 'My KPI 2'}
-        #         ]
-        #     }
-        # )
         JobDetailsDocumentPost(
             status='successful'
             , msg='Job finished in 0.242215 seconds at 2024-06-20 13:23:02.698215+00:00'
@@ -168,6 +157,129 @@ def test_create_documents(requests_mock):
     ]
     assert function_expected_result == create_documents_result
 
+def test_create_documents_fail(requests_mock):
+
+    # --- PREPARE THE TEST SETUP --- #
+
+    # What does the response look like for the create document request?
+    document_api_response = {
+        'job_id': None
+        , 'invalid_documents': [
+            {
+                'index': 0
+                , 'errors': [
+                    {'folder_ids': ['The following Folders don’t exist or are deleted (folder_ids: [21])']}
+                    , [
+                        {}
+                        , {'non_field_errors': ["The value `['reddddddd', 'blue']` is not allowed for field `Colours` with field_id `10313`."]}
+                    ]
+                ]
+                , 'document': {
+                    'title': 'My KPI 1x1'
+                    , 'description': 'This is the description for KPI 1'
+                    , 'template_id': 170
+                    , 'folder_ids': [21]
+                    , 'document_hub_id': 4
+                    , 'custom_fields': [
+                        {
+                            'field_id': 10302
+                            , 'value': [
+                                {
+                                    'otype': 'data'
+                                    , 'oid': 146
+                                }
+                            ]
+                        }
+                        , {
+                            'field_id': 10313
+                            , 'value': ['reddddddd','blue']
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+    # Override the document API call
+    requests_mock.register_uri(
+        method='POST'
+        , url='/integration/v2/document/'
+        , json=document_api_response
+        , status_code=400
+    )
+
+    # What does the response look like for the Job?
+    # None since no job is trigger due to payload problems
+
+    # --- TEST THE FUNCTION --- #
+    create_documents_result = MOCK_USER.create_documents(
+        [
+            DocumentPostItem(
+                title="My KPI 1x1"
+                , description="This is the description for KPI 1"
+                , template_id= 170
+                , folder_ids=[21]
+                , document_hub_id=4
+                , custom_fields=[
+                    # object set
+                    CustomFieldValueItem(
+                        field_id=10302
+                        , value=[
+                            CustomFieldDictValueItem(
+                                otype="data"
+                                , oid=146
+                            )
+                        ]
+                    )
+                    # multi-picker
+                    , CustomFieldValueItem(
+                        field_id=10313
+                        , value=[
+                            CustomFieldStringValueItem(
+                                value="reddddddd"
+                            )
+                            , CustomFieldStringValueItem(
+                                value="blue"
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+    function_expected_result = [
+        JobDetailsDocumentPost(
+            status='failed'
+            , msg=None
+            , result={
+                'job_id': None
+                , 'invalid_documents': [
+                    {
+                        'index': 0
+                        , 'errors': [
+                            {'folder_ids': ['The following Folders don’t exist or are deleted (folder_ids: [21])']}
+                            , [{}, {'non_field_errors': ["The value `['reddddddd', 'blue']` is not allowed for field `Colours` with field_id `10313`."]}]
+                        ]
+                        , 'document': {
+                            'title': 'My KPI 1x1'
+                            , 'description': 'This is the description for KPI 1'
+                            , 'template_id': 170
+                            , 'folder_ids': [21]
+                            , 'document_hub_id': 4
+                            , 'custom_fields': [
+                                {'field_id': 10302, 'value': [{'otype': 'data', 'oid': 146}]}
+                                , {'field_id': 10313, 'value': ['reddddddd', 'blue']}
+                            ]
+                        }
+                    }
+                ]
+            }
+        )
+    ]
+
+    assert function_expected_result == create_documents_result
+
 def test_update_documents(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
@@ -177,7 +289,7 @@ def test_update_documents(requests_mock):
         "job_id": 27811
     }
 
-    # Override the policy API call
+    # Override the document API call
     requests_mock.register_uri(
         method='PUT'
         , url='/integration/v2/document/'
@@ -267,6 +379,91 @@ def test_update_documents(requests_mock):
 
     assert function_expected_result == update_documents_result
 
+def test_update_documents_fail(requests_mock):
+
+    # --- PREPARE THE TEST SETUP --- #
+
+    # What does the response look like for the update document request?
+    document_api_response = {
+        'job_id': None
+        , 'invalid_documents': [
+            {
+                'index': 0
+                , 'errors': [
+                    {'custom_fields': ['Custom field values were included, but no template was specified.']}
+                ]
+                , 'document': {
+                    'id': 8
+                    , 'description': 'This is another description for KPI 1'
+                    , 'custom_fields': [{'field_id': 1778, 'value': [{'otype': 'data', 'oid': 146}]}]
+                    , 'document_hub_id': 1}
+            }
+        ]
+    }
+
+    # Override the document API call
+    requests_mock.register_uri(
+        method='PUT'
+        , url='/integration/v2/document/'
+        , json=document_api_response
+        , status_code=400
+    )
+
+    # What does the response look like for the Job?
+    # => no response, since it never gets that far
+
+
+    # Override the job API call
+    # Note: The id in the job URL corresponds to the task id in document_response defined above
+    # => not required
+
+    # --- TEST THE FUNCTION --- #
+    update_documents_result = MOCK_USER.update_documents(
+        [
+            DocumentPutItem(
+                id=8
+                , description="This is another description for KPI 1"
+                , custom_fields=[
+                    # object set
+                    CustomFieldValueItem(
+                        field_id=1778
+                        , value=[
+                            CustomFieldDictValueItem(
+                                otype="data"
+                                , oid=146
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
+
+    function_expected_result = [
+        JobDetailsDocumentPut(
+            status='failed'
+            , msg=None
+            , result={
+                'job_id': None
+                , 'invalid_documents': [
+                    {
+                        'index': 0
+                        , 'errors': [
+                            {'custom_fields': ['Custom field values were included, but no template was specified.']}
+                        ]
+                        , 'document': {
+                            'id': 8
+                            , 'description': 'This is another description for KPI 1'
+                            , 'custom_fields': [
+                                {'field_id': 1778, 'value': [{'otype': 'data', 'oid': 146}]}], 'document_hub_id': 1}
+                    }
+                ]
+            }
+        )
+    ]
+
+    assert function_expected_result == update_documents_result
+
 def test_delete_documents(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
@@ -301,9 +498,13 @@ def test_delete_documents(requests_mock):
     )
 
     function_expected_result = JobDetailsDocumentDelete(
+        status = "successful"
+        , msg = ""
+        , result = JobDetailsDocumentDeleteResult(
             deleted_document_count = 2
             , deleted_document_ids = [
                 1, 2
             ]
         )
+    )
     assert function_expected_result == delete_document_result

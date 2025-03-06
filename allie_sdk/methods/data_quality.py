@@ -25,7 +25,7 @@ class AlationDataQuality(AsyncHandler):
         """
         super().__init__(access_token, session, host)
 
-    def get_data_quality_fields(self, query_params: DataQualityFieldParams = None) -> list:
+    def get_data_quality_fields(self, query_params: DataQualityFieldParams = None) -> list[DataQualityField]:
         """Query multiple Alation Data Quality Fields.
 
         Args:
@@ -37,12 +37,15 @@ class AlationDataQuality(AsyncHandler):
         """
         validate_query_params(query_params, DataQualityFieldParams)
         params = query_params.generate_params_dict() if query_params else None
-        dq_fields = self.get('/integration/v1/data_quality/fields/', query_params=params)
+        dq_fields = self.get(
+            url = '/integration/v1/data_quality/fields/'
+            , query_params=params
+        )
 
         if dq_fields:
             return [DataQualityField.from_api_response(item) for item in dq_fields]
 
-    def post_data_quality_fields(self, dq_fields: list) -> list:
+    def post_data_quality_fields(self, dq_fields: list) -> list[JobDetailsDataQuality]:
         """Post (Create) Alation Data Quality Fields.
 
         Args:
@@ -53,14 +56,14 @@ class AlationDataQuality(AsyncHandler):
 
         """
         item: DataQualityFieldItem
-        validate_rest_payload(dq_fields, (DataQualityFieldItem,))
+        validate_rest_payload(dq_fields, expected_types = (DataQualityFieldItem,))
         payload = [item.generate_api_post_payload() for item in dq_fields]
-        async_results = self._dq_post(payload, 'Fields')
+        async_results = self._dq_post(payload, dq_type = 'Fields')
 
         if async_results:
             return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
-    def delete_data_quality_fields(self, dq_fields: list) -> list:
+    def delete_data_quality_fields(self, dq_fields: list) -> list[JobDetailsDataQuality]:
         """Delete Alation Data Quality Fields.
 
         Args:
@@ -71,14 +74,14 @@ class AlationDataQuality(AsyncHandler):
 
         """
         item: DataQualityField
-        validate_rest_payload(dq_fields, (DataQualityField,))
+        validate_rest_payload(dq_fields, expected_types = (DataQualityField,))
         payload = [item.key for item in dq_fields]
-        async_results = self._dq_delete(payload, 'Fields')
+        async_results = self._dq_delete(payload, dq_type ='Fields')
 
         if async_results:
             return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
-    def get_data_quality_values(self, query_params: DataQualityValueParams = None) -> list:
+    def get_data_quality_values(self, query_params: DataQualityValueParams = None) -> list[DataQualityValue]:
         """Query multiple Alation Data Quality Values.
 
         Args:
@@ -110,14 +113,14 @@ class AlationDataQuality(AsyncHandler):
 
         """
         item: DataQualityValueItem
-        validate_rest_payload(dq_values, (DataQualityValueItem,))
+        validate_rest_payload(dq_values, expected_types = (DataQualityValueItem,))
         payload = [item.generate_api_post_payload() for item in dq_values]
-        async_results = self._dq_post(payload, 'Values')
+        async_results = self._dq_post(payload, dq_type = 'Values')
 
         if async_results:
             return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
 
-    def delete_data_quality_values(self, dq_values: list) -> list:
+    def delete_data_quality_values(self, dq_values: list) -> list[JobDetailsDataQuality]:
         """Delete Alation Data Quality Values.
 
         Args:
@@ -128,9 +131,9 @@ class AlationDataQuality(AsyncHandler):
 
         """
         item: DataQualityValue
-        validate_rest_payload(dq_values, (DataQualityValue,))
+        validate_rest_payload(dq_values, expected_types = (DataQualityValue,))
         payload = [item.generate_api_delete_payload() for item in dq_values]
-        async_results = self._dq_delete(payload, 'Values')
+        async_results = self._dq_delete(payload, dq_type = 'Values')
 
         if async_results:
             return [JobDetailsDataQuality.from_api_response(item) for item in async_results]
@@ -152,7 +155,10 @@ class AlationDataQuality(AsyncHandler):
         for batch in batches:
             try:
                 dq_batch = {dq_type.lower(): batch}
-                async_result = self.async_post_dict_payload('/integration/v1/data_quality/', dq_batch)
+                async_result = self.async_post_dict_payload(
+                    url = '/integration/v1/data_quality/'
+                    , payload = dq_batch
+                )
                 if async_result:
                     results.extend(async_result)
             except Exception as batch_error:
@@ -177,8 +183,29 @@ class AlationDataQuality(AsyncHandler):
 
         for batch in batches:
             try:
-                dq_batch = {dq_type.lower(): batch}
-                async_result = self.async_delete_dict_payload('/integration/v1/data_quality/', dq_batch)
+                """
+                The payload has to be a dict: 
+                - The first property/key is either `fields` or `values`. 
+                - And the value of this key is a list of the actual field or value dictionaries.
+                
+                Example: 
+                
+                {
+                    'values': 
+                        [
+                            {'field_key': 'sdk-test-1', 'object_key': '1.public.parts'}
+                            , {'field_key': 'sdk-test-2', 'object_key': '1.public.sales'}
+                        ]
+                }
+                """
+                dq_batch = {
+                    dq_type.lower(): batch
+                }
+
+                async_result = self.async_delete_dict_payload(
+                    url = '/integration/v1/data_quality/'
+                    , payload = dq_batch
+                )
                 if async_result:
                     results.extend(async_result)
             except Exception as batch_error:

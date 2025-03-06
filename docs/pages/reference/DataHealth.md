@@ -116,7 +116,7 @@ Returns:
 ###  get_data_quality_values
 
 ```
-get_data_quality_values(query_params: DataQualityValueParams = None) -> list
+get_data_quality_values(query_params: DataQualityValueParams = None) -> list[DataQualityValue]
 ```
 
 Query multiple Alation data quality values.
@@ -130,7 +130,7 @@ Returns:
 ###  post_data_quality_fields
 
 ```
-post_data_quality_fields(dq_fields: list) -> bool
+post_data_quality_fields(dq_fields: list) -> list[JobDetailsDataQuality]
 ```
 
 Post (Create) Alation data quality fields.
@@ -139,12 +139,12 @@ Args:
 * dq_fields (list): Alation data quality fields to be created. Each item in the list must be a `DataQualityFieldItem` object
 
 Returns:
-* bool: Success of the API POST Call(s)
+* list of job details
 
 ###  delete_data_quality_fields
 
 ```
-delete_data_quality_fields(dq_fields: list) -> bool:
+delete_data_quality_fields(dq_fields: list) -> list[JobDetailsDataQuality]:
 ```
 
 Delete Alation data quality fields.
@@ -153,12 +153,12 @@ Args:
 * dq_fields (list): Alation data quality fields to be deleted. Each item in the list must be a `DataQualityField` object
 
 Returns:
-* bool: Success of the API DELETE Call(s)
+* list of job details
 
 ###  post_data_quality_values
 
 ```
-post_data_quality_values(dq_values: list) -> bool
+post_data_quality_values(dq_values: list) -> list[JobDetailsDataQuality]
 ```
 
 Post (Create) Alation data quality values.
@@ -167,12 +167,12 @@ Args:
 * dq_values (list): Alation data quality values to be created. Each item in the list must be a `DataQualityValueItem` object
 
 Returns:
-* bool: Success of the API POST Call(s)
+* bool: list of job details
 
 ###  delete_data_quality_values
 
 ```
-delete_data_quality_values(dq_values: list) -> bool
+delete_data_quality_values(dq_values: list) -> list[JobDetailsDataQuality]
 ```
 
 Delete Alation data quality values.
@@ -181,57 +181,8 @@ Args:
 * dq_values (list): Alation data quality values to be deleted. Each item in the list must be a `DataQualityValue` object
   
 Returns:
-* bool: Success of the API DELETE Call(s)
+* bool: list of job details
 
 ## Examples
-###  Create a data health field and value
-```python
-import allie_sdk as allie
 
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Create the data quality field
-dq_fields = []
-field_item = allie.DataQualityFieldItem(
-    field_key='sdk-test-1',
-    name='Testing the SDK',
-    type='STRING',
-    description='Example test code'
-)
-dq_fields.append(field_item)
-alation.data_quality.post_data_quality_fields(dq_fields)
-
-# Create the data quality value
-dq_values = []
-value_item = allie.DataQualityValueItem(
-    field_key='sdk-test-1',
-    object_key='1.superstore.orders',
-    object_type='TABLE',
-    status='WARNING',
-    value='DQ Check Passed at 87%'
-)
-dq_values.append(value_item)
-alation.data_quality.post_data_quality_values(dq_values)
-```
-
-### Delete a data health rule and child values
-```python
-import allie_sdk as allie
-
-alation = allie.Alation(
-    host='<HOST>',
-    user_id=<USER_ID>,
-    refresh_token='<REFRESH_TOKEN>')
-
-# Get the data quality rule and Values
-dq_field_filter = allie.DataQualityFieldParams()
-dq_field_filter.key.add('sdk-test-1')
-dq_fields = alation.data_quality.get_data_quality_fields(dq_field_filter)
-
-dq_value_filter = allie.DataQualityValueParams()
-dq_value_filter.field_key.add('sdk-test-1')
-dq_values = alation.data_quality.get_data_quality_values(dq_value_filter)
-```
+See `/examples/example_data_quality.py`.

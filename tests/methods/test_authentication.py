@@ -37,9 +37,15 @@ class TestAuthentication(unittest.TestCase):
             "code": "401000"
         }
         m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=failed_response, status_code=401)
-        test_token = MOCK_AUTHENTICATION.validate_refresh_token()
+        actual_response = MOCK_AUTHENTICATION.validate_refresh_token()
 
-        self.assertIsNone(test_token)
+        expected_response = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'Refresh token provided is invalid.', 'code': '401000'}
+        )
+
+        self.assertEqual(expected_response, actual_response)
 
     @requests_mock.Mocker()
     def test_success_create_access_token(self, m):
@@ -85,9 +91,15 @@ class TestAuthentication(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v1/createAPIAccessToken/', json=failed_response, status_code=401)
         m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=refresh_success_response)
-        test_token = MOCK_AUTHENTICATION.create_access_token()
+        actual_response = MOCK_AUTHENTICATION.create_access_token()
 
-        self.assertIsNone(test_token)
+        expected_response = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'Refresh token provided is invalid.', 'code': '401000'}
+        )
+
+        self.assertEqual(expected_response, actual_response)
 
     @requests_mock.Mocker()
     def test_failed_create_access_token_expired_refresh_token(self, m):
@@ -102,9 +114,15 @@ class TestAuthentication(unittest.TestCase):
             "refresh_token": "test"
         }
         m.register_uri('POST', '/integration/v1/validateRefreshToken/', json=refresh_response)
-        test_token = MOCK_AUTHENTICATION.create_access_token()
+        actual_result = MOCK_AUTHENTICATION.create_access_token()
 
-        self.assertIsNone(test_token)
+        expected_result = JobDetails(
+            status='failed'
+            , msg=''
+            , result='The Refresh Token is expired! Please generate a new refresh token and try again.'
+        )
+
+        self.assertEqual(expected_result, actual_result)
 
     @requests_mock.Mocker()
     def test_success_validate_access_token(self, m):
@@ -131,9 +149,15 @@ class TestAuthentication(unittest.TestCase):
         }
         m.register_uri('POST', '/integration/v1/validateAPIAccessToken/', json=failed_response,
                        status_code=401)
-        test_token = MOCK_AUTHENTICATION.validate_access_token('test')
+        actual_result = MOCK_AUTHENTICATION.validate_access_token('test')
 
-        self.assertIsNone(test_token)
+        expected_result = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'API Access Token provided is invalid.', 'code': '401000'}
+        )
+
+        self.assertEqual(expected_result, actual_result)
 
     @requests_mock.Mocker()
     def test_success_revoke_access_tokens(self, m):
@@ -142,9 +166,15 @@ class TestAuthentication(unittest.TestCase):
             "detail": "Revoked active access tokens for refresh token: 'test' with id: 1"
         }
         m.register_uri('POST', '/integration/v1/revokeAPIAccessTokens/', json=success_response)
-        result = MOCK_AUTHENTICATION.revoke_access_tokens()
+        actual_result = MOCK_AUTHENTICATION.revoke_access_tokens()
 
-        self.assertEqual(result, True)
+        expected_result = JobDetails(
+            status='successful'
+            , msg=''
+            , result={'detail': "Revoked active access tokens for refresh token: 'test' with id: 1"}
+        )
+
+        self.assertEqual(expected_result, actual_result)
 
     @requests_mock.Mocker()
     def test_failed_revoke_access_tokens(self, m):
@@ -154,9 +184,15 @@ class TestAuthentication(unittest.TestCase):
             "code": "401000"
         }
         m.register_uri('POST', '/integration/v1/revokeAPIAccessTokens/', json=failed_response, status_code=401)
-        result = MOCK_AUTHENTICATION.revoke_access_tokens()
+        actual_result = MOCK_AUTHENTICATION.revoke_access_tokens()
 
-        self.assertEqual(result, False)
+        expected_result = JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'Refresh token provided is invalid.', 'code': '401000'}
+        )
+
+        self.assertEqual(expected_result, actual_result)
 
 
 if __name__ == '__main__':

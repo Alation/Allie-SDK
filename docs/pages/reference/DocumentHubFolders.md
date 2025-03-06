@@ -125,3 +125,6 @@ Returns:
 
 For a detailed description see [official Alation documentation](https://developer.alation.com/dev/reference/updatefolders).
 
+## Examples
+
+See `/examples/example_document_hub_folder.py`.

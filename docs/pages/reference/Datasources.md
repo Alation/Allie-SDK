@@ -173,7 +173,7 @@ Attributes:
 ### get_ocf_datasources
 
 ```
-get_ocf_datasources(self, query_params:OCFDatasourceParams = None) -> list:
+get_ocf_datasources(self, query_params:OCFDatasourceParams = None) -> list[OCFDatasource]:
 ```
 
 Query multiple Alation OCF Data Sources and return their details.
@@ -186,7 +186,7 @@ Returns:
 ### get_native_datasources
 
 ```
-get_native_datasources(self, query_params:NativeDatasourceParams = None) -> list:
+get_native_datasources(self, query_params:NativeDatasourceParams = None) -> list[NativeDatasource]:
 ```
 
 Query multiple Alation Native Data Sources and return their details.
@@ -195,3 +195,7 @@ Args:
 * query_params (`NativeDatasourceParams`): REST API Native Datasource Query Parameters.
 Returns:
 * list: Alation Native Data Sources
+
+## Examples
+
+See `/examples/example_data_source.py`.

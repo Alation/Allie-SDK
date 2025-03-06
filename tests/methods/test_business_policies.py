@@ -107,7 +107,7 @@ def test_create_business_policies(requests_mock):
     """
 
     # Override the job API call
-    # Note: The id in the job URL correspondes to the task id in policy_api_response defined above
+    # Note: The id in the job URL corresponds to the task id in policy_api_response defined above
     requests_mock.register_uri(
         method = 'GET'
         , url = '/api/v1/bulk_metadata/job/?id=23739'
@@ -282,5 +282,9 @@ def test_delete_business_policies(requests_mock):
     )
 
     # OPEN: See concern mentioned further up
-    function_expected_result = True
+    function_expected_result = JobDetails(
+        status = 'successful'
+        , msg = ''
+        , result = ''
+    )
     assert function_expected_result == delete_business_policy_result

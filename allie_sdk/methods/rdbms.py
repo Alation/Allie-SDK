@@ -29,7 +29,7 @@ class AlationRDBMS(AsyncHandler):
         """
         super().__init__(access_token, session, host)
 
-    def get_schemas(self, query_params: SchemaParams = None) -> list:
+    def get_schemas(self, query_params: SchemaParams = None) -> list[Schema]:
         """Query multiple Alation RDBMS Schemas.
 
         Args:
@@ -46,7 +46,7 @@ class AlationRDBMS(AsyncHandler):
         if schemas:
             return [Schema.from_api_response(schema) for schema in schemas]
 
-    def post_schemas(self, ds_id: int, schemas: list) -> JobDetailsRdbms:
+    def post_schemas(self, ds_id: int, schemas: list) -> list[JobDetailsRdbms]:
         """Post (Create or Update) Alation Schema Objects.
 
         Args:
@@ -54,7 +54,7 @@ class AlationRDBMS(AsyncHandler):
             schemas (list): Alation Schemas to be created or updated.
 
         Returns:
-            JobDetailsRdbms: Job details
+            List of JobDetailsRdbms: Job details
 
         """
         item: SchemaItem
@@ -65,7 +65,7 @@ class AlationRDBMS(AsyncHandler):
         if async_results:
             return [JobDetailsRdbms.from_api_response(item) for item in async_results]
 
-    def get_tables(self, query_params: TableParams = None) -> list:
+    def get_tables(self, query_params: TableParams = None) -> list[Table]:
         """Query multiple Alation RDBMS Tables.
 
         Args:
@@ -82,7 +82,7 @@ class AlationRDBMS(AsyncHandler):
         if tables:
             return [Table.from_api_response(table) for table in tables]
 
-    def post_tables(self, ds_id: int, tables: list) -> JobDetailsRdbms:
+    def post_tables(self, ds_id: int, tables: list) -> list[JobDetailsRdbms]:
         """Post (Create or Update) Alation Table Objects.
 
         Args:
@@ -101,7 +101,7 @@ class AlationRDBMS(AsyncHandler):
         if async_results:
             return [JobDetailsRdbms.from_api_response(item) for item in async_results]
 
-    def get_columns(self, query_params: ColumnParams = None) -> list:
+    def get_columns(self, query_params: ColumnParams = None) -> list[Column]:
         """Query multiple Alation RDBMS Columns.
 
         Args:
@@ -118,7 +118,7 @@ class AlationRDBMS(AsyncHandler):
         if columns:
             return [Column.from_api_response(column) for column in columns]
 
-    def post_columns(self, ds_id: int, columns: list) -> JobDetailsRdbms:
+    def post_columns(self, ds_id: int, columns: list) -> list[JobDetailsRdbms]:
         """Post (Create or Update) Alation Column Objects.
 
         Args:

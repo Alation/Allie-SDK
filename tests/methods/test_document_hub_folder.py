@@ -153,6 +153,101 @@ def test_create_document_hub_folders(requests_mock):
     ]
     assert function_expected_result == create_document_hub_folders_result
 
+def test_create_document_hub_folders_fail(requests_mock):
+
+    # --- PREPARE THE TEST SETUP --- #
+
+    # What does the response look like for the create document request?
+    document_hub_folder_api_response = {
+        'job_id': None
+        , 'invalid_folders': [
+            {
+                'index': 0
+                , 'errors': [
+                    [
+                        {'field_id': ['The field_id 9999999999999 is not present on the chosen template.']}
+                    ]
+                ]
+                , 'folder': {
+                    'title': 'Test Document Hub Folder'
+                    , 'description': 'Test Document Hub Folder'
+                    , 'document_hub_id': 2
+                    , 'custom_fields': [
+                        {'field_id': 9999999999999, 'value': 'Production'}
+                    ]
+                    , 'template_id': 163
+                }
+            }
+        ]
+    }
+
+    # Override the document API call
+    requests_mock.register_uri(
+        method='POST'
+        , url='/integration/v2/folder/'
+        , json=document_hub_folder_api_response
+        , status_code=400
+    )
+
+    # What does the response look like for the Job?
+    # not required since no job id returned
+
+
+    # Override the job API call
+    # Note: The id in the job URL corresponds to the task id in document_hub_folder_api_response defined above
+    # not required since no job id returned
+
+    # --- TEST THE FUNCTION --- #
+    create_document_hub_folders_result = MOCK_USER.create_document_hub_folders(
+        [
+            DocumentHubFolderPostItem(
+                title='Test Document Hub Folder'
+                , description='Test Document Hub Folder'
+                , document_hub_id=2
+                , custom_fields=[
+                    CustomFieldValueItem(
+                        field_id=9999999999999
+                        , value=CustomFieldStringValueItem(
+                            value='Production'
+                        )
+                    )
+                ]
+            )
+        ]
+    )
+
+    function_expected_result = [
+        JobDetailsDocumentHubFolderPost(
+            status='failed'
+            , msg=None
+            , result=
+                {
+                    'job_id': None
+                    , 'invalid_folders': [
+                        {
+                            'index': 0
+                            , 'errors': [
+                                [{'field_id': ['The field_id 9999999999999 is not present on the chosen template.']}]
+                            ]
+                            , 'folder': {
+                                'title': 'Test Document Hub Folder'
+                                , 'description': 'Test Document Hub Folder'
+                                , 'document_hub_id': 2
+                                , 'custom_fields': [
+                                    {'field_id': 9999999999999, 'value': 'Production'}
+                                ]
+                                , 'template_id': 163
+                            }
+                        }
+                ]
+            }
+        )
+    ]
+
+
+    assert function_expected_result == create_document_hub_folders_result
+
+
 def test_update_document_hub_folders(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
@@ -254,6 +349,100 @@ def test_update_document_hub_folders(requests_mock):
 
     assert function_expected_result == update_document_hub_folders_result
 
+def test_update_document_hub_folders_fail(requests_mock):
+
+    # --- PREPARE THE TEST SETUP --- #
+
+    # What does the response look like for the update document request?
+    document_hub_folder_api_response = {
+        'job_id': None
+        , 'invalid_folders': [
+            {
+                'index': 0
+                , 'errors': [
+                    {
+                        'custom_fields': ['Custom field values were included, but no template was specified.']
+                    }
+                ]
+                , 'folder': {
+                    'id': 9999999999
+                    , 'title': 'Test Document Hub Folder'
+                    , 'description': 'Test Document Hub Folder'
+                    , 'document_hub_id': None
+                    , 'custom_fields': [
+                        {'field_id': 999999999, 'value': 'Under Review'}
+                    ]
+                }
+            }
+        ]
+    }
+
+
+    # Override the policy API call
+    requests_mock.register_uri(
+        method='PUT'
+        , url='/integration/v2/folder/'
+        , json=document_hub_folder_api_response
+        , status_code=400
+    )
+
+    # What does the response look like for the Job?
+    # n/a since no job id is returned
+
+
+    # Override the job API call
+    # Note: The id in the job URL corresponds to the task id in document_hub_folder_response defined above
+    # n/a since no job id is returned
+
+    # --- TEST THE FUNCTION --- #
+    update_document_hub_folders_result = MOCK_USER.update_document_hub_folders(
+        [
+            DocumentHubFolderPutItem(
+                id=9999999999
+                , title='Test Document Hub Folder'
+                , description='Test Document Hub Folder'
+                , document_hub_id=2
+                , custom_fields=[
+                    CustomFieldValueItem(
+                        field_id=999999999
+                        , value=CustomFieldStringValueItem(
+                            value='Under Review'
+                        )
+                    )
+                ]
+            )
+        ]
+    )
+
+    function_expected_result = [
+        JobDetailsDocumentHubFolderPut(
+            status='failed'
+            , msg=None
+            , result={
+                'job_id': None
+                , 'invalid_folders': [
+                    {
+                        'index': 0
+                        , 'errors': [
+                            {'custom_fields': ['Custom field values were included, but no template was specified.']}
+                        ]
+                        , 'folder': {
+                            'id': 9999999999
+                            , 'title': 'Test Document Hub Folder'
+                            , 'description': 'Test Document Hub Folder'
+                            , 'document_hub_id': None
+                            , 'custom_fields': [
+                                {'field_id': 999999999, 'value': 'Under Review'}
+                            ]
+                        }
+                    }
+                ]
+            }
+        )
+    ]
+
+    assert function_expected_result == update_document_hub_folders_result
+
 def test_delete_document_hub_folders(requests_mock):
 
     # --- PREPARE THE TEST SETUP --- #
@@ -288,9 +477,13 @@ def test_delete_document_hub_folders(requests_mock):
     )
 
     function_expected_result = JobDetailsDocumentHubFolderDelete(
+        status="successful"
+        , msg=""
+        , result=JobDetailsDocumentHubFolderDeleteResult(
             deleted_folder_count = 2
             , deleted_folder_ids = [
                 1, 2
             ]
         )
+    )
     assert function_expected_result == delete_document_hub_folder_result
