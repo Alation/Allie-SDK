@@ -49,9 +49,10 @@ class TestTrustChecks(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/flag/', json=failed_response, status_code=403)
-        flags = MOCK_TRUST_CHECK.get_trust_checks()
-
-        self.assertIsNone(flags)
+        
+        # The method should now raise an HTTPError for non-200 status codes
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_TRUST_CHECK.get_trust_checks()
 
     @requests_mock.Mocker()
     def test_success_post_trust_check(self, m):

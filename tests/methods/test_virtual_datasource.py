@@ -207,17 +207,6 @@ class TestVirtualDataSource(unittest.TestCase):
 
         async_response = {'error': 'Cannot find Datasource'}
 
-        # no job response since it failed
-        # job_response =
-
-        expected_response = [
-            JobDetailsVirtualDatasourcePost(
-                status='failed'
-                , msg=None
-                , result={'error': 'Cannot find Datasource'}
-            )
-        ]
-
         m.register_uri(
             method = 'POST'
             , url = f'/api/v1/bulk_metadata/extraction/{vds_id}'
@@ -225,9 +214,9 @@ class TestVirtualDataSource(unittest.TestCase):
             , status_code = 400
         )
 
-        async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=vds_objects)
-
-        assert async_result == expected_response
+        # Should raise HTTPError with 400 status
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=vds_objects)
 
 if __name__ == '__main__':
     unittest.main()

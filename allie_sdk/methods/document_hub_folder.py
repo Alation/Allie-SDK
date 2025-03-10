@@ -57,6 +57,9 @@ class AlationDocumentHubFolder(AsyncHandler):
 
         Returns:
             List of JobDetailsDocumentHubFolderPost: Status report of the executed background jobs.
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
 
@@ -74,6 +77,7 @@ class AlationDocumentHubFolder(AsyncHandler):
 
         if async_results:
             return [JobDetailsDocumentHubFolderPost.from_api_response(item) for item in async_results]
+        return []
 
     def update_document_hub_folders(
             self
@@ -89,6 +93,9 @@ class AlationDocumentHubFolder(AsyncHandler):
 
         Returns:
             List of JobDetailsDocumentHubFolderPut: Status report of the executed background jobs.
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
         # make sure input data matches expected structure
@@ -104,6 +111,7 @@ class AlationDocumentHubFolder(AsyncHandler):
         )
         if async_results:
             return [JobDetailsDocumentHubFolderPut.from_api_response(item) for item in async_results]
+        return []
 
     def delete_document_hub_folders(
             self

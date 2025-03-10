@@ -34,16 +34,17 @@ class AlationDataQuality(AsyncHandler):
         Returns:
             list: Alation Data Quality Fields
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         validate_query_params(query_params, DataQualityFieldParams)
         params = query_params.generate_params_dict() if query_params else None
+        
         dq_fields = self.get(
             url = '/integration/v1/data_quality/fields/'
             , query_params=params
         )
-
-        if dq_fields:
-            return [DataQualityField.from_api_response(item) for item in dq_fields]
+        return [DataQualityField.from_api_response(item) for item in dq_fields]
 
     def post_data_quality_fields(self, dq_fields: list) -> list[JobDetailsDataQuality]:
         """Post (Create) Alation Data Quality Fields.
@@ -90,17 +91,19 @@ class AlationDataQuality(AsyncHandler):
         Returns:
             list: DataQualityValue Values
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         validate_query_params(query_params, DataQualityValueParams)
         params = query_params.generate_params_dict() if query_params else None
+        
         dq_values = self.get('/integration/v1/data_quality/values/', query_params=params)
-
+        
         if dq_values:
             return [DataQualityValue.from_api_response(value) for value in dq_values]
         # adding below lines as a temporary solution to this issue
         # https://github.com/Alation/Allie-SDK/issues/36
-        elif dq_values == []:
-            return []
+        return []
 
     def post_data_quality_values(self, dq_values: list) -> list:
         """Post (Create) Alation Data Quality Values.
@@ -148,26 +151,24 @@ class AlationDataQuality(AsyncHandler):
         Returns:
             list: execution results
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         results = []
         batches = self._batch_objects(dq_payload)
 
         for batch in batches:
-            try:
-                dq_batch = {dq_type.lower(): batch}
-                async_result = self.async_post_dict_payload(
-                    url = '/integration/v1/data_quality/'
-                    , payload = dq_batch
-                )
-                if async_result:
-                    results.extend(async_result)
-            except Exception as batch_error:
-                LOGGER.error(batch_error, exc_info=True)
-                results.append(batch_error)
+            dq_batch = {dq_type.lower(): batch}
+            async_result = self.async_post_dict_payload(
+                url = '/integration/v1/data_quality/'
+                , payload = dq_batch
+            )
+            if async_result:
+                results.extend(async_result)
 
         return results
 
-    def _dq_delete(self, dq_payload: list, dq_type: str) -> bool:
+    def _dq_delete(self, dq_payload: list, dq_type: str) -> list:
         """Delete the DQ Fields or Values in Alation.
 
         Args:
@@ -175,41 +176,39 @@ class AlationDataQuality(AsyncHandler):
             dq_type (str): 'Fields' or 'Values'.
 
         Returns:
-            bool: Returns True if a batch fails
+            list: execution results
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         results = []
         batches = self._batch_objects(dq_payload)
 
         for batch in batches:
-            try:
-                """
-                The payload has to be a dict: 
-                - The first property/key is either `fields` or `values`. 
-                - And the value of this key is a list of the actual field or value dictionaries.
-                
-                Example: 
-                
-                {
-                    'values': 
-                        [
-                            {'field_key': 'sdk-test-1', 'object_key': '1.public.parts'}
-                            , {'field_key': 'sdk-test-2', 'object_key': '1.public.sales'}
-                        ]
-                }
-                """
-                dq_batch = {
-                    dq_type.lower(): batch
-                }
+            """
+            The payload has to be a dict: 
+            - The first property/key is either `fields` or `values`. 
+            - And the value of this key is a list of the actual field or value dictionaries.
+            
+            Example: 
+            
+            {
+                'values': 
+                    [
+                        {'field_key': 'sdk-test-1', 'object_key': '1.public.parts'}
+                        , {'field_key': 'sdk-test-2', 'object_key': '1.public.sales'}
+                    ]
+            }
+            """
+            dq_batch = {
+                dq_type.lower(): batch
+            }
 
-                async_result = self.async_delete_dict_payload(
-                    url = '/integration/v1/data_quality/'
-                    , payload = dq_batch
-                )
-                if async_result:
-                    results.extend(async_result)
-            except Exception as batch_error:
-                LOGGER.error(batch_error, exc_info=True)
-                results.append(batch_error)
+            async_result = self.async_delete_dict_payload(
+                url = '/integration/v1/data_quality/'
+                , payload = dq_batch
+            )
+            if async_result:
+                results.extend(async_result)
 
         return results

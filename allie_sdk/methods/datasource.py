@@ -22,12 +22,16 @@ class AlationDatasource(RequestHandler):
 
     def get_ocf_datasources(self, query_params:OCFDatasourceParams = None) -> list[OCFDatasource]:
         """Query multiple Alation datasources and return their details
+        
         Args:
-            query_params (DatasourcesParams): REST API Datasources Query Parameters.
+            query_params (OCFDatasourceParams): REST API Datasources Query Parameters.
+            
         Returns:
-            list: Alation Datasources
+            list[OCFDatasource]: Alation Datasources
+            
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         validate_query_params(query_params, OCFDatasourceParams)
         params = query_params.generate_params_dict() if query_params else None
 
@@ -36,15 +40,20 @@ class AlationDatasource(RequestHandler):
         if datasources:
             datasources_checked = [OCFDatasource.from_api_response(datasource) for datasource in datasources]
             return datasources_checked
+        return []
 
     def get_native_datasources(self, query_params:NativeDatasourceParams = None) -> list[NativeDatasource]:
         """Query multiple Alation datasources and return their details
+        
         Args:
-            query_params (NativeDatasourcesParams): REST API Datasources Query Parameters.
+            query_params (NativeDatasourceParams): REST API Datasources Query Parameters.
+            
         Returns:
-            list: Alation NativeDatasources
+            list[NativeDatasource]: Alation NativeDatasources
+            
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         validate_query_params(query_params, NativeDatasourceParams)
         params = query_params.generate_params_dict() if query_params else None
 
@@ -53,3 +62,4 @@ class AlationDatasource(RequestHandler):
         if datasources:
             datasources_checked = [NativeDatasource.from_api_response(datasource) for datasource in datasources]
             return datasources_checked
+        return []

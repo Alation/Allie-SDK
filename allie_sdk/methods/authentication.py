@@ -29,13 +29,17 @@ class AlationAuthentication(RequestHandler):
         self.refresh_token = refresh_token
         self.user_id = user_id
 
-    def validate_refresh_token(self, refresh_token = None) -> RefreshToken | JobDetails:
+    def validate_refresh_token(self, refresh_token = None) -> RefreshToken:
         """Validate the Alation API Refresh Token.
 
-        Returns:
-            RefreshToken: Alation API Refresh Token if request succeeded
-            JobDetails: Error details if request fails
+        Args:
+            refresh_token (str, optional): Alation API Refresh Token. Defaults to None.
 
+        Returns:
+            RefreshToken: Alation API Refresh Token
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         ref_token = refresh_token if refresh_token else self.refresh_token
 
@@ -44,71 +48,72 @@ class AlationAuthentication(RequestHandler):
             , 'user_id': self.user_id
         }
 
-        validity = self.post('/integration/v1/validateRefreshToken/',
-                             validate_body)
+        validity = self.post('/integration/v1/validateRefreshToken/', validate_body)
 
-        if validity:
-            # cater for error messages
-            # check if the dict contains a status property
-            status = validity.get("status")
-            if status:
-                if status == "failed":
-                    return JobDetails.from_api_response(validity)
-            else:
-                return RefreshToken.from_api_response(validity)
+        # API can return success but with a status="failed" in the body for logical errors
+        # This is distinct from HTTP errors which are raised by RequestHandler
+        status = validity.get("status")
+        if status and status == "failed":
+            # Convert to HTTPError with appropriate status code
+            error_response = requests.Response()
+            error_response.status_code = 400  # Bad request
+            error_response._content = str.encode(str(validity))
+            error = requests.exceptions.HTTPError("Refresh token validation failed", response=error_response)
+            raise error
 
-    def create_access_token(self) -> AccessToken | JobDetails:
+        return RefreshToken.from_api_response(validity)
+
+    def create_access_token(self) -> AccessToken:
         """Create an Alation API Access Token.
 
         Returns:
             AccessToken: Alation API Access Token.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code or if refresh token is invalid.
         """
-        validate_refresh_token_response = self.validate_refresh_token()
+        # This will raise HTTPError if the token is invalid
+        refresh_token_validation = self.validate_refresh_token()
+        
+        # Check if refresh token is expired
+        if refresh_token_validation.token_status.upper() != 'ACTIVE':
+            validation_error_message = "The Refresh Token is expired! Please generate a new refresh token and try again."
+            LOGGER.error(validation_error_message)
+            
+            # Create and raise an HTTP error
+            error_response = requests.Response()
+            error_response.status_code = 401  # Unauthorized
+            error_response._content = str.encode(validation_error_message)
+            error = requests.exceptions.HTTPError(validation_error_message, response=error_response)
+            raise error
+            
+        # Create access token
+        token_body = {'refresh_token': self.refresh_token, 'user_id': self.user_id}
+        token = self.post('/integration/v1/createAPIAccessToken/', token_body)
+        
+        # API can return success but with a status="failed" in the body for logical errors
+        status = token.get("status")
+        if status and status == "failed":
+            # Convert to HTTPError with appropriate status code
+            error_response = requests.Response()
+            error_response.status_code = 400  # Bad request
+            error_response._content = str.encode(str(token))
+            error = requests.exceptions.HTTPError("Access token creation failed", response=error_response)
+            raise error
+            
+        return AccessToken.from_api_response(token)
 
-        # Case: There was some other error validating the refresh token
-        if isinstance(validate_refresh_token_response, JobDetails):
-            # just pass on the error message
-            # it's already in the JobDetails structure
-            return validate_refresh_token_response
-
-        # Case: A RefreshToken object is returned
-        elif isinstance(validate_refresh_token_response, RefreshToken):
-            # Case: Refresh token is expired
-            if validate_refresh_token_response.token_status.upper() != 'ACTIVE':
-                validation_error_message = "The Refresh Token is expired! Please generate a new refresh token and try again."
-                LOGGER.error(validation_error_message)
-
-                # make it conform to JobDetails structure
-                mapped_response = self._map_request_error_to_job_details(validation_error_message)
-                return JobDetails.from_api_response(mapped_response)
-            # Case: We've got a valid refresh token and can proceed with creating a new access token
-            else:
-                token_body = {'refresh_token': self.refresh_token,
-                              'user_id': self.user_id}
-                token = self.post('/integration/v1/createAPIAccessToken/',
-                                  token_body)
-
-                if token:
-                    # cater for error messages
-                    # check if the dict contains a status property
-                    status = token.get("status")
-                    if status:
-                        if status == "failed":
-                            return JobDetails.from_api_response(token)
-                    else:
-                        return AccessToken.from_api_response(token)
-
-    def validate_access_token(self, access_token: str) -> AccessToken | JobDetails:
+    def validate_access_token(self, access_token: str) -> AccessToken:
         """Validate the Alation API Access Token.
 
         Args:
             access_token (str): Alation API Access Token.
 
         Returns:
-            AccessToken: Alation API Access Token if request is successful
-            JobDetails: Error details if request fails
+            AccessToken: Alation API Access Token
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         validate_body = {
             'api_access_token': access_token
@@ -120,39 +125,47 @@ class AlationAuthentication(RequestHandler):
             , body = validate_body
         )
 
-        if validity:
-            # cater for error messages
-            # check if the dict contains a status property
-            status = validity.get("status")
-            if status:
-                if status == "failed":
-                    return JobDetails.from_api_response(validity)
-            else:
-                return AccessToken.from_api_response(validity)
+        # API can return success but with a status="failed" in the body for logical errors
+        status = validity.get("status")
+        if status and status == "failed":
+            # Convert to HTTPError with appropriate status code
+            error_response = requests.Response()
+            error_response.status_code = 401  # Unauthorized
+            error_response._content = str.encode(str(validity))
+            error = requests.exceptions.HTTPError("Access token validation failed", response=error_response)
+            raise error
+
+        return AccessToken.from_api_response(validity)
 
     def revoke_access_tokens(self) -> JobDetails:
         """Revoke the Alation API Access Tokens of an Alation API Refresh Token.
 
         Returns:
-            bool: Result of the API Call to Revoke Access Tokens.
+            JobDetails: Result of the API Call to Revoke Access Tokens.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         revoke_body = {'refresh_token': self.refresh_token,
-                       'user_id': self.user_id}
+                      'user_id': self.user_id}
+        
         revoke_response = self.post(
             url = '/integration/v1/revokeAPIAccessTokens/'
             , body = revoke_body
         )
 
+        # API can return success but with a status="failed" in the body for logical errors
+        status = revoke_response.get("status")
+        if status and status == "failed":
+            # Convert to HTTPError with appropriate status code
+            error_response = requests.Response()
+            error_response.status_code = 400  # Bad request
+            error_response._content = str.encode(str(revoke_response))
+            error = requests.exceptions.HTTPError("Token revocation failed", response=error_response)
+            raise error
 
-        if revoke_response:
-            # check whether it was a success or failure
-            status = revoke_response.get("status")
-            if status:
-                if status == "failed":
-                    return JobDetails.from_api_response(revoke_response)
-            else:
-                mapped_revoke_response = self._map_request_success_to_job_details(revoke_response)
-                return JobDetails.from_api_response(mapped_revoke_response)
+        # Map the response to a JobDetails structure for backward compatibility
+        mapped_revoke_response = self._map_request_success_to_job_details(revoke_response)
+        return JobDetails.from_api_response(mapped_revoke_response)
 
 

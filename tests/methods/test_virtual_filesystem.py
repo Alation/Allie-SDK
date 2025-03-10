@@ -70,7 +70,6 @@ class TestVirtualFileSystem(unittest.TestCase):
         vfs_id = 0
 
         # Add/Update Objects
-
         vfs1 = VirtualFileSystemItem(
             path="/"
             , name="var"
@@ -101,23 +100,16 @@ class TestVirtualFileSystem(unittest.TestCase):
 
         async_response = {'error': 'Cannot find FileSystem id: 0'}
 
-        # no job response since it failed
-        # job_response =
-
-        expected_response = [JobDetails(status='failed', msg=None, result={'error': 'Cannot find FileSystem id: 0'})]
-
-
         m.register_uri(
             method = 'POST'
             , url = f'/api/v1/bulk_metadata/file_upload/{vfs_id}/'
             , json = async_response
             , status_code = 400
         )
-        # no job response since it failed
-        # m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=14391', json=job_response)
-        async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(fs_id=vfs_id, vfs_objects=mock_vfs_list)
-
-        assert async_result == expected_response
+        
+        # Should raise HTTPError with 400 status
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_VIRTUAL_DATA_SOURCE.post_metadata(fs_id=vfs_id, vfs_objects=mock_vfs_list)
 
 if __name__ == '__main__':
     unittest.main()

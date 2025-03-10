@@ -52,10 +52,13 @@ class RequestHandler(object):
         Args:
             url (str): DELETE API Call URL.
             body (any): DELETE API Body.
+            is_async (bool): If True, return raw response for async handling.
 
         Returns:
             dict | list: API Response Body.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         if isinstance(body, dict) or isinstance(body, list):
             body = json.dumps(body, default=str)
@@ -83,25 +86,22 @@ class RequestHandler(object):
                 , log_details
                 , message = f'Error submitting the DELETE Request to: {log_url}'
             )
+            
+            # Raise HTTP error instead of returning error details
+            api_response.raise_for_status()
 
-            # return error details
-            # conform with JobDetails structure
-            mapped_response_data = self._map_request_error_to_job_details(response_data)
-            return mapped_response_data
+        self._log_success(
+            log_details
+            , message = f'Succesfully submitted the DELETE Request to: {log_url}'
+        )
 
+        if is_async:
+            # return response data as is since we still need to extract the job id in async_handler.py
+            return response_data
         else:
-            self._log_success(
-                log_details
-                , message = f'Succesfully submitted the DELETE Request to: {log_url}'
-            )
-
-            if is_async:
-                # return response data as is since we still need to extract the job id in async_handler.py
-                return response_data
-            else:
-                # make sure result conforms to JobDetails structure
-                mapped_response_data = self._map_request_success_to_job_details(response_data)
-                return mapped_response_data
+            # make sure result conforms to JobDetails structure
+            mapped_response_data = self._map_request_success_to_job_details(response_data)
+            return mapped_response_data
 
             
 
@@ -116,31 +116,40 @@ class RequestHandler(object):
         Returns:
             any: API Response Body in JSON.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-        returned_items = None
+        returned_items = []
         if query_params is None:
             query_params = {}
         if pagination:
             query_params['limit'] = self.page_size
 
         api_response = self._api_single_get(self.host + url, params=query_params)
-        if api_response.status_code in SUCCESS_CODES:
+        
+        # Check status and raise error if needed
+        if api_response.status_code not in SUCCESS_CODES:
+            api_response.raise_for_status()
+            
+        try:
+            returned_items = api_response.json()
+        except requests.exceptions.JSONDecodeError:
             try:
-                returned_items = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                try:
-                    return api_response.content.decode("utf-8")
-                except UnicodeDecodeError:
-                    return api_response.content
+                return api_response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                return api_response.content
 
         if pagination:
             while 'X-Next-Page' in api_response.headers:
                 next_url = api_response.headers.get('X-Next-Page')
                 api_response = self._api_single_get(self.host + next_url)
-
-                if api_response.status_code in SUCCESS_CODES:
-                    response_data = api_response.json()
-                    returned_items.extend(response_data)
+                
+                # Check status of paginated request and raise error if needed
+                if api_response.status_code not in SUCCESS_CODES:
+                    api_response.raise_for_status()
+                
+                response_data = api_response.json()
+                returned_items.extend(response_data)
 
         return returned_items
 
@@ -156,6 +165,8 @@ class RequestHandler(object):
         Returns:
             dict: API Response Body in JSON.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         if query_params is None:
             query_params = {}
@@ -174,9 +185,9 @@ class RequestHandler(object):
             response_data = api_response.json()
         except requests.exceptions.JSONDecodeError:
             try:
-                return api_response.content.decode("utf-8")
+                response_data = api_response.content.decode("utf-8")
             except UnicodeDecodeError:
-                return api_response.content
+                response_data = api_response.content
 
         log_url = self._format_log_url(api_response.url)
         log_details = {
@@ -191,18 +202,15 @@ class RequestHandler(object):
                 , log_details
                 , message = f'Error submitting the PATCH Request to: {log_url}'
             )
+            
+            # Raise HTTP error instead of returning error details
+            api_response.raise_for_status()
 
-            # return error details
-            # conform with JobDetails structure
-            mapped_response_data = self._map_request_error_to_job_details(response_data)
-            return mapped_response_data
+        self._log_success(
+            log_details
+            , message = f'Successfully submitted the PATCH Request to: {log_url}')
 
-        else:
-            self._log_success(
-                log_details
-                , message = f'Successfully submitted the PATCH Request to: {log_url}')
-
-            return response_data
+        return response_data
 
     def post(self, url: str, body: any, query_params: dict = None, headers: dict = None,
              files: dict = None) -> dict | list:
@@ -218,6 +226,8 @@ class RequestHandler(object):
         Returns:
             dict | list: API Response Body.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         if query_params is None:
             query_params = {}
@@ -253,19 +263,16 @@ class RequestHandler(object):
                 , log_details
                 , message = f'Error submitting the POST Request to: {log_url}'
             )
+            
+            # Raise HTTP error instead of returning error details
+            api_response.raise_for_status()
 
-            # return error details
-            # conform with JobDetails structure
-            mapped_response_data = self._map_request_error_to_job_details(response_data)
-            return mapped_response_data
+        self._log_success(
+            log_details
+            , message = f'Successfully submitted the POST Request to: {log_url}'
+        )
 
-        else:
-            self._log_success(
-                log_details
-                , message = f'Successfully submitted the POST Request to: {log_url}'
-            )
-
-            return response_data
+        return response_data
 
     def put(self, url: str, body: any, query_params: dict = None) -> dict | list:
         """API Put Request.
@@ -278,8 +285,9 @@ class RequestHandler(object):
         Returns:
             dict | list: API Response Body.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         if query_params is None:
             query_params = {}
 
@@ -309,19 +317,16 @@ class RequestHandler(object):
                 , log_details
                 , message = f'Error submitting the PUT Request to: {log_url}'
             )
+            
+            # Raise HTTP error instead of returning error details
+            api_response.raise_for_status()
 
-            # return error details
-            # conform with JobDetails structure
-            mapped_response_data = self._map_request_error_to_job_details(response_data)
-            return mapped_response_data
+        self._log_success(
+            log_details
+            , message = f'Successfully submitted the PUT Request to: {log_url}'
+        )
 
-        else:
-            self._log_success(
-                log_details
-                , message = f'Successfully submitted the PUT Request to: {log_url}'
-            )
-
-            return response_data
+        return response_data
 
     def _api_single_get(self, url: str, params: dict = None) -> requests.Response:
         """Run a Single REST API Get Call. Helper function for paginated results.
@@ -333,6 +338,9 @@ class RequestHandler(object):
         Returns:
             requests.Response: API GET Response.
 
+        Note:
+            This is a helper method that doesn't raise exceptions directly.
+            The calling method is responsible for checking status codes and raising exceptions.
         """
         if params:
             api_response = self.s.get(url, params=params, headers=self.headers)
@@ -360,7 +368,6 @@ class RequestHandler(object):
                 , log_details
                 , message = f'Error submitting the GET Request to: {log_url}'
             )
-
         else:
             response_objects = len(response_data) if isinstance(response_data, list) else 1
             log_details['Objects Returned'] = response_objects

@@ -27,12 +27,15 @@ class AlationConnector(AsyncHandler):
         """Get the details of all Installed OCF Connectors.
 
         Returns:
-            list: Installed OCF Connectors
-
+            list[Connector]: Installed OCF Connectors
+            
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         connectors = self.get('/integration/v2/connectors/')
 
         if connectors:
             return [Connector.from_api_response(connector) for connector in connectors]
+        return []
 
 

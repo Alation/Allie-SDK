@@ -23,13 +23,16 @@ class AlationCustomTemplate(RequestHandler):
         
     def get_custom_templates (self, query_params:CustomTemplateParams = None) -> list[CustomTemplate]:
         """Use the Custom Template API to retrieve details on all Custom Templates
+        
         Args:
-            query_params (dict): REST API Glossary Term Query Parameters.
+            query_params (CustomTemplateParams): REST API Custom Template Query Parameters.
  
         Returns:
-            list: List of AlationCustomTemplate objects
+            list[CustomTemplate]: List of Alation Custom Template objects
+            
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         validate_query_params(query_params, CustomTemplateParams)
         params = query_params.generate_params_dict() if query_params else None
 
@@ -38,3 +41,4 @@ class AlationCustomTemplate(RequestHandler):
         if custom_templates:
             custom_template_checked = [CustomTemplate.from_api_response(ct) for ct in custom_templates]
             return custom_template_checked
+        return []

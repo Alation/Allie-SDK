@@ -39,6 +39,8 @@ class AsyncHandler(RequestHandler):
         Returns:
             list: job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
         results = []
         batches = self._batch_objects(payload, batch_size)
@@ -56,6 +58,10 @@ class AsyncHandler(RequestHandler):
                         # add the error details to the results list
                         results.append(async_response)
 
+            except requests.exceptions.HTTPError as e:
+                LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+                # Raise all HTTP errors for consistent behavior
+                raise
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
                 results.append(self._map_batch_error_to_job_details(batch_error))
@@ -72,27 +78,33 @@ class AsyncHandler(RequestHandler):
         Returns:
             list: job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
         # Note: batching is implemented on a higher level since the structure of the payload is not standardised
+        try:
+            async_response = self.delete(
+                url = url
+                , body=payload
+                , is_async = True
+            )
 
-        async_response = self.delete(
-            url = url
-            , body=payload
-            , is_async = True
-        )
+            if async_response:
+                # check if the response includes a job_id and only then fetch job details
+                if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                    job = AlationJob(self.access_token, self.session, self.host, async_response)
+                    results = job.check_job_status()
+                else:
+                    # add the error details
+                    # this needs to be a list here since results above is also a list
+                    results = [ async_response ]
 
-        if async_response:
-            # check if the response includes a job_id and only then fetch job details
-            if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
-                job = AlationJob(self.access_token, self.session, self.host, async_response)
-                results = job.check_job_status()
-            else:
-                # add the error details
-                # this needs to be a list here since results above is also a list
-                results = [ async_response ]
-
-        return results
+            return results
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+            # Raise all HTTP errors for consistent behavior
+            raise
 
     def async_patch(self, url: str, payload: list, batch_size: int = None) -> list:
         """Patch Alation Objects via an Async Job Process.
@@ -105,6 +117,8 @@ class AsyncHandler(RequestHandler):
         Returns:
             list: job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
         results = []
         batches = self._batch_objects(payload, batch_size)
@@ -122,6 +136,10 @@ class AsyncHandler(RequestHandler):
                         # add the error details to the results list
                         results.append(async_response)
 
+            except requests.exceptions.HTTPError as e:
+                LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+                # Raise all HTTP errors for consistent behavior
+                raise
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
                 results.append(self._map_batch_error_to_job_details(batch_error))
@@ -140,6 +158,8 @@ class AsyncHandler(RequestHandler):
         Returns:
             list: job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
         results = []
         batches = self._batch_objects(payload, batch_size)
@@ -157,6 +177,10 @@ class AsyncHandler(RequestHandler):
                         # add the error details to the results list
                         results.append(async_response)
 
+            except requests.exceptions.HTTPError as e:
+                LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+                # Raise all HTTP errors for consistent behavior
+                raise
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
                 results.append(self._map_batch_error_to_job_details(batch_error))
@@ -172,8 +196,10 @@ class AsyncHandler(RequestHandler):
             payload (str): REST API data type payload.
 
         Returns:
-            bool: Returns True if the job fails.
+            list: job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
         results = []
         try:
@@ -188,6 +214,10 @@ class AsyncHandler(RequestHandler):
                     # add the error details to the results list
                     results.append(async_response)
 
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+            # Raise all HTTP errors for consistent behavior
+            raise
         except Exception as batch_error:
             LOGGER.error(batch_error, exc_info=True)
             results.append(self._map_batch_error_to_job_details(batch_error))
@@ -204,22 +234,28 @@ class AsyncHandler(RequestHandler):
         Returns:
             job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
         # Note: batching is implemented on a higher level since the structure of the payload is not standardised
+        try:
+            async_response = self.post(url, body=payload)
+            if async_response:
+                # check if the response includes a job_id and only then fetch job details
+                if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
+                    job = AlationJob(self.access_token, self.session, self.host, async_response)
+                    results = job.check_job_status()
+                else:
+                    # add the error details to the results list
+                    # this needs to be a list here since results above is also a list
+                    results = [ async_response ]
 
-        async_response = self.post(url, body=payload)
-        if async_response:
-            # check if the response includes a job_id and only then fetch job details
-            if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
-                job = AlationJob(self.access_token, self.session, self.host, async_response)
-                results = job.check_job_status()
-            else:
-                # add the error details to the results list
-                # this needs to be a list here since results above is also a list
-                results = [ async_response ]
-
-            return results
+                return results
+        except requests.exceptions.HTTPError as e:
+            LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+            # Raise all HTTP errors for consistent behavior
+            raise
 
     def async_put(self, url: str, payload: list, batch_size: int = None) -> list:
         """Put Alation Objects via an Async Job Process.
@@ -232,6 +268,8 @@ class AsyncHandler(RequestHandler):
         Returns:
             list: job execution results
 
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
         batches = self._batch_objects(payload, batch_size)
         results = []
@@ -269,9 +307,13 @@ class AsyncHandler(RequestHandler):
                     else:
                         # add the error details to the results list
                         results.append(async_response)
+            except requests.exceptions.HTTPError as e:
+                LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
+                # Raise all HTTP errors for consistent behavior
+                raise
             except Exception as batch_error:
                 LOGGER.error(batch_error, exc_info=True)
-                # results.append(batch_error) => this won't map to JobDetail
+                results.append(self._map_batch_error_to_job_details(batch_error))
 
         return results
 

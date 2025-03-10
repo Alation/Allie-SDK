@@ -20,6 +20,17 @@ class AlationGroup(RequestHandler):
         super().__init__(session = session, host = host, access_token = access_token)
 
     def get_groups(self, query_params:GroupParams = None) -> list[Group]:
+        """Get Alation groups.
+
+        Args:
+            query_params (GroupParams, optional): Query parameters for filtering groups. Defaults to None.
+
+        Returns:
+            list[Group]: List of Alation groups.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
         validate_query_params(query_params, GroupParams)
         params = query_params.generate_params_dict() if query_params else None
 
@@ -28,3 +39,4 @@ class AlationGroup(RequestHandler):
         if groups:
             groups_checked = [Group.from_api_response(g) for g in groups]
             return groups_checked
+        return []

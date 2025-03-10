@@ -39,8 +39,9 @@ class AlationVirtualFileSystem(AsyncHandler):
         Returns:
             List of JobDetails: Status report of the executed background jobs.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         # allow a list object for empty payloads
         validate_rest_payload(vfs_objects, (VirtualFileSystemItem, list))
         item: VirtualFileSystemItem
@@ -52,11 +53,10 @@ class AlationVirtualFileSystem(AsyncHandler):
         LOGGER.debug(payload_jsonl)
         async_results = self.async_post_data_payload(f'{self._vfs_endpoint}{fs_id}/', data=payload_jsonl)
 
-        if async_results:
-            return [JobDetails.from_api_response(item) for item in async_results]
+        return [JobDetails.from_api_response(item) for item in async_results]
 
     def post_metadata_jsonl(self, fs_id: int, payload: str) -> list[JobDetails]:
-        """Post (Create/Update/Delets) Alation Virtual Data source objects
+        """Post (Create/Update/Delete) Alation Virtual Data source objects
 
         Args:
             fs_id: (int): Virtual File System ID for the metadata objects
@@ -64,14 +64,12 @@ class AlationVirtualFileSystem(AsyncHandler):
 
         Returns:
             List of JobDetails: Status report of the executed background jobs.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
-        # validate_query_params(query_params, VirtualDataSourceParams)
-        # params = query_params.generate_params_dict() if query_params else None
         async_results = self.async_post_data_payload(f'{self._vfs_endpoint}{fs_id}', data=payload)
-
-        if async_results:
-            return [JobDetails.from_api_response(item) for item in async_results]
+        return [JobDetails.from_api_response(item) for item in async_results]
 
 @property
 def vfs_endpoint(self) -> str:
