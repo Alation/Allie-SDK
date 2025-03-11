@@ -61,12 +61,14 @@ class AlationJob(RequestHandler):
         # so we have more context for the processing
         return job_details
 
-    def _get_job(self) -> JobDetails:
+    def _get_job(self) -> tuple[JobDetails, dict]:
         """Query the Alation Job.
 
         Returns:
-            JobDetails: Alation Job.
+            tuple[JobDetails, dict]: Alation Job details and raw response.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         query_params = {'name': self.async_job.job_name} if self.async_job.job_name else {'id': self.async_job.job_id}
         job_response = self.get(
@@ -75,13 +77,12 @@ class AlationJob(RequestHandler):
             , pagination=False
         )
 
-        if job_response:
-            job_details = JobDetails.from_api_response(job_response)
-            # since the job response is not standardised across endpoints and methods
-            # we cannot just map it to a generic data class here
-            # we need some context as to what endpoint and method was used
-            # and then can do the mapping
-            return job_details, job_response
+        job_details = JobDetails.from_api_response(job_response)
+        # since the job response is not standardised across endpoints and methods
+        # we cannot just map it to a generic data class here
+        # we need some context as to what endpoint and method was used
+        # and then can do the mapping
+        return job_details, job_response
 
     def _log_job(self, job: JobDetails):
         """Format the Logs Messages of the Alation Job.

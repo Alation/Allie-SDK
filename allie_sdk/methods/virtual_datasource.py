@@ -35,7 +35,7 @@ class AlationVirtualDataSource(AsyncHandler):
             , vds_objects: list
             , query_params: VirtualDataSourceParams = None
     ) -> list[JobDetailsVirtualDatasourcePost]:
-        """Post (Create/Update/Delets) Alation Virtual Data source objects
+        """Post (Create/Update/Delete) Alation Virtual Data source objects
 
         Args:
             ds_id: (int): Virtual Data Source ID for the metadata objects
@@ -49,8 +49,9 @@ class AlationVirtualDataSource(AsyncHandler):
         Returns:
             List of JobDetailsVirtualDatasourcePost: Status report of the executed background jobs.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         validate_query_params(query_params, VirtualDataSourceParams)
         params = query_params.generate_params_dict() if query_params else None
         validate_rest_payload(
@@ -70,10 +71,9 @@ class AlationVirtualDataSource(AsyncHandler):
         payload_jsonl = '\n'.join(json.dumps(p) for p in payload_d)
         LOGGER.debug(payload_jsonl)
         async_results = self.async_post_data_payload(f'{self._vds_endpoint}{ds_id}',
-                                                     data=payload_jsonl, query_params=params)
+                                                    data=payload_jsonl, query_params=params)
 
-        if async_results:
-            return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
+        return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
 
     def post_metadata_jsonl(
             self
@@ -81,7 +81,7 @@ class AlationVirtualDataSource(AsyncHandler):
             , payload: str
             , query_params: VirtualDataSourceParams = None
     ) -> list[JobDetailsVirtualDatasourcePost]:
-        """Post (Create/Update/Delets) Alation Virtual Data source objects
+        """Post (Create/Update/Delete) Alation Virtual Data source objects
 
         Args:
             ds_id: (int): Virtual Data Source ID for the metadata objects
@@ -94,14 +94,14 @@ class AlationVirtualDataSource(AsyncHandler):
         Returns:
             List of JobDetailsVirtualDatasourcePost: Status report of the executed background jobs.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
-
         validate_query_params(query_params, VirtualDataSourceParams)
         params = query_params.generate_params_dict() if query_params else None
         async_results = self.async_post_data_payload(f'{self._vds_endpoint}{ds_id}', data=payload, query_params=params)
 
-        if async_results:
-            return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
+        return [JobDetailsVirtualDatasourcePost.from_api_response(item) for item in async_results]
 
 @property
 def vds_endpoint(self) -> str:

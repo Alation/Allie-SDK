@@ -40,6 +40,8 @@ class AlationDomain(AsyncHandler):
         Returns:
             list: Alation Domain
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         validate_query_params(query_params, DomainParams)
         params = query_params.generate_params_dict() if query_params else None
@@ -50,6 +52,7 @@ class AlationDomain(AsyncHandler):
 
         if domains:
             return [Domain.from_api_response(domain) for domain in domains]
+        return []
 
     def assign_objects_to_domain(
         self
@@ -61,54 +64,57 @@ class AlationDomain(AsyncHandler):
         Args:
             domain_membership: Alation DomainMembership object
 
+        Returns:
+            list[JobDetails]: Status report of the executed job.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+
         Other useful info:
             If there are less than a 1000 objects to assign to a given domain, this job will be
             executed synchronously, otherwise asynchronously. This threshold can also be configured
             via alation.domains.bulk_membership.sync_job_max_batch_size in the backend.
             For more info see: https://developer.alation.com/dev/reference/postdomainmembership
-
         """
+        if not domain_membership:
+            return []
+            
+        # make sure input data matches expected structure
+        validate_rest_payload(payload = [domain_membership], expected_types = (DomainMembership,))
 
-        if domain_membership:
-            # make sure input data matches expected structure
-            validate_rest_payload(payload = [domain_membership], expected_types = (DomainMembership,))
+        # make sure we only include fields with values in the payload
+        payload = domain_membership.generate_api_post_payload()
 
+        results = self.post(
+            url='/integration/v2/domain/membership/'
+            , body = payload
+        )
 
+        # check if we get a job id back
+        job_id = results.get('job_id')
 
-            # make sure we only include fields with values in the payload
-            payload = domain_membership.generate_api_post_payload()
+        if job_id:
+            job = AlationJob(self.access_token, self.session, self.host, results)
+            job_details = job.check_job_status()
+            # job_details example value:
+            # [{'msg': 'Job finished in 0.033747 seconds at 2024-10-29 17:17:51.842614+00:00', 'result': None, 'status': 'successful'}]
 
-            results = self.post(
-                url='/integration/v2/domain/membership/'
-                , body = payload
-            )
+            return [JobDetails.from_api_response(item) for item in job_details]
 
-            # check if we get a job id back
-            job_id = results.get('job_id')
+            # TODO: Do we have to implement batching here as well?
+            # Created issue for this: https://github.com/Alation/Allie-SDK/issues/38
 
-            if job_id:
-                job = AlationJob(self.access_token, self.session, self.host, results)
-                job_details = job.check_job_status()
-                # job_details example value:
-                # [{'msg': 'Job finished in 0.033747 seconds at 2024-10-29 17:17:51.842614+00:00', 'result': None, 'status': 'successful'}]
-
-                return [JobDetails.from_api_response(item) for item in job_details]
-
-                # TODO: Do we have to implement batching here as well?
-                # Created issue for this: https://github.com/Alation/Allie-SDK/issues/38
-
+        else:
+            # if an error is returned the dict will include a status property
+            status = results.get("status")
+            if status:
+                return [JobDetails.from_api_response(results)]
             else:
-
-                # if an error is returned the dict will include a status property
-                status = results.get("status")
-                if status:
-                    return [JobDetails.from_api_response(results)]
-                else:
-                    return [
-                        JobDetails(
-                            status = "successful"
-                            , msg = ""
-                            , result = None
-                        )
-                    ]
+                return [
+                    JobDetails(
+                        status = "successful"
+                        , msg = ""
+                        , result = None
+                    )
+                ]
 

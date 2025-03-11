@@ -2,6 +2,9 @@
 
 import requests_mock
 import unittest
+
+from requests import HTTPError
+
 from allie_sdk.methods.otype import *
 
 MOCK_OTYPE = AlationOtype(
@@ -35,9 +38,11 @@ class TestOtype(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v1/otype/', json=failed_response, status_code=403)
-        otypes = MOCK_OTYPE.get_otypes()
 
-        self.assertIsNone(otypes)
+        with self.assertRaises(HTTPError) as context:
+            MOCK_OTYPE.get_otypes()
+
+        self.assertEqual(context.exception.response.status_code, 403)
 
 if __name__ == '__main__':
     unittest.main()

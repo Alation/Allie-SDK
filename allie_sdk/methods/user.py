@@ -43,6 +43,8 @@ class AlationUser(RequestHandler):
         Returns:
             list: Alation Users
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         validate_query_params(query_params, UserParams)
         params = query_params.generate_params_dict() if query_params else None
@@ -50,6 +52,7 @@ class AlationUser(RequestHandler):
 
         if users:
             return [User.from_api_response(user) for user in users]
+        return []
 
     def get_a_user(self, user_id: int) -> User:
         """Get an Alation User by User ID.
@@ -60,11 +63,11 @@ class AlationUser(RequestHandler):
         Returns:
             User: Alation User.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         user = self.get(f'{self.user_endpoint}{user_id}/')
-
-        if user:
-            return User.from_api_response(user)
+        return User.from_api_response(user)
 
     def get_authenticated_user(self) -> User:
         """Get the Details of the Authenticated Alation User.
@@ -72,67 +75,72 @@ class AlationUser(RequestHandler):
         Returns:
             User: Authenticated Alation User Details.
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         details = self.get('/integration/v1/userinfo/')
+        return User.from_api_response(details)
 
-        if details:
-            return User.from_api_response(details)
-
-    def post_remove_dup_users_accts(self, csv_file: str) -> str:
+    def post_remove_dup_users_accts(self, csv_file: str) -> JobDetails:
         """Post CSV to remove duplicate Alation Users.
 
-        Returns:
-            status: Confirmation of the removal of duplicate users
+        Args:
+            csv_file (str): Path to the CSV file containing duplicate users to remove
 
+        Returns:
+            JobDetails: Confirmation of the removal of duplicate users
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         files = {"csv_file": (csv_file, open(csv_file, "rb"), "text/plain")}
         result = self.post('/integration/v1/remove_dup_users_accts/', files=files, body=None,
-                           headers={"accept": "application/json"})
+                          headers={"accept": "application/json"})
 
         if isinstance(result, dict):
             success = result.get("Success")
             if success:
-                final_result = JobDetails(
-                    status="successful"
-                    , msg = success
-                    , result=""
+                return JobDetails(
+                    status="successful",
+                    msg=success,
+                    result=""
                 )
             else:
-                final_result = JobDetails.from_api_response(result)
-        # catch anything else
-        else:
-            final_result = result
-
-        return final_result
+                return JobDetails.from_api_response(result)
+        # Handle case where response is not a dictionary
+        return JobDetails(
+            status="successful",
+            msg="",
+            result=result
+        )
 
     def get_generate_dup_users_accts_csv(self) -> str | JobDetails:
         """Get duplicate Alation Users as CSV.
 
         Returns:
-            list: CSV of duplicate Alation Users With headings
+            str | JobDetails: CSV of duplicate Alation Users with headings, or JobDetails with status information
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         result = self.get('/integration/v1/generate_dup_users_accts_csv_file/')
 
         if isinstance(result, dict):
             success = result.get("Success")
             if success:
-                final_result = JobDetails(
-                    status = "successful"
-                    , msg = success
-                    , result = ""
+                return JobDetails(
+                    status="successful",
+                    msg=success,
+                    result=""
                 )
             else:
-                final_result = JobDetails(
-                    status="failed"
-                    , msg=""
-                    , result = result
+                return JobDetails(
+                    status="failed",
+                    msg="",
+                    result=result
                 )
-        # it's a CSV
-        else:
-            final_result = result
-
-        return final_result
+        # If result is a CSV string
+        return result
 
 
     @property

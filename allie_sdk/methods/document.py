@@ -23,12 +23,17 @@ class AlationDocument(AsyncHandler):
         """
         super().__init__(session = session, host = host, access_token=access_token)
 
-    def get_documents(self, query_params:DocumentParams = None) -> list:
+    def get_documents(self, query_params:DocumentParams = None) -> list[Document]:
         """Query multiple Alation Documents and return their details
+        
         Args:
             query_params (DocumentParams): REST API Documents Query Parameters.
+            
         Returns:
-            list: Alation Documents
+            list[Document]: Alation Documents
+            
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
 
         validate_query_params(query_params, DocumentParams)
@@ -39,6 +44,7 @@ class AlationDocument(AsyncHandler):
         if documents:
             documents_checked = [Document.from_api_response(document) for document in documents]
             return documents_checked
+        return []
     
     def create_documents (
         self
@@ -54,6 +60,9 @@ class AlationDocument(AsyncHandler):
 
         Returns:
             List of JobDetailsDocumentPost: Status report of the executed background jobs.
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
 
@@ -71,6 +80,7 @@ class AlationDocument(AsyncHandler):
 
         if async_results:
             return [JobDetailsDocumentPost.from_api_response(item) for item in async_results]
+        return []
 
     
     def update_documents (
@@ -87,6 +97,9 @@ class AlationDocument(AsyncHandler):
 
         Returns:
             List of JobDetailsDocumentPut: Status report of the executed background jobs.
+            
+        Raises:
+            requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
         # make sure input data matches expected structure
@@ -102,6 +115,7 @@ class AlationDocument(AsyncHandler):
         )
         if async_results:
             return [JobDetailsDocumentPut.from_api_response(item) for item in async_results]
+        return []
 
     def delete_documents(
             self
@@ -110,11 +124,16 @@ class AlationDocument(AsyncHandler):
         """Bulk delete documents
 
         Args:
-            documents (list): List of Document
+            documents (list): List of Document objects to delete
+            
+        Returns:
+            JobDetailsDocumentDelete: Status report of the executed delete operation
+            
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
 
         if documents:
-
             item: Document
             validate_rest_payload(payload = documents, expected_types = (Document,))
             payload = {'id': [item.id for item in documents]}
@@ -123,7 +142,16 @@ class AlationDocument(AsyncHandler):
                 url = '/integration/v2/document/'
                 , body = payload
             )
-            # There's no job ID returned here
-            if delete_result:
-                # make sure result conforms to JobDetails structure
-                return JobDetailsDocumentDelete.from_api_response(delete_result)
+            
+            # Return the result as a JobDetailsDocumentDelete object
+            return JobDetailsDocumentDelete.from_api_response(delete_result)
+            
+        # If no documents provided, return empty result
+        return JobDetailsDocumentDelete(
+            status="successful",
+            msg="",
+            result=JobDetailsDocumentDeleteResult(
+                deleted_document_count=0,
+                deleted_document_ids=[]
+            )
+        )

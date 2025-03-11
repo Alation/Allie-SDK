@@ -29,10 +29,13 @@ class AlationOtype(AsyncHandler):
         Returns:
             list: Allowed Alation Otypes
 
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
         """
         otypes = self.get('/integration/v1/otype/')
 
         if otypes:
             return [Otype.from_api_response(otype) for otype in otypes]
+        return []
 
 

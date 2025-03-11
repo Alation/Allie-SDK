@@ -47,9 +47,10 @@ class TestGlossaryTerm(unittest.TestCase):
             "code": "403000"
         }
         m.register_uri('GET', '/integration/v2/term/', json=failed_response, status_code=403)
-        terms = MOCK_GLOSSARY_TERM.get_glossary_terms()
-
-        self.assertIsNone(terms)
+        
+        # The method should now raise an HTTPError for non-200 status codes
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_GLOSSARY_TERM.get_glossary_terms()
 
     @requests_mock.Mocker()
     def test_success_post_glossary_terms(self, m):
@@ -115,26 +116,10 @@ class TestGlossaryTerm(unittest.TestCase):
             ]
         }
         m.register_uri('POST', '/integration/v2/term/', json=failed_response, status_code=400)
-        async_response = MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
-
-        expected_result = [
-            JobDetailsDocumentPost(
-                status='failed'
-                , msg=None
-                , result={
-                    'job_id': None
-                    , 'invalid_terms': [
-                        {
-                            'index': 0
-                            , 'errors': [{'title': ['This field is required.']}]
-                            , 'term': {'title': 'Testing', 'description': 'Testing the API'}
-                        }
-                    ]
-                }
-            )
-        ]
-
-        self.assertEqual(expected_result, async_response)
+        
+        # Should raise HTTPError with 400 status
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
 
     @requests_mock.Mocker()
     def test_success_put_glossary_terms(self, m):
@@ -196,26 +181,10 @@ class TestGlossaryTerm(unittest.TestCase):
             ]
         }
         m.register_uri('PUT', '/integration/v2/term/', json=failed_response, status_code=400)
-        async_response = MOCK_GLOSSARY_TERM.put_glossary_terms(mock_term_list)
-
-        expected_result = [
-            JobDetailsDocumentPut(
-                status='failed'
-                , msg=None
-                , result={
-                    'job_id': None
-                    , 'invalid_terms': [
-                        {
-                            'index': 0
-                            , 'errors': [{'id': ['This field is required.']}]
-                            , 'term': {'title': 'Updated Title'}
-                        }
-                    ]
-                }
-            )
-        ]
-
-        self.assertEqual(expected_result, async_response)
+        
+        # Should raise HTTPError with 400 status
+        with self.assertRaises(requests.exceptions.HTTPError):
+            MOCK_GLOSSARY_TERM.put_glossary_terms(mock_term_list)
 
     @requests_mock.Mocker()
     def test_success_delete_glossary_terms(self, m):
