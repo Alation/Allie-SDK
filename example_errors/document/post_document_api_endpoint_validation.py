@@ -119,7 +119,8 @@ create_document_result = alation.document.create_documents(
             title = "My KPI 1x1"
             , description = "This is the description for KPI 1"
             , template_id = my_template_id
-            , folder_ids = [ 999999999999999 ] # <= this value should make the process fail
+            , parent_folder_id = 999999999999999 # <= this value should make the process fail
+            , nav_link_folder_ids = []
             , document_hub_id = DOCUMENT_HUB_ID
             , custom_fields = [
                 # multi-picker

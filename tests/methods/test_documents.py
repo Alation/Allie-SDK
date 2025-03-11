@@ -31,7 +31,8 @@ class TestDocument(unittest.TestCase):
                 "title": "Sales",
                 "description": "Relevant data and articles for Sales Analytics",
                 "template_id": 47,
-                "folder_ids": [
+                "parent_folder_id": 1,
+                "nav_link_folder_ids": [
                     14,
                     165
                 ],
@@ -151,7 +152,8 @@ class TestDocument(unittest.TestCase):
                     title="My KPI 1",
                     description="This is the description for KPI 1",
                     template_id=12,
-                    folder_ids=[6],
+                    parent_folder_id=1,
+                    nav_link_folder_ids=[6],
                     document_hub_id=2,
                     custom_fields=[
                         CustomFieldValueItem(
@@ -169,7 +171,8 @@ class TestDocument(unittest.TestCase):
                     title="My KPI 2",
                     description="This is the description for KPI 2",
                     template_id=12,
-                    folder_ids=[6],
+                    parent_folder_id=1,
+                    nav_link_folder_ids=[6],
                     document_hub_id=2,
                     custom_fields=[
                         CustomFieldValueItem(
@@ -230,7 +233,8 @@ class TestDocument(unittest.TestCase):
                         title="Test document with validation error",
                         description="This document will trigger a 400 error on the API",
                         template_id=12,
-                        folder_ids=[6],
+                        parent_folder_id=1,
+                        nav_link_folder_ids=[6],
                         document_hub_id=2
                     )
                 ]
@@ -282,7 +286,8 @@ class TestDocument(unittest.TestCase):
                     title="My KPI 1",
                     description="This is the description for KPI 1",
                     template_id=12,
-                    folder_ids=[6],
+                    parent_folder_id=1,
+                    nav_link_folder_ids=[6],
                     document_hub_id=2,
                     custom_fields=[
                         CustomFieldValueItem(
@@ -301,7 +306,8 @@ class TestDocument(unittest.TestCase):
                     title="My KPI 2",
                     description="This is the description for KPI 2",
                     template_id=12,
-                    folder_ids=[6],
+                    parent_folder_id=1,
+                    nav_link_folder_ids=[6],
                     document_hub_id=2,
                     custom_fields=[
                         CustomFieldValueItem(
@@ -363,7 +369,8 @@ class TestDocument(unittest.TestCase):
                         title="My KPI with non-existent ID",
                         description="This is a description for a document that doesn't exist",
                         template_id=12,
-                        folder_ids=[6],
+                        parent_folder_id=1,
+                        nav_link_folder_ids=[6],
                         document_hub_id=2
                     )
                 ]

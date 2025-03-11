@@ -16,14 +16,15 @@ Sub-model used in the parent Models of `Document`, `DocumentPostItem`, and `Docu
 
 Attributes:
 
-| Name            | Type | Description                                                                                                                                                                                                                       |
-|-----------------|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| title           | str  | The title of the document                                                                                                                                                                                                         |
-| description     | str  | The description of the document                                                                                                                                                                                                   |
-| template_id     | int  | The ID of the custom template assigned to the document                                                                                                                                                                            |   
-| folder_ids      | list | A list containing the folder IDs that the document is a member of                                                                                                                                                                 |
-| document_hub_id | int  | The ID of the Document Hub assigned to the document                                                                                                                                                                               |
-| custom_fields   | list | A list of `CustomFieldValueItem` objects containing custom field information relative to the custom template ID                                                                                                                   |
+| Name            | Type | Description                                                                                                     |
+|-----------------|------|-----------------------------------------------------------------------------------------------------------------|
+| title           | str  | The title of the document                                                                                       |
+| description     | str  | The description of the document                                                                                 |
+| template_id     | int  | The ID of the custom template assigned to the document                                                          |   
+|         parent_folder_id        | int  | The ID of the folder to assign as the parent of the document                                                    |
+| nav_link_folder_ids      | list | An array containing the folder IDs that the document has navigation links to                                    |
+| document_hub_id | int  | The ID of the Document Hub assigned to the document                                                             |
+| custom_fields   | list | A list of `CustomFieldValueItem` objects containing custom field information relative to the custom template ID |
 
 ### Document
 Individual list item returned in the response of the function `get_documents` that represents a document in Alation.
