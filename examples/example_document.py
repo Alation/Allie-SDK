@@ -118,7 +118,8 @@ create_document_response = alation.document.create_documents(
             title = "My KPI 1x1"
             , description = "This is the description for KPI 1"
             , template_id = my_template_id
-            , folder_ids = [ random_folder_id ]
+            , parent_folder_id = random_folder_id
+            , nav_link_folder_ids = []
             , document_hub_id = DOCUMENT_HUB_ID
             , custom_fields = [
                 allie.CustomFieldValueItem(
