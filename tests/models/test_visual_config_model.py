@@ -258,26 +258,26 @@ class TestVisualConfigModels(unittest.TestCase):
                 {
                     "rendered_otype": "CUSTOM_FIELD",
                     "rendered_oid": 4,
-                    # "page_defined_type": None,
+                    "page_defined_type": None,
                     "component_type": "BUILT_IN",
                     "panel": "MAIN"
                 },
                 {
-                    # "rendered_otype": None,
+                    "rendered_otype": None,
                     # "rendered_oid": None,
                     "page_defined_type": "catalog_document_collection.document_collection_links_table",
                     "component_type": "PAGE_DEFINED",
                     "panel": "MAIN"
                 },
                 {
-                    # "rendered_otype": None,
+                    "rendered_otype": None,
                     # "rendered_oid": None,
                     "page_defined_type": "catalog_document_collection.properties",
                     "component_type": "PAGE_DEFINED",
                     "panel": "SIDEBAR"
                 },
                 {
-                    # "rendered_otype": None,
+                    "rendered_otype": None,
                     # "rendered_oid": None,
                     "page_defined_type": "catalog.membership_to_domains",
                     "component_type": "PAGE_DEFINED",
@@ -286,12 +286,12 @@ class TestVisualConfigModels(unittest.TestCase):
                 {
                     "rendered_otype": "CUSTOM_FIELD",
                     "rendered_oid": 8,
-                    # "page_defined_type": None,
+                    "page_defined_type": None,
                     "component_type": "BUILT_IN",
                     "panel": "MAIN"
                 },
                 {
-                    # "rendered_otype": None,
+                    "rendered_otype": None,
                     # "rendered_oid": None,
                     "page_defined_type": "catalog.tags",
                     "component_type": "PAGE_DEFINED",
@@ -301,21 +301,21 @@ class TestVisualConfigModels(unittest.TestCase):
                     "label": "Referenced By",
                     "components": [
                         {
-                            # "rendered_otype": None,
+                            "rendered_otype": None,
                             # "rendered_oid": None,
                             "page_defined_type": "catalog.mentioned_on",
                             "component_type": "PAGE_DEFINED",
                             "panel": "SIDEBAR"
                         },
                         {
-                            # "rendered_otype": None,
+                            "rendered_otype": None,
                             # "rendered_oid": None,
                             "page_defined_type": "catalog.article_backreferences",
                             "component_type": "PAGE_DEFINED",
                             "panel": "SIDEBAR"
                         },
                         {
-                            # "rendered_otype": None,
+                            "rendered_otype": None,
                             # "rendered_oid": None,
                             "page_defined_type": "catalog.objectset_backreferences",
                             "component_type": "PAGE_DEFINED",
