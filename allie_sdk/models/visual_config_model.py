@@ -28,8 +28,9 @@ class VisualConfigComponent(BaseClass):
 
         payload = dict()
 
-        if self.rendered_otype:
-            payload['rendered_otype'] = self.rendered_otype
+        # API endpoint validator throws error if rendered_otype is not present
+        # so we add it in any case:
+        payload['rendered_otype'] = self.rendered_otype
 
         if self.rendered_oid:
             payload['rendered_oid'] = self.rendered_oid
@@ -42,6 +43,9 @@ class VisualConfigComponent(BaseClass):
         if self.page_defined_type is None:
             if self.component_type == 'PAGE_DEFINED':
                 raise InvalidPostBody(f"The page defined type must be set if component type is PAGE_DEFINED")
+            # API endpoint validator throws error if page_defined_type is not present
+            # so we add it in any case:
+            payload['page_defined_type'] = self.page_defined_type
         else:
             payload['page_defined_type'] = self.page_defined_type
 
@@ -139,9 +143,15 @@ class VisualConfigBase(BaseClass):
 @dataclass(kw_only = True)
 class VisualConfigItem(VisualConfigBase):
 
+    # Currently collection_type_id is only available for POST and PUT requests.
+    collection_type_id:int = field(default = None)
     def generate_api_payload(self) -> dict:
 
         payload = dict()
+
+        # collection_type_id is optional
+        if self.collection_type_id:
+            payload['collection_type_id'] = self.collection_type_id
 
         if self.title is None:
             raise InvalidPostBody(f"The title must be set")
