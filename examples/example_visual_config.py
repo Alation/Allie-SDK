@@ -67,65 +67,50 @@ create_response = alation.visual_config.create_visual_config(
         , title='Data Product'
         , layout_otype='glossary_term'
         , component_list_in_config=[
-            allie.VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                  page_defined_type='catalog_document.document_children', component_type='PAGE_DEFINED',
-                                  panel='SIDEBAR')
-            , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None,
-                                    component_type='BUILT_IN', panel='MAIN')
-            , allie.VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True,
-                                     components=[
-                                         allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011,
-                                                               page_defined_type=None, component_type='USER_DEFINED',
-                                                               panel='MAIN')
-                                         , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012,
-                                                                 page_defined_type=None, component_type='USER_DEFINED',
-                                                                 panel='MAIN')
-                                         , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10013,
-                                                                 page_defined_type=None, component_type='USER_DEFINED',
-                                                                 panel='MAIN')
-                                         , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10014,
-                                                                 page_defined_type=None, component_type='USER_DEFINED',
-                                                                 panel='MAIN')
-                                         , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10015,
-                                                                 page_defined_type=None, component_type='USER_DEFINED',
-                                                                 panel='MAIN')
-                                     ]
-                                     )
-            , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10017, page_defined_type=None,
-                                    component_type='USER_DEFINED', panel='MAIN')
-            , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10016, page_defined_type=None,
-                                    component_type='USER_DEFINED', panel='MAIN')
-            , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10018, page_defined_type=None,
-                                    component_type='USER_DEFINED', panel='MAIN')
-            , allie.VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True, components=[
-                allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10019, page_defined_type=None,
-                                      component_type='USER_DEFINED', panel='SIDEBAR')
-                , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10020, page_defined_type=None,
-                                        component_type='USER_DEFINED', panel='SIDEBAR')
-                , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None,
-                                        component_type='BUILT_IN', panel='SIDEBAR')
-            ]
-                                     )
-            , allie.VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10021, page_defined_type=None,
-                                    component_type='USER_DEFINED', panel='SIDEBAR')
-            , allie.VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                    page_defined_type='catalog.membership_to_domains', component_type='PAGE_DEFINED',
-                                    panel='SIDEBAR')
-            , allie.VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.tags',
-                                    component_type='PAGE_DEFINED', panel='SIDEBAR')
-            , allie.VisualGroupedComponent(label='Referenced By', open_by_default=True, panel='SIDEBAR', is_group=True,
-                                     components=[
-                                         allie.VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                                               page_defined_type='catalog.mentioned_on',
-                                                               component_type='PAGE_DEFINED', panel='SIDEBAR')
-                                         , allie.VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                                                 page_defined_type='catalog.article_backreferences',
-                                                                 component_type='PAGE_DEFINED', panel='SIDEBAR')
-                                         , allie.VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                                                 page_defined_type='catalog.objectset_backreferences',
-                                                                 component_type='PAGE_DEFINED', panel='SIDEBAR')
-                                     ]
-                                     )
+            allie.VisualConfigComponent(
+                rendered_otype='CUSTOM_FIELD'
+                , rendered_oid=4
+                , page_defined_type=None
+                , component_type='BUILT_IN'
+                , panel='MAIN'
+            )
+            , allie.VisualGroupedComponent(
+                label='Data Product Info'
+                , open_by_default=True
+                , panel='MAIN'
+                , is_group=True
+                , components=[
+                    allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=10011
+                        , page_defined_type=None
+                        , component_type='USER_DEFINED'
+                        , panel='MAIN'
+                    )
+                    , allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=10012
+                        , page_defined_type=None
+                        , component_type='USER_DEFINED'
+                        , panel='MAIN'
+                    )
+                ]
+            )
+            , allie.VisualGroupedComponent(
+                label='Owners'
+                , open_by_default=True
+                , panel='SIDEBAR'
+                , is_group=True
+                , components=[
+                    allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=8
+                        , page_defined_type=None
+                        , component_type='BUILT_IN'
+                        , panel='SIDEBAR'
+                    )
+                ]
+            )
         ]
     )
 )
@@ -135,7 +120,8 @@ if create_response is None:
     sys.exit(1)
 elif isinstance(create_response, allie.JobDetails):
     if create_response.status == "successful":
-        logging.info(f"Successful execution Visual Config '{create_response.title}' with id: {create_response.id}")
+        my_visual_config = create_response.result
+        logging.info(f"Successfully created Visual Config '{my_visual_config.title}' with id: {my_visual_config.id}")
     else:
         logging.error(f"Failed execution. Additional info: {create_response.result}")
         sys.exit(1)
@@ -160,17 +146,131 @@ else:
     sys.exit(1)
 
 # ================================
+# GET VISUAL CONFIGS BY OBJECT TYPE
+# ================================
+
+existing_visual_configs = alation.visual_config.get_visual_configs(
+    otype = "glossary_term"
+)
+
+if existing_visual_configs is None:
+    logging.warning("No visual config was found.")
+elif isinstance(existing_visual_configs, list):
+    logging.info(f"Found {len(existing_visual_configs)} visual configs:")
+    for d in existing_visual_configs:
+        logging.info(f"{d.title}")
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
 # GET A VISUAL CONFIG
 # ================================
 
 existing_visual_configs = alation.visual_config.get_a_visual_config(
-    visual_config_id = 37
+    visual_config_id = my_visual_config.id
 )
 
 if existing_visual_configs is None:
     logging.warning("No visual config was found.")
 elif isinstance(existing_visual_configs, allie.VisualConfig):
     logging.info(f"Found visual config: {existing_visual_configs.title} ")
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+
+# ================================
+# UPDATE A VISUAL CONFIG
+# ================================
+
+update_response = alation.visual_config.update_visual_config(
+    visual_config = allie.VisualConfigItem(
+        collection_type_id = 2
+        , title='Data Product UPDATED'
+        , layout_otype='glossary_term'
+        , component_list_in_config=[
+            allie.VisualConfigComponent(
+                rendered_otype='CUSTOM_FIELD'
+                , rendered_oid=4
+                , page_defined_type=None
+                , component_type='BUILT_IN'
+                , panel='MAIN'
+            )
+            , allie.VisualGroupedComponent(
+                label='Data Product Info'
+                , open_by_default=True
+                , panel='MAIN'
+                , is_group=True
+                , components=[
+                    allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=10011
+                        , page_defined_type=None
+                        , component_type='USER_DEFINED'
+                        , panel='MAIN'
+                    )
+                    , allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=10012
+                        , page_defined_type=None
+                        , component_type='USER_DEFINED'
+                        , panel='MAIN'
+                    )
+                ]
+            )
+            , allie.VisualGroupedComponent(
+                label='Owners'
+                , open_by_default=True
+                , panel='SIDEBAR'
+                , is_group=True
+                , components=[
+                    allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=8
+                        , page_defined_type=None
+                        , component_type='BUILT_IN'
+                        , panel='SIDEBAR'
+                    )
+                ]
+            )
+        ]
+    )
+    , visual_config_id = my_visual_config.id
+)
+
+if update_response is None:
+    logging.error("Tried to update visual config but got no response ...")
+    sys.exit(1)
+elif isinstance(update_response, allie.JobDetails):
+    if update_response.status == "successful":
+        logging.info(f"Successfully updated Visual Config '{my_visual_config.title}' with id: {my_visual_config.id}")
+    else:
+        logging.error(f"Failed execution. Additional info: {update_response.result}")
+        sys.exit(1)
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+
+# ================================
+# DELETE A VISUAL CONFIG
+# ================================
+
+
+delete_response = alation.visual_config.delete_visual_config(
+    visual_config_id = my_visual_config.id
+)
+
+if delete_response is None:
+    logging.error("Tried to delete visual config but got no response ...")
+    sys.exit(1)
+elif isinstance(update_response, allie.JobDetails):
+    if update_response.status == "successful":
+        logging.info(f"Successfully deleted Visual Config")
+    else:
+        logging.error(f"Failed execution. Additional info: {update_response.result}")
+        sys.exit(1)
 else:
     print(f"Unexpected result ... I don't know what to do ...")
     sys.exit(1)

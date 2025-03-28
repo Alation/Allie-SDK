@@ -81,7 +81,7 @@ class TestVisualConfigModels(unittest.TestCase):
                     "is_group": None
                 }
             ],
-            "title": "Folder",
+            "title": "Folder", # => only part of the response to a POST request
             "layout_otype": "glossary_v3"
         }
 
@@ -90,7 +90,7 @@ class TestVisualConfigModels(unittest.TestCase):
 
         # Expected Output
         output = VisualConfig(
-            title='Folder'
+            title='Folder' # => only part of the response to a POST request
             , layout_otype='glossary_v3'
             , component_list_in_config=[
                 VisualConfigComponent(

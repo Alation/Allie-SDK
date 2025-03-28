@@ -22,11 +22,11 @@ class AlationVisualConfig(RequestHandler):
         """
         super().__init__(session=session, host=host, access_token=access_token)
 
-    def get_visual_configs(self) -> list[VisualConfig]:
+    def get_visual_configs(self, otype:str=None) -> list[VisualConfig]:
         """Query multiple Alation Visual Configs and return their details
 
         Args:
-
+            otype: Object Type (optional). Filter by object type.
 
         Returns:
             list[VisualConfig]: List of Visual Configs
@@ -35,7 +35,12 @@ class AlationVisualConfig(RequestHandler):
             requests.HTTPError: If the API returns a non-success status code.
         """
         try:
-            visual_configs = self.get('/integration/visual_config/')
+            if otype is None:
+                url = f'/integration/visual_config/'
+            else:
+                url = f'/integration/visual_config/{otype}/'
+
+            visual_configs = self.get(url)
 
             if visual_configs:
                 visual_configs_checked = [VisualConfig.from_api_response(v) for v in visual_configs]
@@ -46,7 +51,7 @@ class AlationVisualConfig(RequestHandler):
             raise
 
     def get_a_visual_config(self, visual_config_id:int) -> VisualConfig:
-        """Query multiple Alation Visual Configs and return their details
+        """Query one Alation Visual Config and return the details
 
         Args:
             visual_config_id: Alation Visual Config ID.
@@ -68,7 +73,7 @@ class AlationVisualConfig(RequestHandler):
             raise
 
     def create_visual_config(self, visual_config:VisualConfigItem) -> JobDetails:
-        """Query multiple Alation Visual Configs and return their details
+        """Create an Alation Visual Config
 
         Args:
             visual_config: VisualConfigItem. This is the main payload.
@@ -108,5 +113,79 @@ class AlationVisualConfig(RequestHandler):
                 )
             # Re-raise other HTTP errors
             raise
+
+    def update_visual_config(self, visual_config:VisualConfigItem, visual_config_id:int) -> JobDetails:
+        """Update an Alation Visual Config
+
+        Args:
+            visual_config: VisualConfigItem. This is the main payload.
+            visual_config_id: The id of the Visual Config to update.
+
+        Returns:
+            JobDetails: an object of type JobDetails
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        try:
+            # make sure input data matches expected structure
+            item: VisualConfigItem
+            validate_rest_payload(payload=[visual_config], expected_types=(VisualConfigItem,))
+
+            # make sure we only include fields with values in the payload
+            payload = visual_config.generate_api_payload()
+
+            response = self.put(
+                url = f'/integration/visual_config/{visual_config_id}/'
+                , body = payload
+            )
+
+            mapped_response = self._map_request_success_to_job_details(
+                VisualConfig.from_api_response(response)
+            )
+            return JobDetails.from_api_response(mapped_response)
+
+        except requests.exceptions.HTTPError as e:
+            # For test compatibility, handle HTTP errors specially
+            if e.response.status_code >= 400:
+                # Return error in the expected format
+                return JobDetails(
+                    status='failed',
+                    msg=None,
+                    result=e.response.json()
+                )
+            # Re-raise other HTTP errors
+            raise
+
+    def delete_visual_config(self, visual_config_id:int) -> JobDetails:
+        """Delete an Alation Visual Config
+
+        Args:
+            visual_config_id: Alation Visual Config ID.
+
+        Returns:
+            JobDetails: an object of type JobDetails
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        try:
+            visual_config = self.delete(f'/integration/visual_config/{visual_config_id}/')
+
+            if visual_config:
+                visual_config_checked = JobDetails.from_api_response(visual_config)
+                return visual_config_checked
+        except requests.exceptions.HTTPError as e:
+            # For test compatibility, handle HTTP errors specially
+            if e.response.status_code >= 400:
+                # Return error in the expected format
+                return JobDetails(
+                    status='failed',
+                    msg=None,
+                    result=e.response.json()
+                )
+            # Re-raise other HTTP errors
+            raise
+
 
 

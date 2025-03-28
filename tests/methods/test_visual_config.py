@@ -23,76 +23,38 @@ class TestVisualConfig(unittest.TestCase):
         # What does the response look like for the document request?
         api_response = [
             {
-                # currently the collection_type_id is not returned
-                'id': 1
+                'id': 50
                 , 'component_list_in_config': [
-                    {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.source_comments', 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                    , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'MAIN'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.sample_columns', 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.sample_content', 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.published_queries', 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.sql_view', 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.table_sql_view', 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.used_by', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.membership_to_domains', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                    , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.tags', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.properties', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                    , {'label': 'Referenced By', 'components': [
-                            {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.mentioned_on', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                            , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.article_backreferences', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                            , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.objectset_backreferences', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                        ]
-                        , 'open_by_default': True
-                        , 'panel': 'SIDEBAR'
-                        , 'is_group': True
-                    }
-                    , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.policy_backreference', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                ]
-                , 'title': 'Table custom fields'
-                , 'layout_otype': 'table'
+                        {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'MAIN'}
+                        , {'label': 'Data Product Info', 'components': [
+                                {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10011, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                                , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10012, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                            ], 'open_by_default': True, 'panel': 'MAIN', 'is_group': True}
+                    , {'label': 'Owners', 'components': [
+                            {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
+                        ], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}
+                ], 'title': 'Data Product', 'layout_otype': 'glossary_term'
             }
         ]
 
-        # success_response = [VisualConfig.from_api_response(item) for item in api_response]
+
         success_response = [
             VisualConfig(
-                # currently the collection_type_id is not returned
-                title='Table custom fields'
-                , layout_otype='table'
+                title='Data Product'
+                , layout_otype='glossary_term'
                 , component_list_in_config=[
-                    VisualConfigComponent(
-                        rendered_otype=None
-                        , rendered_oid=None
-                        , page_defined_type='catalog.source_comments'
-                        , component_type='PAGE_DEFINED'
-                        , panel='MAIN'
-                    )
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None, component_type='BUILT_IN', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_table.sample_columns', component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_table.sample_content', component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_table.published_queries', component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_table.sql_view', component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_table.table_sql_view', component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.used_by', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.membership_to_domains', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.tags', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_table.properties', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualGroupedComponent(
-                        label='Referenced By'
-                        , open_by_default=True
-                        , panel='SIDEBAR'
-                        , is_group=True
-                        , components=[
-                            VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.mentioned_on', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.article_backreferences', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.objectset_backreferences', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                        ]
-                    )
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.policy_backreference', component_type='PAGE_DEFINED', panel='SIDEBAR')
+                        VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None, component_type='BUILT_IN', panel='MAIN')
+                        , VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True, components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                                , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                            ]
+                        )
+                        , VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True, components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')
+                            ]
+                        )
                 ]
-                , id=1
+                , id=50
             )
         ]
 
@@ -110,129 +72,118 @@ class TestVisualConfig(unittest.TestCase):
         self.assertEqual(success_response, actual_response)
 
     @requests_mock.Mocker()
+    def test_get_visual_configs_by_otype(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        # What does the response look like for the document request?
+        api_response = [
+            {
+                'id': 50
+                , 'component_list_in_config': [
+                {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None,
+                 'component_type': 'BUILT_IN', 'panel': 'MAIN'}
+                , {'label': 'Data Product Info', 'components': [
+                    {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10011, 'page_defined_type': None,
+                     'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                    , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10012, 'page_defined_type': None,
+                       'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                ], 'open_by_default': True, 'panel': 'MAIN', 'is_group': True}
+                , {'label': 'Owners', 'components': [
+                    {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None,
+                     'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
+                ], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}
+            ], 'title': 'Data Product', 'layout_otype': 'glossary_term'
+            }
+        ]
+
+        success_response = [
+            VisualConfig(
+                title='Data Product'
+                , layout_otype='glossary_term'
+                , component_list_in_config=[
+                    VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None,
+                                          component_type='BUILT_IN', panel='MAIN')
+                    ,
+                    VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True,
+                                           components=[
+                                               VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011,
+                                                                     page_defined_type=None,
+                                                                     component_type='USER_DEFINED', panel='MAIN')
+                                               ,
+                                               VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012,
+                                                                     page_defined_type=None,
+                                                                     component_type='USER_DEFINED', panel='MAIN')
+                                           ]
+                                           )
+                    , VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True,
+                                             components=[
+                                                 VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8,
+                                                                       page_defined_type=None,
+                                                                       component_type='BUILT_IN', panel='SIDEBAR')
+                                             ]
+                                             )
+                ]
+                , id=50
+            )
+        ]
+
+        # Override the visual config API call
+        otype = 'glossary_term'
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/integration/visual_config/{otype}/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_response = self.mock_user.get_visual_configs(
+            otype=otype
+        )
+
+        self.assertEqual(success_response, actual_response)
+
+    @requests_mock.Mocker()
     def test_get_a_visual_config(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
         # What does the response look like for the document request?
         api_response = {
-                # currently the collection_type_id is not returned
-                'id': 1
+                'id': 50
                 , 'component_list_in_config': [
-                {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.source_comments',
-                 'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None,
-                   'component_type': 'BUILT_IN', 'panel': 'MAIN'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.sample_columns',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.sample_content',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.published_queries',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.sql_view',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.table_sql_view',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'MAIN'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.used_by',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.membership_to_domains',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None,
-                   'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.tags',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_table.properties',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                , {'label': 'Referenced By', 'components': [
-                    {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.mentioned_on',
-                     'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-                    , {'rendered_otype': None, 'rendered_oid': None,
-                       'page_defined_type': 'catalog.article_backreferences', 'component_type': 'PAGE_DEFINED',
-                       'panel': 'SIDEBAR'}
-                    , {'rendered_otype': None, 'rendered_oid': None,
-                       'page_defined_type': 'catalog.objectset_backreferences', 'component_type': 'PAGE_DEFINED',
-                       'panel': 'SIDEBAR'}
-                ]
-                    , 'open_by_default': True
-                    , 'panel': 'SIDEBAR'
-                    , 'is_group': True
-                   }
-                , {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.policy_backreference',
-                   'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}
-            ]
-                , 'title': 'Table custom fields'
-                , 'layout_otype': 'table'
-        }
+                        {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'MAIN'}
+                        , {'label': 'Data Product Info', 'components': [
+                                {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10011, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                                , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10012, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                            ], 'open_by_default': True, 'panel': 'MAIN', 'is_group': True}
+                    , {'label': 'Owners', 'components': [
+                            {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
+                        ], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}
+                ], 'title': 'Data Product', 'layout_otype': 'glossary_term'
+            }
 
 
-        # success_response = [VisualConfig.from_api_response(item) for item in api_response]
         success_response = VisualConfig(
-                # currently the collection_type_id is not returned
-                title='Table custom fields'
-                , layout_otype='table'
+                title='Data Product'
+                , layout_otype='glossary_term'
                 , component_list_in_config=[
-                    VisualConfigComponent(
-                        rendered_otype=None
-                        , rendered_oid=None
-                        , page_defined_type='catalog.source_comments'
-                        , component_type='PAGE_DEFINED'
-                        , panel='MAIN'
-                    )
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None,
-                                            component_type='BUILT_IN', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog_table.sample_columns',
-                                            component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog_table.sample_content',
-                                            component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog_table.published_queries',
-                                            component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog_table.sql_view', component_type='PAGE_DEFINED',
-                                            panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog_table.table_sql_view',
-                                            component_type='PAGE_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.used_by',
-                                            component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog.membership_to_domains',
-                                            component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None,
-                                            component_type='BUILT_IN', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.tags',
-                                            component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog_table.properties', component_type='PAGE_DEFINED',
-                                            panel='SIDEBAR')
-                    , VisualGroupedComponent(
-                        label='Referenced By'
-                        , open_by_default=True
-                        , panel='SIDEBAR'
-                        , is_group=True
-                        , components=[
-                            VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                                  page_defined_type='catalog.mentioned_on',
-                                                  component_type='PAGE_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                                    page_defined_type='catalog.article_backreferences',
-                                                    component_type='PAGE_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                                    page_defined_type='catalog.objectset_backreferences',
-                                                    component_type='PAGE_DEFINED', panel='SIDEBAR')
-                        ]
-                    )
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None,
-                                            page_defined_type='catalog.policy_backreference',
-                                            component_type='PAGE_DEFINED', panel='SIDEBAR')
+                        VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None, component_type='BUILT_IN', panel='MAIN')
+                        , VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True, components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                                , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                            ]
+                        )
+                        , VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True, components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')
+                            ]
+                        )
                 ]
-                , id=1
+                , id=50
             )
 
 
         # Override the visual config API call
-        VISUAL_CONFIG_ID = 1
+        VISUAL_CONFIG_ID = 50
 
         requests_mock.register_uri(
             method='GET',
@@ -250,14 +201,63 @@ class TestVisualConfig(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_create_visual_config(self, requests_mock):
-        # --- PREPARE THE TEST SETUP --- #
 
         # What does the response look like for the document request?
-        api_response = {'id': 43, 'component_list_in_config': [{'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog_document.document_children', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'MAIN'}, {'label': 'Data Product Info', 'components': [{'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10011, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10012, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10013, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10014, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10015, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}], 'open_by_default': True, 'panel': 'MAIN', 'is_group': True}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10017, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10016, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10018, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}, {'label': 'Owners', 'components': [{'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10019, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10020, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}, {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10021, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.membership_to_domains', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.tags', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}, {'label': 'Referenced By', 'components': [{'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.mentioned_on', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.article_backreferences', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}, {'rendered_otype': None, 'rendered_oid': None, 'page_defined_type': 'catalog.objectset_backreferences', 'component_type': 'PAGE_DEFINED', 'panel': 'SIDEBAR'}], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}], 'title': 'Data Product', 'layout_otype': 'glossary_term'}
+        api_response = {
+            'id': 45
+            , 'component_list_in_config': [
+                {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'MAIN'}
+                , {'label': 'Data Product Info', 'components': [
+                        {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10011, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                        , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10012, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                    ], 'open_by_default': True, 'panel': 'MAIN', 'is_group': True}
+                , {'label': 'Owners', 'components': [
+                        {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
+                    ], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}
+            ]
+            , 'title': 'Data Product'
+            , 'layout_otype': 'glossary_term'
+        }
 
         # What is the expected response?
-        success_response = allie.JobDetails(status='successful', msg='', result=VisualConfig(title='Data Product', layout_otype='glossary_term', component_list_in_config=[VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_document.document_children', component_type='PAGE_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None, component_type='BUILT_IN', panel='MAIN'), VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True, components=[VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10013, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10014, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10015, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')]), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10017, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10016, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10018, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN'), VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True, components=[VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10019, page_defined_type=None, component_type='USER_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10020, page_defined_type=None, component_type='USER_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')]), VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10021, page_defined_type=None, component_type='USER_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.membership_to_domains', component_type='PAGE_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.tags', component_type='PAGE_DEFINED', panel='SIDEBAR'), VisualGroupedComponent(label='Referenced By', open_by_default=True, panel='SIDEBAR', is_group=True, components=[VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.mentioned_on', component_type='PAGE_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.article_backreferences', component_type='PAGE_DEFINED', panel='SIDEBAR'), VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.objectset_backreferences', component_type='PAGE_DEFINED', panel='SIDEBAR')])], id=43))
+        success_response = allie.JobDetails(
+            status='successful'
+            , msg=''
+            , result=VisualConfig(
+                layout_otype='glossary_term'
+                , component_list_in_config=[
+                        VisualConfigComponent(
+                            rendered_otype='CUSTOM_FIELD'
+                            , rendered_oid=4
+                            , page_defined_type=None
+                            , component_type='BUILT_IN'
+                            , panel='MAIN'
+                        )
+                        , VisualGroupedComponent(
+                            label='Data Product Info'
+                            , open_by_default=True
+                            , panel='MAIN'
+                            , is_group=True
+                            , components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                                , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                            ]
+                        ), VisualGroupedComponent(
+                            label='Owners'
+                            , open_by_default=True
+                            , panel='SIDEBAR'
+                            , is_group=True
+                            , components=[
+                                    VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')
+                                ]
+                        )
+                ]
+                , title = 'Data Product'
+                , id=45
+            )
+        )
 
+        # What is the INPUT?
         # Override the visual config API call
         requests_mock.register_uri(
             method='POST',
@@ -268,41 +268,200 @@ class TestVisualConfig(unittest.TestCase):
 
         # --- TEST THE FUNCTION --- #
         actual_response = self.mock_user.create_visual_config(
-            visual_config = VisualConfigItem(
-                collection_type_id = 2
+            VisualConfigItem(
+                collection_type_id=2
                 , title='Data Product'
                 , layout_otype='glossary_term'
                 , component_list_in_config=[
-                    VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog_document.document_children', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None, component_type='BUILT_IN', panel='MAIN')
-                    , VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True, components=[
-                            VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                            , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                            , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10013, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                            , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10014, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                            , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10015, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                    VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=4
+                        , page_defined_type=None
+                        , component_type='BUILT_IN'
+                        , panel='MAIN'
+                    )
+                    , VisualGroupedComponent(
+                        label='Data Product Info'
+                        , open_by_default=True
+                        , panel='MAIN'
+                        , is_group=True
+                        , components=[
+                            allie.VisualConfigComponent(
+                                rendered_otype='CUSTOM_FIELD'
+                                , rendered_oid=10011
+                                , page_defined_type=None
+                                , component_type='USER_DEFINED'
+                                , panel='MAIN'
+                            )
+                            , allie.VisualConfigComponent(
+                                rendered_otype='CUSTOM_FIELD'
+                                , rendered_oid=10012
+                                , page_defined_type=None
+                                , component_type='USER_DEFINED'
+                                , panel='MAIN'
+                            )
                         ]
                     )
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10017, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10016, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10018, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
-                    , VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True, components=[
-                            VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10019, page_defined_type=None, component_type='USER_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10020, page_defined_type=None, component_type='USER_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')
+                    , VisualGroupedComponent(
+                        label='Owners'
+                        , open_by_default=True
+                        , panel='SIDEBAR'
+                        , is_group=True
+                        , components=[
+                            allie.VisualConfigComponent(
+                                rendered_otype='CUSTOM_FIELD'
+                                , rendered_oid=8
+                                , page_defined_type=None
+                                , component_type='BUILT_IN'
+                                , panel='SIDEBAR'
+                            )
                         ]
                     )
-                    , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10021, page_defined_type=None, component_type='USER_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.membership_to_domains', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.tags', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                    , VisualGroupedComponent(label='Referenced By', open_by_default=True, panel='SIDEBAR', is_group=True, components=[
-                            VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.mentioned_on', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.article_backreferences', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                            , VisualConfigComponent(rendered_otype=None, rendered_oid=None, page_defined_type='catalog.objectset_backreferences', component_type='PAGE_DEFINED', panel='SIDEBAR')
-                        ]
-                        )
                 ]
             )
         )
 
+
         self.assertEqual(success_response, actual_response)
+
+    @requests_mock.Mocker()
+    def test_update_visual_config(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        # What does the response look like for the document request?
+        api_response = {
+            'id': 50
+            , 'component_list_in_config': [
+                    {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 4, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'MAIN'}
+                    , {'label': 'Data Product Info', 'components': [
+                            {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10011, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                            , {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 10012, 'page_defined_type': None, 'component_type': 'USER_DEFINED', 'panel': 'MAIN'}
+                        ], 'open_by_default': True, 'panel': 'MAIN', 'is_group': True}
+                    , {'label': 'Owners', 'components': [
+                            {'rendered_otype': 'CUSTOM_FIELD', 'rendered_oid': 8, 'page_defined_type': None, 'component_type': 'BUILT_IN', 'panel': 'SIDEBAR'}
+                        ], 'open_by_default': True, 'panel': 'SIDEBAR', 'is_group': True}
+            ]
+            , 'title': 'Data Product UPDATED custom fields'
+            , 'layout_otype': 'glossary_term'
+        }
+
+        # What is the expected response?
+        success_response = allie.JobDetails(
+            status='successful'
+            , msg=''
+            , result=VisualConfig(
+                title='Data Product UPDATED custom fields'
+                , layout_otype='glossary_term'
+                , component_list_in_config=[
+                        VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=4, page_defined_type=None, component_type='BUILT_IN', panel='MAIN')
+                        , VisualGroupedComponent(label='Data Product Info', open_by_default=True, panel='MAIN', is_group=True, components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10011, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                                , VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=10012, page_defined_type=None, component_type='USER_DEFINED', panel='MAIN')
+                            ]
+                        )
+                        , VisualGroupedComponent(label='Owners', open_by_default=True, panel='SIDEBAR', is_group=True, components=[
+                                VisualConfigComponent(rendered_otype='CUSTOM_FIELD', rendered_oid=8, page_defined_type=None, component_type='BUILT_IN', panel='SIDEBAR')
+                            ]
+                        )
+                ]
+                , id=50
+            )
+        )
+
+        # Override the visual config API call
+        requests_mock.register_uri(
+            method='PUT',
+            url=f'/integration/visual_config/50/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_response = self.mock_user.update_visual_config(
+            visual_config=allie.VisualConfigItem(
+                collection_type_id = 2
+                , title='Data Product UPDATED'
+                , layout_otype='glossary_term'
+                , component_list_in_config=[
+                    allie.VisualConfigComponent(
+                        rendered_otype='CUSTOM_FIELD'
+                        , rendered_oid=4
+                        , page_defined_type=None
+                        , component_type='BUILT_IN'
+                        , panel='MAIN'
+                    )
+                    , allie.VisualGroupedComponent(
+                        label='Data Product Info'
+                        , open_by_default=True
+                        , panel='MAIN'
+                        , is_group=True
+                        , components=[
+                            allie.VisualConfigComponent(
+                                rendered_otype='CUSTOM_FIELD'
+                                , rendered_oid=10011
+                                , page_defined_type=None
+                                , component_type='USER_DEFINED'
+                                , panel='MAIN'
+                            )
+                            , allie.VisualConfigComponent(
+                                rendered_otype='CUSTOM_FIELD'
+                                , rendered_oid=10012
+                                , page_defined_type=None
+                                , component_type='USER_DEFINED'
+                                , panel='MAIN'
+                            )
+                        ]
+                    )
+                    , allie.VisualGroupedComponent(
+                        label='Owners'
+                        , open_by_default=True
+                        , panel='SIDEBAR'
+                        , is_group=True
+                        , components=[
+                            allie.VisualConfigComponent(
+                                rendered_otype='CUSTOM_FIELD'
+                                , rendered_oid=8
+                                , page_defined_type=None
+                                , component_type='BUILT_IN'
+                                , panel='SIDEBAR'
+                            )
+                        ]
+                    )
+                ]
+            )
+            , visual_config_id = 50
+        )
+
+        self.assertEqual(success_response, actual_response)
+
+    @requests_mock.Mocker()
+    def test_delete_visual_config_error(self, requests_mock):
+
+        # What does the response look like for the document request?
+        api_response = {
+            "detail": "Delete is not supported for glossary_term"
+            , "code": "400000"
+        }
+
+        # What is the expected response?
+        success_response = allie.JobDetails(
+            status='failed'
+            , msg=None
+            , result={'detail': 'Delete is not supported for glossary_term', 'code': '400000'}
+        )
+
+        # Override the visual config API call
+        requests_mock.register_uri(
+            method='DELETE',
+            url=f'/integration/visual_config/50/',
+            json=api_response,
+            status_code=400
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_response = self.mock_user.delete_visual_config(
+            visual_config_id=50
+        )
+
+        self.assertEqual(success_response, actual_response)
+
