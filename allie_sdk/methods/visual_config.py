@@ -23,7 +23,7 @@ class AlationVisualConfig(RequestHandler):
         super().__init__(session=session, host=host, access_token=access_token)
 
     def get_visual_configs(self, otype:str=None) -> list[VisualConfig]:
-        """Query multiple Alation Visual Configs and return their details
+        """Query multiple Alation Visual Configs and return their details.
 
         Args:
             otype: Object Type (optional). Filter by object type.
@@ -51,7 +51,7 @@ class AlationVisualConfig(RequestHandler):
             raise
 
     def get_a_visual_config(self, visual_config_id:int) -> VisualConfig:
-        """Query one Alation Visual Config and return the details
+        """Query one Alation Visual Config and return the details.
 
         Args:
             visual_config_id: Alation Visual Config ID.
