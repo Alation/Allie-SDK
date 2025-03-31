@@ -4,7 +4,7 @@ Example of creating, listing, updating and deleting one visual config.
 Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
-- ...
+- Adjust the variable values in the below "Set Global Variables" section.
 
 """
 
@@ -17,7 +17,11 @@ import configparser
 # Set Global Variables
 # ================================
 
-
+# the id for the document hub that we assign the visual config to
+DOCUMENT_HUB_ID = 2
+# IDs of custom fields that you want to add to the visual config
+FIRST_CUSTOM_FIELD_ID=10011
+SECOND_CUSTOM_FIELD_ID=10012
 
 # ================================
 # Define Logging Config
@@ -63,7 +67,7 @@ alation = allie.Alation(
 
 create_response = alation.visual_config.create_visual_config(
     visual_config = allie.VisualConfigItem(
-        collection_type_id = 2
+        collection_type_id = DOCUMENT_HUB_ID
         , title='Data Product'
         , layout_otype='glossary_term'
         , component_list_in_config=[
@@ -82,14 +86,14 @@ create_response = alation.visual_config.create_visual_config(
                 , components=[
                     allie.VisualConfigComponent(
                         rendered_otype='CUSTOM_FIELD'
-                        , rendered_oid=10011
+                        , rendered_oid=FIRST_CUSTOM_FIELD_ID
                         , page_defined_type=None
                         , component_type='USER_DEFINED'
                         , panel='MAIN'
                     )
                     , allie.VisualConfigComponent(
                         rendered_otype='CUSTOM_FIELD'
-                        , rendered_oid=10012
+                        , rendered_oid=SECOND_CUSTOM_FIELD_ID
                         , page_defined_type=None
                         , component_type='USER_DEFINED'
                         , panel='MAIN'
@@ -186,7 +190,7 @@ else:
 
 update_response = alation.visual_config.update_visual_config(
     visual_config = allie.VisualConfigItem(
-        collection_type_id = 2
+        collection_type_id = DOCUMENT_HUB_ID # Note: Currently collection type id is not supported for updates
         , title='Data Product UPDATED'
         , layout_otype='glossary_term'
         , component_list_in_config=[
@@ -205,14 +209,14 @@ update_response = alation.visual_config.update_visual_config(
                 , components=[
                     allie.VisualConfigComponent(
                         rendered_otype='CUSTOM_FIELD'
-                        , rendered_oid=10011
+                        , rendered_oid=FIRST_CUSTOM_FIELD_ID
                         , page_defined_type=None
                         , component_type='USER_DEFINED'
                         , panel='MAIN'
                     )
                     , allie.VisualConfigComponent(
                         rendered_otype='CUSTOM_FIELD'
-                        , rendered_oid=10012
+                        , rendered_oid=SECOND_CUSTOM_FIELD_ID
                         , page_defined_type=None
                         , component_type='USER_DEFINED'
                         , panel='MAIN'
@@ -257,6 +261,7 @@ else:
 # DELETE A VISUAL CONFIG
 # ================================
 
+# Note: Currently visual configs cannot be deleted for documents and document folders.
 
 delete_response = alation.visual_config.delete_visual_config(
     visual_config_id = my_visual_config.id
