@@ -9,6 +9,16 @@ parent: SDK Reference
 * TOC
 {:toc}
 
+
+## Known Shortcomings
+
+We would like to highlight that currently the Visual Config API provided via the Alation platform has a few shortcomings:
+
+- If you change the title of the visual config, the title gets suffixed with `custom field`. This bug is reported.
+- It's not possible to update the document hub id with the `PUT` request.
+- The document hub id is missing as a response of the `GET` request.
+
+
 ## Models
 
 ### VisualConfigBase

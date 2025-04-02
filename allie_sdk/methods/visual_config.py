@@ -33,6 +33,9 @@ class AlationVisualConfig(RequestHandler):
 
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
+
+        Note:
+            The document hub id is missing in the response.
         """
         try:
             if otype is None:
@@ -61,6 +64,9 @@ class AlationVisualConfig(RequestHandler):
 
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
+
+        Note:
+            The document hub id is missing in the response.
         """
         try:
             visual_config = self.get(f'/integration/visual_config/{visual_config_id}/')
@@ -126,6 +132,10 @@ class AlationVisualConfig(RequestHandler):
 
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
+
+        Note:
+            - It's not possible to update the document hub id.
+            - If you change the title of the visual config, the title gets suffixed with `custom field`. This bug is reported.
         """
         try:
             # make sure input data matches expected structure
