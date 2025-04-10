@@ -136,6 +136,7 @@ class AlationVisualConfig(RequestHandler):
         Note:
             - It's not possible to update the document hub id.
             - If you change the title of the visual config, the title gets suffixed with `custom field`. This bug is reported.
+
         """
         try:
             # make sure input data matches expected structure
