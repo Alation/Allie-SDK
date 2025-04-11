@@ -7,27 +7,26 @@ from ..core.data_structures import BaseClass, BaseParams
 from datetime import datetime
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BaseBISourceParams(BaseParams):
     oids: set = field(default_factory=set)
     keyField: set = field(default_factory=set)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BISourceParams(BaseBISourceParams):
     limit: set = field(default_factory=set)
     offset: set = field(default_factory=set)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BaseBISourceItem:
     def class_to_dict(self, cls):
-        '''Generate dict from class with only fields that are not None'''
-
+        # Generate dict from class with only fields that are not None
         return {item.name: getattr(cls, item.name) for item in fields(cls) if getattr(cls, item.name) is not None}
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BaseBISourceItemWithSharedFields(BaseBISourceItem):
     name: str
     external_id: str
@@ -37,14 +36,12 @@ class BaseBISourceItemWithSharedFields(BaseBISourceItem):
 
 
 # BI Server
-@dataclass
+@dataclass(kw_only = True)
 class BIServerParams(BaseParams):
     oids: set = field(default_factory=set)
-    limit: set = field(default_factory=set)
-    offset: set = field(default_factory=set)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class NameConfiguration(BaseClass):
     bi_report: str = field(default=None)
     bi_datasource: str = field(default=None)
@@ -52,20 +49,29 @@ class NameConfiguration(BaseClass):
     bi_connection: str = field(default=None)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BIServer(BaseClass):
+    # The Numeric ID of the server
     id: int = field(default=None)
+    # undocumented property
+    type: str = field(default=None)
+    # The uri of the underlying BI server
     uri: str = field(default=None)
+    # The title of the underlying BI server
     title: str = field(default=None)
+    # The description of the underlying BI server
     description: str = field(default=None)
+    # Key-Value pairs matching BI object names to new user defined names.
     name_configuration: NameConfiguration = field(default=None)
+    # Boolean flag determining if the BI Server is private. Defaults to False.
+    private: bool = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.name_configuration, dict):
             self.name_configuration = NameConfiguration.from_api_response(self.name_configuration)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BIServerItem(BaseBISourceItem):
     uri: str = field(default=None)
     title: str = field(default=None)
@@ -73,7 +79,9 @@ class BIServerItem(BaseBISourceItem):
     name_configuration: NameConfiguration = field(default=None)
 
     def generate_api_payload(self, method: str):
-        '''method is a string that can be either post or patch'''
+        """
+        method is a string that can be either post or patch
+        """
 
         if method == 'post':
             for item in [self.uri, self.title]:
@@ -97,12 +105,12 @@ class BIServerItem(BaseBISourceItem):
         return payload
 
 
-@dataclass
+@dataclass(kw_only = True)
 class UpdateBIServersSuccessResponse(BaseClass):
     Status: str = field(default=None)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class CreateBIServersSuccessResponse(UpdateBIServersSuccessResponse):
     Count: int = field(default=None)
     ServerIDs: list = field(default=None)
@@ -117,7 +125,7 @@ class CreateBIServersSuccessResponse(UpdateBIServersSuccessResponse):
 
 
 # BI Folder
-@dataclass
+@dataclass(kw_only = True)
 class BIFolder(BaseClass):
     id: int = field(default=None)
     name: str = field(default=None)
@@ -143,7 +151,7 @@ class BIFolder(BaseClass):
             self.last_updated = self.convert_timestamp(self.last_updated)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BIFolderItem(BaseBISourceItemWithSharedFields):
     owner: str
     created_at: datetime = field(default=None)
@@ -159,7 +167,7 @@ class BIFolderItem(BaseBISourceItemWithSharedFields):
 
 
 # BI Report
-@dataclass
+@dataclass(kw_only = True)
 class BIReportItem(BaseBISourceItemWithSharedFields):
     owner: str
     report_type: str
@@ -177,7 +185,7 @@ class BIReportItem(BaseBISourceItemWithSharedFields):
         return payload
 
 
-@dataclass
+@dataclass(kw_only = True)
 class BIReport(BaseClass):
     id: int = field(default=None)
     name: str = field(default=None)
@@ -199,7 +207,7 @@ class BIReport(BaseClass):
 
 
 # BI Report Column
-@dataclass
+@dataclass(kw_only = True)
 class BIReportColumnItem(BaseBISourceItemWithSharedFields):
     data_type: str = field(default=None)
     role: str = field(default=None)

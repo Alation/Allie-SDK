@@ -1,6 +1,14 @@
 from .alation import Alation
 from .models import (
     AccessToken,
+    BIFolder,
+    BIFolderItem,
+    BIReport,
+    BIReportItem,
+    BIReportColumnItem,
+    BIServer,
+    BIServerParams,
+    BISourceParams,
     BusinessPolicyPostItem,
     BusinessPolicy,
     BusinessPolicyPutItem,

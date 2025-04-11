@@ -4,30 +4,28 @@ import logging
 import requests
 
 from ..core.async_handler import AsyncHandler
-from ..core.custom_exceptions import validate_query_params, InvalidParams
+from ..core.custom_exceptions import *
 from ..models.bi_source_model import *
+from ..models.job_model import *
 
-LOGGER = logging.getLogger()
-
+LOGGER = logging.getLogger('allie_sdk_logger')
 
 class AlationBISource(AsyncHandler):
     """Alation REST API BI Source Methods."""
 
     def __init__(self, access_token: str, session: requests.Session,
                  host: str):
-        """Creates an instance of the BI Source object.
-
+        """Creates an instance of the Documents  object.
         Args:
             access_token (str): Alation REST API Access Token.
             session (requests.Session): Python requests common session.
             host (str): Alation URL.
-
         """
-        super().__init__(access_token, session, host)
+        super().__init__(session = session, host = host, access_token=access_token)
 
         self._bi_source_endpoint = '/integration/v2/bi/server/'
 
-    def get_bi_servers(self, query_params: BIServerParams = None) -> list:
+    def get_bi_servers(self, query_params: BIServerParams = None) -> list[BIServer]:
         """Get multiple Alation BI Servers.
 
         Args:
@@ -43,6 +41,7 @@ class AlationBISource(AsyncHandler):
 
         if bi_servers:
             return [BIServer.from_api_response(bi_server) for bi_server in bi_servers]
+        return []
 
     def get_a_bi_server(self, bi_server_id: int) -> BIServer:
         """Get an Alation BI Server by BI Server ID.
