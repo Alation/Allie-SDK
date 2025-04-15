@@ -7,6 +7,8 @@ from .models import (
     BIReportItem,
     BIReportColumnItem,
     BIServer,
+    BIServerItem,
+    BIServerNameConfiguration,
     BIServerParams,
     BISourceParams,
     BusinessPolicyPostItem,

@@ -57,6 +57,39 @@ alation = allie.Alation(
 
 
 # ================================
+# CREATE BI SERVER
+# ================================
+
+created_bi_servers = alation.bi_source.create_bi_servers(
+    [
+        allie.BIServerItem(
+            uri = "http://localhost:5000/bi_servers",
+            title = "BI Server Test",
+            description = "BI Server Test",
+            name_configuration = allie.BIServerNameConfiguration(
+                bi_report = "BI Report"
+                , bi_datasource = "BI Data Source"
+                , bi_folder = "BI Folder"
+                , bi_connection = "BI Connection"
+            )
+        )
+    ]
+)
+
+if created_bi_servers is None:
+    logging.error("Tried to create BI Server but received no response ...")
+    sys.exit(1)
+elif isinstance(created_bi_servers, allie.JobDetailsBIServerPost):
+    if created_bi_servers.status == "successful":
+        logging.info(f"Number of documents created: {created_bi_servers.result.Count}")
+        logging.info(f"The following documents were created (IDs): {created_bi_servers.result.ServerIDs}")
+    else:
+        logging.error(f"Tried to create documents but received {created_bi_servers.status}: {created_bi_servers.result}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
 # GET BI SERVERS
 # ================================
 

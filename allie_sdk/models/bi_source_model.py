@@ -42,11 +42,25 @@ class BIServerParams(BaseParams):
 
 
 @dataclass(kw_only = True)
-class NameConfiguration(BaseClass):
+class BIServerNameConfiguration(BaseClass):
     bi_report: str = field(default=None)
     bi_datasource: str = field(default=None)
     bi_folder: str = field(default=None)
     bi_connection: str = field(default=None)
+
+    def generate_api_payload(self) -> dict:
+        payload = dict()
+
+        # API endpoint validator throws error if rendered_otype is not present
+        # so we add it in any case:
+        if self.bi_report:
+            payload['bi_report'] = self.bi_report
+        if self.bi_datasource:
+            payload['bi_datasource'] = self.bi_datasource
+        if self.bi_folder:
+            payload['bi_folder'] = self.bi_folder
+        if self.bi_connection:
+            payload['bi_connection'] = self.bi_connection
 
 
 @dataclass(kw_only = True)
@@ -62,13 +76,13 @@ class BIServer(BaseClass):
     # The description of the underlying BI server
     description: str = field(default=None)
     # Key-Value pairs matching BI object names to new user defined names.
-    name_configuration: NameConfiguration = field(default=None)
+    name_configuration: BIServerNameConfiguration = field(default=None)
     # Boolean flag determining if the BI Server is private. Defaults to False.
     private: bool = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.name_configuration, dict):
-            self.name_configuration = NameConfiguration.from_api_response(self.name_configuration)
+            self.name_configuration = BIServerNameConfiguration.from_api_response(self.name_configuration)
 
 
 @dataclass(kw_only = True)
@@ -76,7 +90,7 @@ class BIServerItem(BaseBISourceItem):
     uri: str = field(default=None)
     title: str = field(default=None)
     description: str = field(default=None)
-    name_configuration: NameConfiguration = field(default=None)
+    name_configuration: BIServerNameConfiguration = field(default=None)
 
     def generate_api_payload(self, method: str):
         """
@@ -87,11 +101,13 @@ class BIServerItem(BaseBISourceItem):
             for item in [self.uri, self.title]:
                 if item is None:
                     raise InvalidPostBody(
-                        "'uri', and 'title' are required fields for BI Servers POST payload body")
+                        "'uri', and 'title' are required fields for BI Servers POST payload body"
+                    )
         if method == 'patch':
             if self.uri is None:
                 raise InvalidPostBody(
-                    "'uri' is a required field for BI Server PATCH payload body")
+                    "'uri' is a required field for BI Server PATCH payload body"
+                )
 
         payload = {'uri': self.uri}
         if self.title:
@@ -99,30 +115,9 @@ class BIServerItem(BaseBISourceItem):
         if self.description:
             payload['description'] = self.description
         if self.name_configuration:
-            # payload['name_configuration'] = {k: v for k,v in self.name_configuration.__dict__.items() if v is not None}
-            payload['name_configuration'] = self.class_to_dict(self.name_configuration)
+            payload['name_configuration'] = BIServerNameConfiguration.generate_api_payload(self.name_configuration)
 
         return payload
-
-
-@dataclass(kw_only = True)
-class UpdateBIServersSuccessResponse(BaseClass):
-    Status: str = field(default=None)
-
-
-@dataclass(kw_only = True)
-class CreateBIServersSuccessResponse(UpdateBIServersSuccessResponse):
-    Count: int = field(default=None)
-    ServerIDs: list = field(default=None)
-    Errors: list = field(default=None)
-
-    @classmethod
-    def _from_api_response(cls, body_params: dict):
-        return cls(**{
-            k.replace(' ', ''): v for k, v in body_params.items()
-            if k.replace(' ', '') in inspect.signature(cls).parameters
-        })
-
 
 # BI Folder
 @dataclass(kw_only = True)
