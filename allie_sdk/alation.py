@@ -25,10 +25,11 @@ from .methods import (
     , AlationOtype
     , AlationPolicyGroup
     , AlationRDBMS
+    , AlationTrustChecks
     , AlationUser
     , AlationVirtualFileSystem
-    , AlationTrustChecks
     , AlationVirtualDataSource
+    , AlationVisualConfig
 )
 
 from .models import JobDetails
@@ -149,6 +150,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.virtual_datasource = AlationVirtualDataSource(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.visual_config = AlationVisualConfig(
             access_token=self.access_token, session=session, host=host
         )
 
