@@ -62,6 +62,8 @@ class BIServerNameConfiguration(BaseClass):
         if self.bi_connection:
             payload['bi_connection'] = self.bi_connection
 
+        return payload
+
 
 @dataclass(kw_only = True)
 class BIServer(BaseClass):

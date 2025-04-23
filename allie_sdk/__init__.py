@@ -61,6 +61,7 @@ from .models import (
     Group,
     GroupParams,
     JobDetails,
+    JobDetailsBIServerPost,
     JobDetailsCustomFieldPost,
     JobDetailsCustomFieldPostResult,
     JobDetailsCustomFieldPostResultData,

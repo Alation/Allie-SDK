@@ -82,7 +82,7 @@ class AlationBISource(AsyncHandler):
             # Re-raise other HTTP errors
             raise
 
-    def update_bi_server(self, bi_server_id: int, bi_server: BIServerItem) -> list:
+    def update_bi_server(self, bi_server_id: int, bi_server: BIServerItem) -> JobDetails:
         """PATCH (Update) Alation BI Server. This method is not allowed for non-virtual BI Servers.
 
         Args:
@@ -90,18 +90,41 @@ class AlationBISource(AsyncHandler):
             bi_server (BIServerItem): Alation BI Server to be updated.
 
         Returns:
-            UpdateBIServersSuccessResponse: Updated Alation BI Server response.
+            JJobDetails
 
         """
-        validate_rest_payload([bi_server], (BIServerItem,))
-        payload = bi_server.generate_api_payload('patch')
-        LOGGER.debug(payload)
-        updated_bi_server = self.patch(f'{self._bi_source_endpoint}{bi_server_id}/', body=payload)
+        try:
+            validate_rest_payload(payload = [bi_server], expected_types = (BIServerItem,))
+            payload = bi_server.generate_api_payload('patch')
 
-        if updated_bi_server:
-            return JobDetails.from_api_response(updated_bi_server)
+            updated_bi_server = self.patch( url = f'{self._bi_source_endpoint}{bi_server_id}/', body=payload)
 
-    def get_bi_folders(self, bi_server_id: int, query_params: BISourceParams = None) -> list:
+            if updated_bi_server:
+                # check whether it was a success or failure
+                status = updated_bi_server.get("status")
+                if status:
+                    if status == "failed":
+                        return JobDetails.from_api_response(updated_bi_server)
+                else:
+                    mapped_updated_bi_server = self._map_request_success_to_job_details(
+                        response_data=updated_bi_server
+                    )
+                    return JobDetails.from_api_response(mapped_updated_bi_server)
+
+        except requests.exceptions.HTTPError as e:
+            # For test compatibility, handle HTTP errors specially
+            if e.response.status_code >= 400:
+                # Return error in the expected format
+                return JobDetails(
+                    status='failed',
+                    msg=None,
+                    result=e.response.json()
+                )
+            # Re-raise other HTTP errors
+            raise
+
+
+    def get_bi_folders(self, bi_server_id: int, query_params: BISourceParams = None) -> list[BIFolder]:
         """Get multiple Alation BI Folders.
 
         Args:
@@ -114,15 +137,22 @@ class AlationBISource(AsyncHandler):
         """
         validate_query_params(query_params, BISourceParams)
         params = query_params.generate_params_dict() if query_params else None
+
         if params and params.get('oids') and isinstance(params.get('oids'), list):
             params['oids'] = ','.join(map(str, params['oids']))
         bi_folders = self.get(f'{self._bi_source_endpoint}{bi_server_id}/folder/', query_params=params)
 
         if bi_folders:
             return [BIFolder.from_api_response(bi_folder) for bi_folder in bi_folders]
+        return []
 
-    def post_bi_folders(self, bi_server_id: int, bi_folders: list) -> bool:
+    def create_bi_folders(self, bi_server_id: int, bi_folders: list[BIFolderItem]) -> list[JobDetails]:
         """Post (Create/Update) Alation BI Folders. This method is not allowed for non-virtual BI Servers.
+
+        Creates and updates folder objects via external_id.
+        If an object with a matching external_id exists, it is updated with the given payload.
+        Otherwise, it is created.
+        Note that this method is not allowed for non-virtual servers.
 
         Args:
             bi_server_id (int): Alation BI Server ID to create/update BI Folders for.
@@ -132,12 +162,17 @@ class AlationBISource(AsyncHandler):
             bool: Success of the API POST Call.
 
         """
-        validate_rest_payload(bi_folders, (BIFolderItem,))
+        validate_rest_payload(payload = bi_folders, expected_types = (BIFolderItem,))
         payload = [item.generate_api_payload() for item in bi_folders]
-        LOGGER.debug(payload)
-        async_result = self.async_post(f'{self._bi_source_endpoint}{bi_server_id}/folder/', payload)
 
-        return True if not async_result else False
+        async_results = self.async_post(
+            url = f'{self._bi_source_endpoint}{bi_server_id}/folder/'
+            , payload = payload
+        )
+
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]
+        return []
 
     def delete_bi_folders(self, bi_server_id: int, query_params: BaseBISourceParams) -> bool:
         """Delete Alation BI Folders. This method is not allowed for non-virtual BI Servers.
@@ -178,21 +213,22 @@ class AlationBISource(AsyncHandler):
         if deleted:
             return True
 
-    def get_a_bi_folder(self, bi_server_id: int, bi_folder_oid: int) -> list:
-        """Get an Alation BI Folder.
-
-        Args:
-            bi_server_id (int): Alation BI Server ID to get a BI folder from.
-            bi_folder_oid (int): Alation BI Folder object id.
-
-        Returns:
-            list: Alation BI Folders
-
-        """
-        bi_folder = self.get(f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_oid}/', pagination=False)
-
-        if bi_folder:
-            return BIFolder.from_api_response(bi_folder)
+    # SHOULD BE REMOVED SINCE YOU CAN GET SIMILAR RESULT FROM get_bi_folders
+    # def get_a_bi_folder(self, bi_server_id: int, bi_folder_oid: int) -> list:
+    #     """Get an Alation BI Folder.
+    #
+    #     Args:
+    #         bi_server_id (int): Alation BI Server ID to get a BI folder from.
+    #         bi_folder_oid (int): Alation BI Folder object id.
+    #
+    #     Returns:
+    #         list: Alation BI Folders
+    #
+    #     """
+    #     bi_folder = self.get(f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_oid}/', pagination=False)
+    #
+    #     if bi_folder:
+    #         return BIFolder.from_api_response(bi_folder)
 
     def patch_bi_folder(self, bi_server_id: int, bi_folder_oid: int, bi_folder: BIFolderItem) -> BIFolder:
         """PATCH (Update) an Alation BI Folder. This method is not allowed for non-virtual BI Servers.
