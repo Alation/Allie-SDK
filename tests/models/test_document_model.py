@@ -11,17 +11,13 @@ class TestDocumentModels(unittest.TestCase):
             "id": 1,
             "deleted": False,
             "ts_deleted": "2022-07-05T15:09:40.421916Z",
-            # "is_public": True, => was removed Apr 2024
             "ts_created": "2022-07-05T15:09:40.421916Z",
             "ts_updated": "2022-07-05T15:09:40.421916Z",
-            # "otype": "glossary_term",  => was removed Apr 2024
             "title": "Sales",
             "description": "Relevant data and articles for Sales Analytics",
             "template_id": 47,
-            "folder_ids": [
-                14,
-                165
-            ],
+            "parent_folder_id": 1,
+            "nav_link_folder_ids": [14,165],
             "document_hub_id": 1,
             "custom_fields": [
                 {
@@ -46,7 +42,8 @@ class TestDocumentModels(unittest.TestCase):
             title = "Sales",
             description = "Relevant data and articles for Sales Analytics",
             template_id = 47,
-            folder_ids = [
+            parent_folder_id = 1,
+            nav_link_folder_ids = [
                 14,
                 165
             ],
@@ -69,7 +66,8 @@ class TestDocumentModels(unittest.TestCase):
             title = "My KPI 1"
             , description = "This is the description for KPI 1"
             , template_id = 12
-            , folder_ids = [ 6 ]
+            , parent_folder_id = 1
+            , nav_link_folder_ids = [ 6 ]
             , document_hub_id = 2
             , custom_fields = [
                 CustomFieldValueItem(
@@ -92,7 +90,8 @@ class TestDocumentModels(unittest.TestCase):
             "title": "My KPI 1"
             , "description": "This is the description for KPI 1"
             , "template_id": 12
-            , "folder_ids": [ 6 ]
+            , "parent_folder_id": 1
+            , "nav_link_folder_ids": [ 6 ]
             , "document_hub_id": 2
             , "custom_fields": [
                 {
@@ -118,7 +117,8 @@ class TestDocumentModels(unittest.TestCase):
             , title = "My KPI 1"
             , description = "This is the description for KPI 1"
             , template_id = 12
-            , folder_ids = [ 6 ]
+            , parent_folder_id = 1
+            , nav_link_folder_ids = [ 6 ]
             , document_hub_id = 2
             , custom_fields = [
                 CustomFieldValueItem(
@@ -142,7 +142,8 @@ class TestDocumentModels(unittest.TestCase):
             , "title": "My KPI 1"
             , "description": "This is the description for KPI 1"
             , "template_id": 12
-            , "folder_ids": [ 6 ]
+            , "parent_folder_id": 1
+            , "nav_link_folder_ids": [ 6 ]
             , "document_hub_id": 2
             , "custom_fields": [
                 {

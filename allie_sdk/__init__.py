@@ -106,5 +106,9 @@ from .models import (
     VirtualDataSourceTable,
     VirtualDataSourceView,
     VirtualDataSourceColumn,
-    VirtualDataSourceIndex
+    VirtualDataSourceIndex,
+    VisualConfig,
+    VisualConfigItem,
+    VisualConfigComponent,
+    VisualGroupedComponent
 )
