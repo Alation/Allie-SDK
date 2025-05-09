@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "allie-sdk"
 description = "A Python library for the Alation REST APIs."
-version = "1.0.0"
+version = "2.0.0"
 dependencies = [
   "requests~=2.32.0",
   "python-json-logger~=2.0.4",

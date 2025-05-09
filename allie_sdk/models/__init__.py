@@ -19,3 +19,4 @@ from .user_model import *
 from .virtual_filesystem_model import *
 from .policy_group_model import *
 from .virtual_datasource_model import *
+from .visual_config_model import *

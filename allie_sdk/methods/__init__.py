@@ -18,3 +18,4 @@ from .trust_check import AlationTrustChecks
 from .user import AlationUser
 from .virtual_datasource import AlationVirtualDataSource
 from .virtual_filesystem import AlationVirtualFileSystem
+from .visual_config import AlationVisualConfig
