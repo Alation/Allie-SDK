@@ -46,6 +46,7 @@ class RequestHandler(object):
         , url: str
         , body: any = None
         , is_async: bool = False
+        , query_params: dict = None
     ) -> dict | list:
         """API Delete Request.
 
@@ -60,10 +61,13 @@ class RequestHandler(object):
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
         """
+        if query_params is None:
+            query_params = {}
+
         if isinstance(body, dict) or isinstance(body, list):
             body = json.dumps(body, default=str)
 
-        api_response = self.s.delete(self.host + url, data=body, headers=self.headers)
+        api_response = self.s.delete(self.host + url, data=body, headers=self.headers, params=query_params)
 
         try:
             response_data = api_response.json()

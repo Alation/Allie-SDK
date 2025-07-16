@@ -10,6 +10,7 @@ from .models import (
     BIServerItem,
     BIServerNameConfiguration,
     BIServerParams,
+    BISourceBaseParams,
     BISourceParams,
     BusinessPolicyPostItem,
     BusinessPolicy,

@@ -165,7 +165,7 @@ alation = allie.Alation(
 # no method available
 
 # ================================
-# GET BI FOLDERS
+# CREATE BI FOLDERS
 # ================================
 
 bi_server_id = 21 # REMOVE LATER !!!
@@ -194,9 +194,24 @@ async_results: [{'msg': 'Job finished in 0.092239 seconds at 2025-04-17 10:00:55
 created_bi_folder = [JobDetails(status='successful', msg='Job finished in 0.051855 seconds at 2025-04-17 13:26:40.148839+00:00', result=['1 BIFolder object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.05s'])]
 """
 
+if created_bi_folder is None:
+    logging.error("Tried to create BI Folder but received no response ...")
+    sys.exit(1)
+elif isinstance(created_bi_folder, list):
+    for c in created_bi_folder:
+        if c.status == "successful":
+            created_bi_server_result = c.result[0]
+            logging.info(f"Number of BI Servers created: {created_bi_server_result}")
+        else:
+            logging.error(f"Tried to create BI Folders but received {created_bi_folder.status}: {created_bi_folder.result}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
 # ================================
 # GET BI FOLDERS
 # ================================
+
 
 existing_bi_folders = alation.bi_source.get_bi_folders(
     bi_server_id = bi_server_id
@@ -207,12 +222,30 @@ response = [{'id': 16, 'external_id': 'parent_workspace_folder', 'name': 'Worksp
 existing_bi_folders = [BIFolder(id=16, name='Workspaces', external_id='parent_workspace_folder', source_url=None, bi_object_type='PowerBI Workspaces', description_at_source=None, owner=None, created_at=None, last_updated=None, num_reports=0, num_report_accesses=0, parent_folder=None, popularity=0.0, subfolders=['2a41d8b2-038d-49f2-8afc-24520bab929f'], connections=[], reports=[]), BIFolder(id=17, name='Acme Bank Workspace', external_id='2a41d8b2-038d-49f2-8afc-24520bab929f', source_url='groups/2a41d8b2-038d-49f2-8afc-24520bab929f', bi_object_type='New Workspace', description_at_source=None, owner=None, created_at=None, last_updated=None, num_reports=2, num_report_accesses=0, parent_folder='parent_workspace_folder', popularity=None, subfolders=[], connections=[], reports=['663b9e9a-d6dc-4554-a0d3-9379a6586897', '90274a21-e533-4506-b23a-2f5e6b75e15c'])]
 """
 
+existing_bi_folder_ids = []
+
 if existing_bi_folders is None or len(existing_bi_folders) == 0:
     logging.warning("No BI Folders were found.")
 elif isinstance(existing_bi_folders, list):
     logging.info(f"Found {len(existing_bi_folders)} BI Folders:")
     for d in existing_bi_folders:
-        logging.info(f"{d.title}")
+        logging.info(f"{d.name}")
+        existing_bi_folder_ids.append(d.id)
 else:
     print(f"Unexpected result ... I don't know what to do ...")
     sys.exit(1)
+
+
+# ================================
+# DELETE BI FOLDERS
+# ================================
+
+
+deleted_bi_folders = alation.bi_source.delete_bi_folders(
+    bi_server_id = bi_server_id
+    # , query_params = allie.BISourceBaseParams(
+    #     oids = existing_bi_folder_ids
+    # )
+)
+
+deleted_bi_folders

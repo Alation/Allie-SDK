@@ -8,13 +8,13 @@ from datetime import datetime
 
 
 @dataclass(kw_only = True)
-class BaseBISourceParams(BaseParams):
+class BISourceBaseParams(BaseParams):
     oids: set = field(default_factory=set)
     keyField: set = field(default_factory=set)
 
 
 @dataclass(kw_only = True)
-class BISourceParams(BaseBISourceParams):
+class BISourceParams(BISourceBaseParams):
     limit: set = field(default_factory=set)
     offset: set = field(default_factory=set)
 

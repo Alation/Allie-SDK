@@ -146,6 +146,23 @@ class AlationBISource(AsyncHandler):
             return [BIFolder.from_api_response(bi_folder) for bi_folder in bi_folders]
         return []
 
+    # SHOULD BE REMOVED SINCE YOU CAN GET SIMILAR RESULT FROM get_bi_folders
+    # def get_a_bi_folder(self, bi_server_id: int, bi_folder_oid: int) -> list:
+    #     """Get an Alation BI Folder.
+    #
+    #     Args:
+    #         bi_server_id (int): Alation BI Server ID to get a BI folder from.
+    #         bi_folder_oid (int): Alation BI Folder object id.
+    #
+    #     Returns:
+    #         list: Alation BI Folders
+    #
+    #     """
+    #     bi_folder = self.get(f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_oid}/', pagination=False)
+    #
+    #     if bi_folder:
+    #         return BIFolder.from_api_response(bi_folder)
+
     def create_bi_folders(self, bi_server_id: int, bi_folders: list[BIFolderItem]) -> list[JobDetails]:
         """Post (Create/Update) Alation BI Folders. This method is not allowed for non-virtual BI Servers.
 
@@ -174,61 +191,48 @@ class AlationBISource(AsyncHandler):
             return [JobDetails.from_api_response(item) for item in async_results]
         return []
 
-    def delete_bi_folders(self, bi_server_id: int, query_params: BaseBISourceParams) -> bool:
+    def delete_bi_folders(self, bi_server_id: int, query_params: BISourceBaseParams) -> bool:
         """Delete Alation BI Folders. This method is not allowed for non-virtual BI Servers.
 
         Args:
             bi_server_id (int): Alation BI Server ID to delete the BI folders from.
-            query_params (BaseBISourceParams): Alation BI Folder params.
+            query_params (BISourceBaseParams): Alation BI Folder params. This is mandatory.
 
         Returns:
             bool: Success of the API DELETE Call.
 
         """
 
-        validate_query_params(query_params, BaseBISourceParams)
-        params = query_params.generate_params_dict()
+
+        validate_query_params(query_params, BISourceBaseParams)
+        params = query_params.generate_params_dict() if query_params else None
 
         if isinstance(params.get('oids'), list):
             params['oids'] = ','.join(map(str, params['oids']))
 
-        deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/folder/', query_params=params)
+
+        deleted = self.delete(url = f'{self._bi_source_endpoint}{bi_server_id}/folder/', query_params=params)
 
         if deleted:
-            return True
-        
-    def delete_a_bi_folder(self, bi_server_id: int, bi_folder_oid: int) -> bool:
-        """Delete an Alation BI Folder. This method is not allowed for non-virtual BI Servers.
+            return JobDetails.from_api_response(deleted)
 
-        Args:
-            bi_server_id (int): Alation BI Server ID to delete the BI folder from.
-            bi_folder_oid (int): Alation BI Folder object id to delete.
 
-        Returns:
-            bool: Success of the API DELETE Call.
-
-        """
-        deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_oid}/')
-
-        if deleted:
-            return True
-
-    # SHOULD BE REMOVED SINCE YOU CAN GET SIMILAR RESULT FROM get_bi_folders
-    # def get_a_bi_folder(self, bi_server_id: int, bi_folder_oid: int) -> list:
-    #     """Get an Alation BI Folder.
+    #REMOVE LATER: REDUNDANT SINCE YOU CAN DO THE SAME WITH delete_bi_folders()
+    # def delete_a_bi_folder(self, bi_server_id: int, bi_folder_oid: int) -> bool:
+    #     """Delete an Alation BI Folder. This method is not allowed for non-virtual BI Servers.
     #
     #     Args:
-    #         bi_server_id (int): Alation BI Server ID to get a BI folder from.
-    #         bi_folder_oid (int): Alation BI Folder object id.
+    #         bi_server_id (int): Alation BI Server ID to delete the BI folder from.
+    #         bi_folder_oid (int): Alation BI Folder object id to delete.
     #
     #     Returns:
-    #         list: Alation BI Folders
+    #         bool: Success of the API DELETE Call.
     #
     #     """
-    #     bi_folder = self.get(f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_oid}/', pagination=False)
+    #     deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_oid}/')
     #
-    #     if bi_folder:
-    #         return BIFolder.from_api_response(bi_folder)
+    #     if deleted:
+    #         return True
 
     def patch_bi_folder(self, bi_server_id: int, bi_folder_oid: int, bi_folder: BIFolderItem) -> BIFolder:
         """PATCH (Update) an Alation BI Folder. This method is not allowed for non-virtual BI Servers.
@@ -269,19 +273,19 @@ class AlationBISource(AsyncHandler):
 
         return True if not async_result else False
 
-    def delete_bi_reports(self, bi_server_id: int, query_params: BaseBISourceParams) -> bool:
+    def delete_bi_reports(self, bi_server_id: int, query_params: BISourceBaseParams) -> bool:
         """Delete Alation BI reports. This method is not allowed for non-virtual BI Servers.
 
         Args:
             bi_server_id (int): Alation BI Server ID to delete the BI reports from.
-            query_params (BaseBISourceParams): Alation BI Folder params.
+            query_params (BISourceBaseParams): Alation BI Folder params.
 
         Returns:
             bool: Success of the API DELETE Call.
 
         """
 
-        validate_query_params(query_params, BaseBISourceParams)
+        validate_query_params(query_params, BISourceBaseParams)
         params = query_params.generate_params_dict()
 
         if isinstance(params.get('oids'), list):

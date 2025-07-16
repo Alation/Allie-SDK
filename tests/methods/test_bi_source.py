@@ -378,6 +378,76 @@ class TestBISource(unittest.TestCase):
         self.assertEqual(success_response, bi_servers)
 
     @requests_mock.Mocker()
+    def test_get_a_bi_folder(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        bi_folder_id = 16
+
+        # What does the response look like for the folder request?
+        api_response = [
+            {
+                'id': bi_folder_id
+                , 'external_id': 'parent_workspace_folder'
+                , 'name': 'Workspaces'
+                , 'created_at': None
+                , 'last_updated': None
+                , 'source_url': None
+                , 'bi_object_type': 'PowerBI Workspaces'
+                , 'owner': None
+                , 'description_at_source': None
+                , 'num_reports': 0
+                , 'num_report_accesses': 0
+                , 'popularity': 0.0
+                , 'parent_folder': None
+                , 'subfolders': ['2a41d8b2-038d-49f2-8afc-24520bab929f']
+                , 'connections': []
+                , 'reports': []
+                , 'datasources': []
+            }
+        ]
+
+        success_response = [
+            BIFolder(
+                id = bi_folder_id
+                , name='Workspaces'
+                , external_id='parent_workspace_folder'
+                , source_url=None
+                , bi_object_type='PowerBI Workspaces'
+                , description_at_source=None
+                , owner=None
+                , created_at=None
+                , last_updated=None
+                , num_reports=0
+                , num_report_accesses=0
+                , parent_folder=None
+                , popularity=0.0
+                , subfolders=['2a41d8b2-038d-49f2-8afc-24520bab929f']
+                , connections=[]
+                , reports=[]
+            )
+        ]
+
+        # Override the document API call
+        bi_server_id = 21
+
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/integration/v2/bi/server/{bi_server_id}/folder/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        bi_servers = self.mock_user.get_bi_folders(
+            bi_server_id = bi_server_id
+            , query_params = BISourceParams(
+                oids = [ bi_folder_id ]
+            )
+        )
+
+        self.assertEqual(success_response, bi_servers)
+
+    @requests_mock.Mocker()
     def test_create_bi_folders(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
