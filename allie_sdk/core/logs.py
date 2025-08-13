@@ -21,6 +21,26 @@ def ensure_log_directory() -> bool:
     except:
         return False
 
+core_handlers = {
+    "file_for_allie": {
+        "class": "logging.FileHandler",
+        "formatter": "standard",
+        "level": logging.DEBUG,
+        "filename": f"logs/allie-sdk-{datetime.date.today()}.log",
+    },
+    "console_for_allie": {
+        "class": "logging.StreamHandler",
+        "formatter": "console",
+        "level": logging.INFO,
+        "stream": "ext://sys.stdout",
+    },
+    "api_json": {
+        "class": "logging.FileHandler",
+        "formatter": "json",
+        "level": logging.DEBUG,
+        "filename": f"logs/alation-rest-{datetime.date.today()}.json",
+    },
+}
 
 class LoggingConfigs(object):
     """
@@ -53,6 +73,11 @@ class LoggingConfigs(object):
             log_dir_exists = ensure_log_directory()
             if not log_dir_exists:
                 enabled_handlers = list(set(enabled_handlers) - file_handlers)
+
+        handler_configs = {
+            k: v for k, v in core_handlers.items() if k in enabled_handlers
+        }
+
         logging_config = dict(
             version=1,
             disable_existing_loggers=False,
@@ -66,26 +91,7 @@ class LoggingConfigs(object):
                     "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
                 },
             },
-            handlers={
-                "file_for_allie": {
-                    "class": "logging.FileHandler",
-                    "formatter": "standard",
-                    "level": logging.DEBUG,
-                    "filename": f"logs/allie-sdk-{datetime.date.today()}.log",
-                },
-                "console_for_allie": {
-                    "class": "logging.StreamHandler",
-                    "formatter": "console",
-                    "level": logging.INFO,
-                    "stream": "ext://sys.stdout",
-                },
-                "api_json": {
-                    "class": "logging.FileHandler",
-                    "formatter": "json",
-                    "level": logging.DEBUG,
-                    "filename": f"logs/alation-rest-{datetime.date.today()}.json",
-                },
-            },
+            handlers=handler_configs,
             loggers={
                 "allie_sdk_logger": {
                     "handlers": enabled_handlers,
