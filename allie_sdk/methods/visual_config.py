@@ -197,6 +197,35 @@ class AlationVisualConfig(RequestHandler):
                 )
             # Re-raise other HTTP errors
             raise
+    def get_visual_configs(self, otype:str=None) -> list[VisualConfig]:
+        """Query multiple Alation Visual Configs and return their details.
 
+        Args:
+            otype: Object Type (optional). Filter by object type.
+
+        Returns:
+            list[VisualConfig]: List of Visual Configs
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+
+        Note:
+            The document hub id is missing in the response.
+        """
+        try:
+            if otype is None:
+                url = f'/integration/visual_config/'
+            else:
+                url = f'/integration/visual_config/{otype}/'
+
+            visual_configs = self.get(url)
+
+            if visual_configs:
+                visual_configs_checked = [VisualConfig.from_api_response(v) for v in visual_configs]
+                return visual_configs_checked
+            return []
+        except requests.exceptions.HTTPError:
+            # Re-raise the error
+            raise
 
 
