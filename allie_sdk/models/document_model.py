@@ -13,6 +13,7 @@ class DocumentBase(BaseClass):
     template_id:int = field(default = None)
     # folder_ids:list[int] = field(default = None) # DEPRECATED IN 2024.3.2
     parent_folder_id: int = field(default = None)  # ADDED IN 2024.3.2
+    parent_document_id: int = field(default = None)  # ADDED IN 2024.3.2
     nav_link_folder_ids: list[int] = field(default=None) # ADDED IN 2024.3.2
     document_hub_id:int = field(default = None)
     custom_fields:list[CustomFieldValueItem] = field(default = None)
@@ -76,6 +77,8 @@ class DocumentPostItem(DocumentBase):
             payload['parent_folder_id'] = self.parent_folder_id
         if self.nav_link_folder_ids:
             payload['nav_link_folder_ids'] = sorted(self.nav_link_folder_ids)
+        if self.parent_document_id:
+            payload['parent_document_id'] = self.parent_document_id
         if self.document_hub_id:
             payload['document_hub_id'] = self.document_hub_id
         if self.custom_fields:
@@ -116,6 +119,8 @@ class DocumentPutItem(DocumentBase):
             payload['parent_folder_id'] = self.parent_folder_id
         if self.nav_link_folder_ids:
             payload['nav_link_folder_ids'] = sorted(self.nav_link_folder_ids)
+        if self.parent_document_id:
+            payload['parent_document_id'] = self.parent_document_id
         if self.document_hub_id:
             payload['document_hub_id'] = self.document_hub_id
         if self.custom_fields:
