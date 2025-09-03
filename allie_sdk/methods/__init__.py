@@ -18,3 +18,4 @@ from .user import AlationUser
 from .virtual_datasource import AlationVirtualDataSource
 from .virtual_filesystem import AlationVirtualFileSystem
 from .visual_config import AlationVisualConfig
+from .oauth2 import AlationOAuth2

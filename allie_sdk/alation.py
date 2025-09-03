@@ -30,6 +30,7 @@ from .methods import (
     , AlationVirtualFileSystem
     , AlationVirtualDataSource
     , AlationVisualConfig
+    , AlationOAuth2
 )
 
 from .models import JobDetails
@@ -155,6 +156,7 @@ class Alation(object):
         self.visual_config = AlationVisualConfig(
             access_token=self.access_token, session=session, host=host
         )
+        self.oauth2 = AlationOAuth2(session=session, host=host)
 
     @property
     def access_token(self) -> str:
