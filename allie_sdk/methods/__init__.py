@@ -5,6 +5,7 @@ from .custom_field import AlationCustomField
 from .custom_template import AlationCustomTemplate
 from .data_quality import AlationDataQuality
 from .datasource import AlationDatasource
+from .dataflow import AlationDataflow
 from .document import AlationDocument
 from .document_hub_folder import AlationDocumentHubFolder
 from .domain import AlationDomain
