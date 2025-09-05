@@ -40,13 +40,14 @@ class TestDataflow(unittest.TestCase):
 
         requests_mock.register_uri(
             method='GET',
-            url='/integration/v2/dataflow/',
+            url='/integration/v2/dataflow/?keyField=id',
             json=api_response,
             status_code=200
         )
 
-        result = self.mock_df.get_dataflows()
+        result = self.mock_df.get_dataflows([1], DataflowParams(keyField='id'))
         self.assertEqual(result, expected)
+        self.assertEqual(requests_mock.last_request.json(), [1])
 
     @requests_mock.Mocker()
     def test_create_or_replace_dataflows(self, requests_mock):

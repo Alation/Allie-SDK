@@ -120,5 +120,3 @@ class DataflowPayload(BaseClass):
 class DataflowParams(BaseParams):
     """Query parameters for Dataflow GET requests."""
     keyField: str = field(default=None)
-    limit: int = field(default=None)
-    skip: int = field(default=None)

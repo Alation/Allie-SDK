@@ -16,11 +16,20 @@ class AlationDataflow(AsyncHandler):
         """Creates an instance of the Dataflow object."""
         super().__init__(session=session, host=host, access_token=access_token)
 
-    def get_dataflows(self, query_params: DataflowParams = None) -> DataflowPayload:
+    def get_dataflows(
+        self, object_ids: list[int | str] = None, query_params: DataflowParams = None
+    ) -> DataflowPayload:
         """Retrieve dataflow objects and their paths."""
         validate_query_params(query_params, DataflowParams)
+        if object_ids:
+            validate_rest_payload(object_ids, (int, str))
         params = query_params.generate_params_dict() if query_params else None
-        data = self.get('/integration/v2/dataflow/', query_params=params, pagination=False)
+        data = self.get(
+            '/integration/v2/dataflow/',
+            query_params=params,
+            pagination=False,
+            body=object_ids,
+        )
         if data:
             return DataflowPayload.from_api_response(data)
         return DataflowPayload()

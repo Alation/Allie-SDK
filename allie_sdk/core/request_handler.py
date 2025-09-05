@@ -105,13 +105,20 @@ class RequestHandler(object):
 
             
 
-    def get(self, url: str, query_params: dict = None, pagination: bool = True) -> any:
+    def get(
+        self,
+        url: str,
+        query_params: dict = None,
+        pagination: bool = True,
+        body: any = None,
+    ) -> any:
         """API Get Request.
 
         Args:
             url (str): GET API Call URL.
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Fetch all API results that meet the Query Parameters.
+            body (any): Optional GET Request Body.
 
         Returns:
             any: API Response Body in JSON.
@@ -125,7 +132,9 @@ class RequestHandler(object):
         if pagination:
             query_params['limit'] = self.page_size
 
-        api_response = self._api_single_get(self.host + url, params=query_params)
+        api_response = self._api_single_get(
+            self.host + url, params=query_params, body=body
+        )
         
         # Check status and raise error if needed
         if api_response.status_code not in SUCCESS_CODES:
@@ -328,12 +337,15 @@ class RequestHandler(object):
 
         return response_data
 
-    def _api_single_get(self, url: str, params: dict = None) -> requests.Response:
+    def _api_single_get(
+        self, url: str, params: dict = None, body: any = None
+    ) -> requests.Response:
         """Run a Single REST API Get Call. Helper function for paginated results.
 
         Args:
             url (str): GET API Call URL.
             params (dict): GET API Call Query Parameters.
+            body (any): Optional GET Request Body.
 
         Returns:
             requests.Response: API GET Response.
@@ -342,8 +354,17 @@ class RequestHandler(object):
             This is a helper method that doesn't raise exceptions directly.
             The calling method is responsible for checking status codes and raising exceptions.
         """
-        if params:
+        if body is not None:
+            body = json.dumps(body, default=str)
+
+        if params and body:
+            api_response = self.s.get(
+                url, params=params, headers=self.headers, data=body
+            )
+        elif params:
             api_response = self.s.get(url, params=params, headers=self.headers)
+        elif body:
+            api_response = self.s.get(url, headers=self.headers, data=body)
         else:
             api_response = self.s.get(url, headers=self.headers)
 
