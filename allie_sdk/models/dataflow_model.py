@@ -76,8 +76,7 @@ class DataflowPayload(BaseClass):
     def __post_init__(self):
         if isinstance(self.dataflow_objects, list):
             self.dataflow_objects = [
-                Dataflow.from_api_response(value) if isinstance(value, dict) else value
-                for value in self.dataflow_objects
+                Dataflow.from_api_response(value) for value in self.dataflow_objects
             ]
         if isinstance(self.paths, list):
             paths_out = []
@@ -87,7 +86,6 @@ class DataflowPayload(BaseClass):
                     for segment in path:
                         if isinstance(segment, list):
                             segment_out = []
-                            validate_rest_payload(segment, (DataflowPathObject,))
                             for obj in segment:
                                 if isinstance(obj, dict):
                                     segment_out.append(DataflowPathObject.from_api_response(obj))

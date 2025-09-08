@@ -16,6 +16,7 @@ from .methods import (
     , AlationCustomField
     , AlationCustomTemplate
     , AlationDataQuality
+    , AlationDataflow
     , AlationDatasource
     , AlationDocument
     , AlationDocumentHubFolder
@@ -111,6 +112,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.datasource = AlationDatasource(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.dataflow = AlationDataflow(
             access_token=self.access_token, session=session, host=host
         )
         self.document = AlationDocument(
