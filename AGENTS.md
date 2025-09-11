@@ -13,3 +13,15 @@ In the `examples` folder you should find one file/example for each file in `alli
 In the `example_errors` folder you should find one file/example for each file in `allie_sdk/methods` that shows how to use each of the methods, but in this case, we make the request call fail on purpose so that you can see what error messages look like.
 
 The `docs` folder has the main documentation. The `docs/pages/reference` subfolder should include a file/documentation for each file in `allie_sdk/methods`. 
+
+# Setup commands
+
+```shell
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+# Code Style
+
+- use Python type hints
+- use double quotes instead of single quotes were possible
