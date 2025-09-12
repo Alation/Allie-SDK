@@ -364,8 +364,12 @@ class TestRDBMSModels(unittest.TestCase):
             "column_comment": "This is a comment",
             "nullable": False,
             "position": 7,
-            "index": {"isPrimaryKey": False, "isForeignKey": True, "isOtherIndex": False,
-                      "referencedColumnId": "1.Test.Table"},
+            "index": {
+                "isPrimaryKey": False
+                , "isForeignKey": True
+                , "isOtherIndex": False
+                , "referencedColumnId": "1.Test.Table"
+            },
             "custom_fields": [
                 {'field_id': 1, 'value': 'Testing'},
                 {'field_id': 2, 'value': [{'otype': 'table', 'oid': 5}]}
