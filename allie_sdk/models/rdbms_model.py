@@ -218,6 +218,44 @@ class ColumnItem(BaseRDBMSItem):
 
         return payload
 
+
+@dataclass
+class ColumnPatchItem(BaseRDBMSItem):
+    id: int = field(default=None)
+    column_comment: str = field(default=None)
+    nullable: bool = field(default=None)
+    position: int = field(default=None)
+    index: ColumnIndex = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.id is None:
+            raise InvalidPostBody("'id' is a required field for Column PATCH payload body")
+        payload = {'id': self.id}
+        if self.title:
+            payload['title'] = self.title
+        if self.description:
+            payload['description'] = self.description
+        if self.column_comment:
+            payload['column_comment'] = self.column_comment
+        if self.nullable is not None:
+            payload['nullable'] = self.nullable
+        if self.position:
+            payload['position'] = self.position
+        if self.index:
+            payload['index'] = {}
+            if self.index.isPrimaryKey is not None:
+                payload['index']['isPrimaryKey'] = self.index.isPrimaryKey
+            if self.index.isForeignKey is not None:
+                payload['index']['isForeignKey'] = self.index.isForeignKey
+            if self.index.isOtherIndex is not None:
+                payload['index']['isOtherIndex'] = self.index.isOtherIndex
+            if self.index.referencedColumnId:
+                payload['index']['referencedColumnId'] = self.index.referencedColumnId
+        if self.custom_fields:
+            payload['custom_fields'] = self._create_fields_payload()
+
+        return payload
+
 @dataclass
 class ColumnParams(BaseRDBMSParams):
     table_id: set = field(default_factory=set)

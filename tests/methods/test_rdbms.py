@@ -386,6 +386,64 @@ class TestRDBMS(unittest.TestCase):
         # Verify the error response contains expected information
         self.assertEqual(context.exception.response.status_code, 400)
 
+    @requests_mock.Mocker()
+    def test_success_patch_columns(self, m):
+
+        mock_column = ColumnPatchItem(
+            id=1,
+            title='Updated Title'
+        )
+        mock_column_list = [mock_column]
+
+        async_response = {
+            "job_id": 1
+        }
+        job_response = {
+            "status": "successful",
+            "msg": "Job finished in 1 second",
+            "result": [
+                {
+                    "response": "Updated 1 attribute objects.",
+                    "mapping": [
+                        {"id": 1, "key": "9.sales.orders.id"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        m.register_uri('PATCH', '/integration/v2/column/?ds_id=1', json=async_response)
+        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        async_result = MOCK_RDBMS.patch_columns(1, mock_column_list)
+
+        input_transformed = [JobDetailsRdbms(**job_response)]
+        self.assertEqual(input_transformed, async_result)
+
+    @requests_mock.Mocker()
+    def test_failed_patch_columns(self, m):
+        mock_column = ColumnPatchItem(id=1)
+        mock_column_list = [mock_column]
+
+        failed_response = {
+            "detail": "Incorrect input data. Please fix the errors and post the data.",
+            "errors": [
+                {
+                    "id": [
+                        "400068: id is a required input"
+                    ]
+                }
+            ],
+            "code": "400010",
+        }
+
+        m.register_uri('PATCH', '/integration/v2/column/?ds_id=1',
+                      json=failed_response, status_code=400)
+
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            MOCK_RDBMS.patch_columns(ds_id=1, columns=mock_column_list)
+
+        self.assertEqual(context.exception.response.status_code, 400)
+
 
 if __name__ == '__main__':
     unittest.main()
