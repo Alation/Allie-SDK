@@ -139,7 +139,7 @@ class AlationRDBMS(AsyncHandler):
             # Re-raise the error
             raise
 
-    def patch_columns(self, ds_id: int, columns: list) -> list[JobDetailsRdbms]:
+    def patch_columns(self, ds_id: int, columns: list[ColumnPatchItem]) -> list[JobDetailsRdbms]:
         """Patch (Update) Alation Column Objects.
 
         Args:

@@ -308,6 +308,23 @@ Args:
 Returns:
 * list of job details
 
+### patch_columns
+
+```python
+patch_columns(ds_id: int, columns: list[ColumnPatchItem]) -> list[allie_sdk.models.job_model.JobDetailsRdbms]
+```
+
+Patch (Update) Alation Column Objects.
+
+Args:
+   - `ds_id` (int): ID of the Alation Columns' Parent Datasource.
+   - `columns` (list): Alation Columns to be updated.
+
+Returns:
+   - `list[JobDetailsRdbms]`: result of the job
+
+Raises:
+   - `requests.HTTPError`: If the API returns a non-success status code.
 
 ## Examples
 

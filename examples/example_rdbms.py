@@ -21,7 +21,7 @@ from allie_sdk import JobDetailsRdbmsResult
 # ================================
 
 # adjust to your requirements
-DATA_SOURCE_ID = 3
+DATA_SOURCE_ID = 1
 
 # ================================
 # Define Logging Config
