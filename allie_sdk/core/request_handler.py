@@ -360,20 +360,16 @@ class RequestHandler(object):
             This is a helper method that doesn't raise exceptions directly.
             The calling method is responsible for checking status codes and raising exceptions.
         """
-        if params:
-            if body is not None:
-                body = json.dumps(body, default=str)
+        if body is not None:
+            body = json.dumps(body, default=str)
 
-            if params and body:
-                api_response = self.s.get(
-                    url, params=params, headers=self.headers, data=body
-                )
-            elif params:
-                api_response = self.s.get(url, params=params, headers=self.headers)
-            elif body:
-                api_response = self.s.get(url, headers=self.headers, data=body)
-            else:
-                api_response = self.s.get(url, headers=self.headers)
+            # Always call GET; requests can handle None for params/body
+        api_response = self.s.get(
+            url,
+            params=params,
+            headers=self.headers,
+            data=body
+        )
 
         try:
             response_data = api_response.json()
