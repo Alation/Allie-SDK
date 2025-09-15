@@ -16,11 +16,20 @@ class AlationDataflow(AsyncHandler):
         """Creates an instance of the Dataflow object."""
         super().__init__(session=session, host=host, access_token=access_token)
 
-    def get_dataflows(self, query_params: DataflowParams = None) -> DataflowPayload:
+    def get_dataflows(
+        self, object_ids: list[int | str] = None, query_params: DataflowParams = None
+    ) -> DataflowPayload:
         """Retrieve dataflow objects and their paths."""
         validate_query_params(query_params, DataflowParams)
+        if object_ids:
+            validate_rest_payload(object_ids, (int, str))
         params = query_params.generate_params_dict() if query_params else None
-        data = self.get('/integration/v2/dataflow/', query_params=params, pagination=False)
+        data = self.get(
+            '/integration/v2/dataflow/',
+            query_params=params,
+            pagination=False,
+            body=object_ids,
+        )
         if data:
             return DataflowPayload.from_api_response(data)
         return DataflowPayload()
@@ -43,14 +52,23 @@ class AlationDataflow(AsyncHandler):
         payload = [item.generate_api_patch_payload() for item in dataflows]
         async_results = self.async_patch('/integration/v2/dataflow/', payload=payload)
         if async_results:
+            # return [JobDetails.from_api_response(async_results['result']
             return [JobDetails.from_api_response(item) for item in async_results]
         return []
 
-    def delete_dataflows(self, object_ids: list[int | str]) -> list[JobDetails]:
+    def delete_dataflows(
+        self, object_ids: list[int | str], query_params: DataflowParams = None
+    ) -> list[JobDetails]:
         """Delete multiple dataflow objects."""
+        validate_query_params(query_params, DataflowParams)
         if not object_ids:
             return []
-        async_results = self.async_delete('/integration/v2/dataflow/', payload=object_ids)
+        validate_rest_payload(object_ids, (int, str))
+        params = query_params.generate_params_dict() if query_params else None
+        async_results = self.async_delete(
+            '/integration/v2/dataflow/', payload=object_ids, query_params=params
+        )
         if async_results:
             return [JobDetails.from_api_response(item) for item in async_results]
         return []
+

@@ -15,6 +15,7 @@ from .methods import (
     , AlationConnector
     , AlationCustomField
     , AlationCustomTemplate
+    , AlationDataflow
     , AlationDataQuality
     , AlationDatasource
     , AlationDocument
@@ -105,6 +106,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.custom_template = AlationCustomTemplate(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.dataflow = AlationDataflow(
             access_token=self.access_token, session=session, host=host
         )
         self.data_quality = AlationDataQuality(

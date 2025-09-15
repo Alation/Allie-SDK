@@ -75,10 +75,14 @@ class DataflowPayload(BaseClass):
 
     def __post_init__(self):
         if isinstance(self.dataflow_objects, list):
+            # init routine to support constructors with passed in object
             self.dataflow_objects = [
-                Dataflow.from_api_response(value) if isinstance(value, dict) else value
+                Dataflow.from_api_response(value) if isinstance(value, dict)
+                else value if isinstance(value, Dataflow)
+                else (_ for _ in ()).throw(TypeError(f"Invalid type: {type(value)}"))
                 for value in self.dataflow_objects
             ]
+
         if isinstance(self.paths, list):
             paths_out = []
             for path in self.paths:
@@ -87,7 +91,6 @@ class DataflowPayload(BaseClass):
                     for segment in path:
                         if isinstance(segment, list):
                             segment_out = []
-                            validate_rest_payload(segment, (DataflowPathObject,))
                             for obj in segment:
                                 if isinstance(obj, dict):
                                     segment_out.append(DataflowPathObject.from_api_response(obj))
@@ -120,5 +123,4 @@ class DataflowPayload(BaseClass):
 class DataflowParams(BaseParams):
     """Query parameters for Dataflow GET requests."""
     keyField: str = field(default=None)
-    limit: int = field(default=None)
-    skip: int = field(default=None)
+

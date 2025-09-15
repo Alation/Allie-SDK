@@ -40,12 +40,12 @@ class TestDataflow(unittest.TestCase):
 
         requests_mock.register_uri(
             method='GET',
-            url='/integration/v2/dataflow/',
+            url='/integration/v2/dataflow/?keyField=id',
             json=api_response,
             status_code=200
         )
 
-        result = self.mock_df.get_dataflows()
+        result = self.mock_df.get_dataflows([1], DataflowParams(keyField='id'))
         self.assertEqual(result, expected)
 
     @requests_mock.Mocker()
@@ -95,7 +95,7 @@ class TestDataflow(unittest.TestCase):
             json=job_response,
             status_code=200
         )
-        items = [DataflowPatchItem(id=1, title="New")] 
+        items = [DataflowPatchItem(id=1, title="New")]
         result = self.mock_df.update_dataflows(items)
         expected = [JobDetails.from_api_response(job_response)]
         self.assertEqual(result, expected)
@@ -110,7 +110,7 @@ class TestDataflow(unittest.TestCase):
         }
         requests_mock.register_uri(
             method='DELETE',
-            url='/integration/v2/dataflow/',
+            url='/integration/v2/dataflow/?keyField=id',
             json=delete_response,
             status_code=202
         )
@@ -120,6 +120,6 @@ class TestDataflow(unittest.TestCase):
             json=job_response,
             status_code=200
         )
-        result = self.mock_df.delete_dataflows([1])
+        result = self.mock_df.delete_dataflows([1], DataflowParams(keyField='id'))
         expected = [JobDetails.from_api_response(job_response)]
         self.assertEqual(result, expected)
