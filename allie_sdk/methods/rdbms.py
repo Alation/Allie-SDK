@@ -8,7 +8,7 @@ from ..core.custom_exceptions import validate_query_params, validate_rest_payloa
 from ..models.rdbms_model import (
     Schema, SchemaItem, SchemaParams,
     Table, TableItem, TableParams,
-    Column, ColumnItem, ColumnPatchItem, ColumnParams
+    Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams
 )
 from ..models.job_model import *
 

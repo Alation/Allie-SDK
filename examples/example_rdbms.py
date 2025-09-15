@@ -118,35 +118,6 @@ else:
         logging.error("Unexpected result ... I don't know how to handle this ...")
         sys.exit(1)
 
-# ================================
-# UPDATE COLUMN WITH PATCH
-# ================================
-
-patch_column_response = alation.rdbms.patch_columns(
-    ds_id = DATA_SOURCE_ID,
-    columns = [
-        allie.ColumnPatchItem(
-            id = created_column_id,
-            title = "ID",
-            description = "Updated description for the id column ..."
-        )
-    ]
-)
-
-if patch_column_response is None:
-    logging.error("Tried to submit patch request ... but somehow heard nothing back!")
-    sys.exit(1)
-else:
-    if isinstance(patch_column_response, list):
-        for r in patch_column_response:
-            if r.status == "successful":
-                logging.info(r.result[0].response)
-            else:
-                logging.error(f"Finished with status {r.status}: {r.result}")
-    else:
-        logging.error("Unexpected result ... I don't know how to handle this ...")
-        sys.exit(1)
-
 
 # ================================
 # CREATE TABLE WITH TECHNICAL AND LOGICAL METADATA
@@ -198,6 +169,12 @@ post_column_response = alation.rdbms.post_columns(
             , column_type = "INTEGER"
             , title = "ID"
             , description = "This is the id column of the refunds table ..."
+            , index = allie.ColumnIndex(
+                isPrimaryKey = True
+                , isForeignKey = False
+                , referencedColumnId = None
+                , isOtherIndex = False
+            )
         )
     ]
 )
@@ -231,9 +208,15 @@ patch_column_response = alation.rdbms.patch_columns(
     ds_id = DATA_SOURCE_ID,
     columns = [
         allie.ColumnPatchItem(
-            id = created_column_id,
-            title = "ID",
-            description = "Updated description for the id column ..."
+            id = created_column_id
+            , title = "ID"
+            , description = "Updated description for the id column ..."
+            , index=allie.ColumnIndex(
+                isPrimaryKey=True
+                , isForeignKey=False
+                , referencedColumnId=None
+                , isOtherIndex=False
+            )
         )
     ]
 )
