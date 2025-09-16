@@ -12,7 +12,7 @@ parent: SDK Reference
 ## Models
 
 ### Dataflow
-Python object used to define dataflow object to be created `create_or_replace_dataflows`.
+Python object used to define a dataflow object to be created `create_or_replace_dataflows`.
 
 Attributes:
 
@@ -26,7 +26,7 @@ Attributes:
 |
 
 ### DataflowPathObject
-Python object used to define a lineage path
+Python object used to define a lineage path.
 
 Attributes:
 
@@ -37,7 +37,7 @@ Attributes:
 
 
 ### DataflowPayload
-Python object used to define dataflow object and lineage patch to be created `create_or_replace_dataflows`.
+Python object used to define dataflow objects and lineage paths to be created `create_or_replace_dataflows`.
 
 Attributes:
 
