@@ -28,13 +28,21 @@ class AsyncHandler(RequestHandler):
         self.host = host
         self.session = session
 
-    def async_delete(self, url: str, payload: list, batch_size: int = None) -> list:
+    def async_delete(
+            self,
+            url: str,
+            payload: list,
+            batch_size: int = None,
+            query_params: dict = None,
+    ) -> list:
         """Delete Alation Objects via an Async Job Process.
 
         Args:
             url (str): Delete API Call URL.
             payload (list): REST API Delete Body.
             batch_size (int): REST API Delete Body Size Limit.
+            query_params (dict): DELETE API Call Query Parameters.
+
 
         Returns:
             list: job execution results
@@ -48,7 +56,9 @@ class AsyncHandler(RequestHandler):
         for batch in batches:
             try:
                 LOGGER.debug(batch)
-                async_response = self.delete(url, body=batch)
+                async_response = self.delete(
+                    url, body=batch, query_params=query_params, is_async=True
+                )
                 if async_response:
                     # check if the response includes a job_id and only then fetch job details
                     if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
