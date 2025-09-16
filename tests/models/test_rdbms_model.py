@@ -338,6 +338,54 @@ class TestRDBMSModels(unittest.TestCase):
 
         self.assertRaises(InvalidPostBody, lambda: mock_column.generate_api_post_payload())
 
+    def test_column_patch_item_payload(self):
+        mock_column = ColumnPatchItem(
+            id=1,
+            title="Customer Name",
+            description="<p>This is the customer name</p>",
+            custom_fields=[
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value="Testing")),
+                CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
+            ],
+            column_comment="This is a comment",
+            nullable=False,
+            position=7,
+            index=ColumnIndex(
+                isPrimaryKey=False,
+                isForeignKey=True,
+                isOtherIndex=False,
+                referencedColumnId="1.Test.Table"
+            )
+        )
+        expected_payload = {
+            "id": 1,
+            "title": "Customer Name",
+            "description": "<p>This is the customer name</p>",
+            "column_comment": "This is a comment",
+            "nullable": False,
+            "position": 7,
+            "index": {
+                "isPrimaryKey": False
+                , "isForeignKey": True
+                , "isOtherIndex": False
+                , "referencedColumnId": "1.Test.Table"
+            },
+            "custom_fields": [
+                {'field_id': 1, 'value': 'Testing'},
+                {'field_id': 2, 'value': [{'otype': 'table', 'oid': 5}]}
+            ]
+        }
+
+        self.assertEqual(mock_column.generate_api_patch_payload(), expected_payload)
+
+    def test_column_patch_item_exception_missing_id(self):
+        mock_column = ColumnPatchItem(
+            title="Customer Name",
+            description="<p>This is the customer name</p>"
+        )
+
+        self.assertRaises(InvalidPostBody, lambda: mock_column.generate_api_patch_payload())
+
     def test_base_rdbms_custom_field_parsing(self):
 
         mock_base = BaseRDBMS(

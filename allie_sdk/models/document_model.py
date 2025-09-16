@@ -44,7 +44,7 @@ class Document(DocumentBase):
 @dataclass(kw_only = True)
 class DocumentPostItem(DocumentBase):
 
-    # OPEN: MOVE OUTSIDE, duplicate
+    # TODO: MOVE OUTSIDE, duplicate
     def _create_fields_payload(self) -> list:
         item: CustomFieldValueItem
         validate_rest_payload(self.custom_fields, (CustomFieldValueItem,))
@@ -87,7 +87,7 @@ class DocumentPostItem(DocumentBase):
 class DocumentPutItem(DocumentBase):
     id:int # mandatory
 
-    # OPEN: MOVE OUTSIDE, duplicate
+    # TODO: MOVE OUTSIDE, duplicate
     def _create_fields_payload(self) -> list:
         item: CustomFieldValueItem
         validate_rest_payload(self.custom_fields, (CustomFieldValueItem,))
