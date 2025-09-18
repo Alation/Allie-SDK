@@ -91,6 +91,7 @@ from .models import (
     SchemaParams,
     Table,
     TableItem,
+    TablePatchItem,
     TableParams,
     TrustCheckFlag,
     TrustCheckFlagItem,

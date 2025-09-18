@@ -157,6 +157,36 @@ else:
         sys.exit(1)
 
 # ================================
+# UPDATE TABLE WITH PATCH
+# ================================
+
+patch_table_response = alation.rdbms.patch_tables(
+    ds_id = DATA_SOURCE_ID,
+    tables = [
+        allie.TablePatchItem(
+            id = created_table_id,
+            title = "Refunds",
+            description = "Updated description for the refunds table ...",
+            table_comment = "Updated comment"
+        )
+    ]
+)
+
+if patch_table_response is None:
+    logging.error("Tried to submit table patch request ... but somehow heard nothing back!")
+    sys.exit(1)
+else:
+    if isinstance(patch_table_response, list):
+        for r in patch_table_response:
+            if r.status == "successful":
+                logging.info(r.result[0].response)
+            else:
+                logging.error(f"Finished with status {r.status}: {r.result}")
+    else:
+        logging.error("Unexpected result ... I don't know how to handle this ...")
+        sys.exit(1)
+
+# ================================
 # CREATE COLUMN WITH TECHNICAL AND LOGICAL METADATA
 # ================================
 
