@@ -132,17 +132,6 @@ if created_schema_id:
                 id = created_schema_id
                 , title = "Orders - Updated"
                 , description = "This is the updated orders schema ..."
-                , custom_fields = [
-                    allie.CustomFieldValueItem(
-                        field_id = steward_field_id
-                        , value = [
-                            allie.CustomFieldDictValueItem(
-                                otype = "user"
-                                , oid = 1
-                            )
-                        ]
-                    )
-                ]
             )
         ]
     )
