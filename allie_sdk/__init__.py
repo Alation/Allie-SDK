@@ -88,6 +88,7 @@ from .models import (
     RefreshToken,
     Schema,
     SchemaItem,
+    SchemaPatchItem,
     SchemaParams,
     Table,
     TableItem,
