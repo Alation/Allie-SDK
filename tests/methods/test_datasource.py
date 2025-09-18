@@ -272,5 +272,132 @@ class TestDatasource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         with self.assertRaises(HTTPError) as context:
             self.mock_user.get_native_datasources()
-            
+
         self.assertEqual(context.exception.response.status_code, 403)
+
+    @requests_mock.Mocker()
+    def test_create_ocf_datasource(self, requests_mock):
+        datasource_post = OCFDatasourcePost(
+            connector_id=101,
+            title="New Datasource",
+            uri="mysql://<hostname>:<port>/<db_name>",
+            private=False,
+        )
+
+        datasource_api_response = {
+            "uri": "mysql://<hostname>:<port>/<db_name>",
+            "connector_id": 101,
+            "db_username": "alation",
+            "title": "New Datasource",
+            "description": "Sample mysql datasource setup",
+            "private": False,
+            "is_hidden": False,
+            "id": 1,
+        }
+
+        requests_mock.register_uri(
+            method='POST',
+            url='/integration/v2/datasource/',
+            json=datasource_api_response,
+            status_code=201
+        )
+
+        datasource = self.mock_user.create_ocf_datasource(datasource_post)
+
+        self.assertEqual(
+            OCFDatasource.from_api_response(datasource_api_response),
+            datasource,
+        )
+
+    def test_create_ocf_datasource_missing_payload(self):
+        with self.assertRaises(InvalidPostBody):
+            self.mock_user.create_ocf_datasource(None)
+
+    @requests_mock.Mocker()
+    def test_get_ocf_datasource_by_id(self, requests_mock):
+        datasource_api_response = {
+            "uri": "mysql://<hostname>:<port>/<db_name>",
+            "connector_id": 101,
+            "db_username": "alation",
+            "title": "Existing Datasource",
+            "description": "Sample mysql datasource setup",
+            "private": False,
+            "is_hidden": False,
+            "id": 1,
+        }
+
+        requests_mock.register_uri(
+            method='GET',
+            url='/integration/v2/datasource/1/',
+            json=datasource_api_response,
+            status_code=200
+        )
+
+        params = OCFDatasourceGetParams(exclude_suspended=True)
+
+        datasource = self.mock_user.get_ocf_datasource_by_id(1, query_params=params)
+
+        self.assertEqual(
+            OCFDatasource.from_api_response(datasource_api_response),
+            datasource,
+        )
+
+    def test_get_ocf_datasource_by_id_missing_id(self):
+        with self.assertRaises(InvalidPostBody):
+            self.mock_user.get_ocf_datasource_by_id(None)
+
+    @requests_mock.Mocker()
+    def test_update_ocf_datasource(self, requests_mock):
+        datasource_update = OCFDatasourceUpdatePayload(description="Updated description")
+
+        datasource_api_response = {
+            "uri": "mysql://<hostname>:<port>/<db_name>",
+            "connector_id": 101,
+            "db_username": "alation",
+            "title": "Existing Datasource",
+            "description": "Updated description",
+            "private": False,
+            "is_hidden": False,
+            "id": 1,
+        }
+
+        requests_mock.register_uri(
+            method='PUT',
+            url='/integration/v2/datasource/1/',
+            json=datasource_api_response,
+            status_code=200
+        )
+
+        datasource = self.mock_user.update_ocf_datasource(1, datasource_update)
+
+        self.assertEqual(
+            OCFDatasource.from_api_response(datasource_api_response),
+            datasource,
+        )
+
+    def test_update_ocf_datasource_missing_data(self):
+        with self.assertRaises(InvalidPostBody):
+            self.mock_user.update_ocf_datasource(1, None)
+
+    def test_update_ocf_datasource_missing_id(self):
+        datasource_update = OCFDatasourceUpdatePayload(description="Updated description")
+
+        with self.assertRaises(InvalidPostBody):
+            self.mock_user.update_ocf_datasource(None, datasource_update)
+
+    @requests_mock.Mocker()
+    def test_delete_ocf_datasource(self, requests_mock):
+        requests_mock.register_uri(
+            method='DELETE',
+            url='/integration/v2/datasource/1/',
+            json={},
+            status_code=200
+        )
+
+        response = self.mock_user.delete_ocf_datasource(1)
+
+        self.assertEqual(EmptyResponse(), response)
+
+    def test_delete_ocf_datasource_missing_id(self):
+        with self.assertRaises(InvalidPostBody):
+            self.mock_user.delete_ocf_datasource(None)

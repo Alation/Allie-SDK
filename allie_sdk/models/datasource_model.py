@@ -1,9 +1,11 @@
 
 """Alation REST API Datasource Data Models."""
 
+import dataclasses
 from dataclasses import dataclass, field
+
 from ..core.data_structures import BaseClass, BaseParams
-from ..core.custom_exceptions import validate_rest_payload, InvalidPostBody
+from ..core.custom_exceptions import InvalidPostBody
 
 # DATA MODELS FOR OCF DATA SOURCES
 
@@ -18,7 +20,7 @@ class OCFDatasource(BaseClass):
     is_hidden:bool = field(default=None)
     id:int = field(default=None)
     supports_explain:bool = field(default=None)
-    data_upload_disabled_message:bool = field(default=None)
+    data_upload_disabled_message:str = field(default=None)
     is_gone:bool = field(default=None)
     supports_qli_diagnostics:bool = field(default=None)
     latest_extraction_time:str = field(default=None)
@@ -65,6 +67,132 @@ class OCFDatasource(BaseClass):
 @dataclass(kw_only=True)
 class OCFDatasourceParams(BaseParams):
     include_hidden:bool = field(default=False)
+    exclude_suspended:bool = field(default=False)
+
+
+@dataclass(kw_only=True)
+class OCFDatasourceGetParams(BaseParams):
+    """Query parameters available when retrieving a datasource by id."""
+
+    exclude_suspended:bool = field(default=False)
+
+
+@dataclass(kw_only=True)
+class _OCFDatasourcePayload(BaseClass):
+    """Internal base payload shared across POST and PUT operations."""
+
+    uri:str = field(default=None)
+    connector_id:int = field(default=None)
+    db_username:str = field(default=None)
+    title:str = field(default=None)
+    description:str = field(default=None)
+    private:bool = field(default=None)
+    is_hidden:bool = field(default=None)
+    supports_explain:bool = field(default=None)
+    data_upload_disabled_message:str = field(default=None)
+    is_gone:bool = field(default=None)
+    supports_qli_diagnostics:bool = field(default=None)
+    latest_extraction_time:str = field(default=None)
+    negative_filter_words:list[str] = field(default=None)
+    can_data_upload:bool = field(default=None)
+    qualified_name:str = field(default=None)
+    all_schemas:str = field(default=None)
+    has_previewable_qli:bool = field(default=None)
+    supports_qli_daterange:bool = field(default=None)
+    latest_extraction_successful:bool = field(default=None)
+    owner_ids:list[int] = field(default=None)
+    favorited_by_list:bool = field(default=None)
+    supports_compose:bool = field(default=None)
+    enable_designated_credential:bool = field(default=None)
+    deleted:bool = field(default=None)
+    limit_schemas:str = field(default=None)
+    obfuscate_literals:list[str] = field(default=None)
+    remove_filtered_schemas:bool = field(default=None)
+    profiling_tip:str = field(default=None)
+    supports_profiling:str = field(default=None)
+    icon:str = field(default=None)
+    url:str = field(default=None)
+    otype:str = field(default=None)
+    exclude_schemas:str = field(default=None)
+    exclude_additional_columns_in_qli:bool = field(default=None)
+    can_toggle_ds_privacy:bool = field(default=None)
+    supports_md_diagnostics:bool = field(default=None)
+    supports_ocf_query_service_api:bool = field(default=None)
+    uses_ocf_agent:bool = field(default=None)
+    nosql_mde_sample_size:int = field(default=None)
+    disable_auto_extraction:bool = field(default=None)
+    unresolved_mention_fingerprint_method:bool = field(default=None)
+    enable_default_schema_extraction:bool = field(default=None)
+    enabled_in_compose:bool = field(default=None)
+    builtin_datasource:str = field(default=None)
+    cron_extraction:str = field(default=None)
+    supports_default_schema_extraction:bool = field(default=None)
+
+    _READ_ONLY_FIELDS = {
+        'id',
+        'latest_extraction_time',
+        'qualified_name',
+        'url',
+        'otype',
+        'builtin_datasource',
+        'has_previewable_qli',
+        'supports_qli_daterange',
+        'latest_extraction_successful',
+        'favorited_by_list',
+        'can_data_upload',
+        'supports_explain',
+        'data_upload_disabled_message',
+        'is_gone',
+        'supports_qli_diagnostics',
+        'supports_md_diagnostics',
+        'supports_ocf_query_service_api',
+        'uses_ocf_agent',
+        'supports_profiling',
+    }
+
+    def _generate_payload(self) -> dict:
+        payload = dataclasses.asdict(
+            self,
+            dict_factory=lambda values: {
+                key: value for key, value in values
+                if value is not None and key not in self._READ_ONLY_FIELDS
+            }
+        )
+        return payload
+
+
+@dataclass(kw_only=True)
+class OCFDatasourcePost(_OCFDatasourcePayload):
+    """Payload used to create a new OCF datasource."""
+
+    def generate_api_post_payload(self) -> dict:
+        if self.connector_id is None:
+            raise InvalidPostBody("'connector_id' is required for the Datasource POST payload.")
+        if self.title is None:
+            raise InvalidPostBody("'title' is required for the Datasource POST payload.")
+
+        payload = self._generate_payload()
+        return payload
+
+
+@dataclass(kw_only=True)
+class OCFDatasourceUpdatePayload(_OCFDatasourcePayload):
+    """Payload used when updating an existing OCF datasource."""
+
+    def generate_api_put_payload(self) -> dict:
+        payload = self._generate_payload()
+        if not payload:
+            raise InvalidPostBody(
+                "At least one mutable field must be provided for the Datasource PUT payload."
+            )
+        return payload
+
+
+@dataclass(kw_only=True)
+class EmptyResponse(BaseClass):
+    """Generic empty response model used by DELETE operations."""
+
+    pass
 
 
 # DATA MODELS FOR OLD NATIVE CONNECTORS AND RELATIONAL VIRTUAL DATA SOURCES

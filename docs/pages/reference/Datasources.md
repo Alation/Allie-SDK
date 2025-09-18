@@ -74,9 +74,73 @@ Optional item used to filter the response of the returned data from the function
 
 Attributes:
 
-| Name  | Type | Description                                                                                                                |
-|-------|------|----------------------------------------------------------------------------------------------------------------------------|
-| include_hidden   | bool | Specifies if hidden datasources should be included in retrieved list. Hidden data sources are not visible in the UI. These are the data sources created via the API with the is_hidden property set to True. There is no UI for the Settings page of such sources and they can only be accessed through the API.  |
+| Name             | Type | Description |
+|------------------|------|-------------|
+| include_hidden   | bool | Specifies if hidden datasources should be included in retrieved list. Hidden data sources are not visible in the UI. These are the data sources created via the API with the `is_hidden` property set to `True`. |
+| exclude_suspended | bool | When enabled, suspended datasources are excluded from the response payload. |
+
+### OCFDatasourcePost
+
+Dataclass that represents the payload accepted by `create_ocf_datasource`.
+
+Attributes:
+
+| Name                             | Type      | Description |
+|----------------------------------|-----------|-------------|
+| connector_id                     | int       | The OCF connector identifier to associate with the new datasource. |
+| title                            | str       | Human readable name for the datasource. |
+| uri                              | str       | JDBC URI that the datasource should use during extraction. |
+| db_username                      | str       | Service account used to connect to the database. |
+| description                      | str       | Optional description shown in the catalog. |
+| private                          | bool      | Marks the datasource as private in the catalog UI. |
+| is_hidden                        | bool      | Hides the datasource from the UI while keeping it accessible through the API. |
+| enable_default_schema_extraction | bool      | Enables metadata extraction of the default schema. |
+| enable_designated_credential     | bool      | Toggles the use of designated credentials. |
+| limit_schemas                    | str       | Comma separated list of schemas to include during extraction. |
+| exclude_schemas                  | str       | Comma separated list of schemas to exclude during extraction. |
+| negative_filter_words            | list[str] | List of filter keywords that should be applied during extraction. |
+| obfuscate_literals               | list[str] | Literal strings to obfuscate in query logs. |
+| owner_ids                        | list[int] | Identifiers of the datasource owners. |
+| cron_extraction                  | str       | Cron expression controlling extraction scheduling. |
+| disable_auto_extraction          | bool      | Disables scheduled metadata extraction when set to `True`. |
+
+Fields that are read-only in the REST API are automatically removed from the generated payload.
+
+### OCFDatasourceUpdatePayload
+
+Dataclass used by `update_ocf_datasource` to represent mutable datasource fields. Only populated attributes are included in the API request.
+
+Attributes:
+
+| Name                             | Type      | Description |
+|----------------------------------|-----------|-------------|
+| title                            | str       | Updated datasource title. |
+| description                      | str       | Updated datasource description. |
+| private                          | bool      | Updates the privacy setting of the datasource. |
+| is_hidden                        | bool      | Hides or reveals the datasource in the UI. |
+| uri                              | str       | Updated JDBC URI. |
+| db_username                      | str       | Updated service account username. |
+| enable_default_schema_extraction | bool      | Enables or disables default schema extraction. |
+| enable_designated_credential     | bool      | Enables or disables designated credentials. |
+| limit_schemas                    | str       | Updates the list of schemas to include. |
+| exclude_schemas                  | str       | Updates the list of schemas to exclude. |
+| negative_filter_words            | list[str] | Updates the configured extraction filters. |
+| obfuscate_literals               | list[str] | Updates the literals that should be obfuscated. |
+| owner_ids                        | list[int] | Updates datasource owner assignments. |
+| cron_extraction                  | str       | Updates the extraction schedule. |
+| disable_auto_extraction          | bool      | Enables or disables automatic extraction. |
+
+### OCFDatasourceGetParams
+
+Optional query parameters used by `get_ocf_datasource_by_id`.
+
+| Name              | Type | Description |
+|-------------------|------|-------------|
+| exclude_suspended | bool | When enabled, suspended datasources are excluded from the response payload. |
+
+### EmptyResponse
+
+Represents the empty response body returned by `delete_ocf_datasource` when the datasource is removed successfully.
 
 ### NativeDatasource
 
@@ -182,6 +246,60 @@ Args:
 * query_params (`OCFDatasourceParams`): REST API OCF Datasource Query Parameters.
 Returns:
 * list: Alation OCF Data Sources
+
+### create_ocf_datasource
+
+```
+create_ocf_datasource(self, datasource: OCFDatasourcePost) -> OCFDatasource:
+```
+
+Create a new OCF datasource.
+
+Args:
+* datasource (`OCFDatasourcePost`): The datasource configuration to submit.
+Returns:
+* `OCFDatasource`: The created datasource returned by the API.
+
+### get_ocf_datasource_by_id
+
+```
+get_ocf_datasource_by_id(self, datasource_id: int, query_params: OCFDatasourceGetParams = None) -> OCFDatasource:
+```
+
+Retrieve the details for a single OCF datasource.
+
+Args:
+* datasource_id (int): Identifier of the datasource to retrieve.
+* query_params (`OCFDatasourceGetParams`): Optional query parameter container.
+Returns:
+* `OCFDatasource`: The requested datasource.
+
+### update_ocf_datasource
+
+```
+update_ocf_datasource(self, datasource_id: int, datasource: OCFDatasourceUpdatePayload) -> OCFDatasource:
+```
+
+Update an existing OCF datasource in place.
+
+Args:
+* datasource_id (int): Identifier of the datasource to update.
+* datasource (`OCFDatasourceUpdatePayload`): Fields to update.
+Returns:
+* `OCFDatasource`: The updated datasource returned by the API.
+
+### delete_ocf_datasource
+
+```
+delete_ocf_datasource(self, datasource_id: int) -> EmptyResponse:
+```
+
+Delete an OCF datasource by identifier.
+
+Args:
+* datasource_id (int): Identifier of the datasource to delete.
+Returns:
+* `EmptyResponse`: Empty response model confirming the deletion request.
 
 ### get_native_datasources
 
