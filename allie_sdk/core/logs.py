@@ -6,6 +6,7 @@ import time
 
 
 def clean_old_logs(days: int = 7) -> None:
+    """Remove log files older than the specified number of days."""
     for log_file in os.listdir("logs"):
         log = os.path.join("./logs", log_file)
         if os.stat(log).st_mtime < time.time() - days * 86400:
@@ -50,7 +51,12 @@ class LoggingConfigs(object):
 
     If unset or empty, the default handler console_for_allie is added.
 
-    File handlers are added only if the logs directory exists.
+    If file handlers are listed, the logs directory is created.
+
+    The possible logger handlers are:
+        - console_for_allie
+        - file_for_allie
+        - api_json
     """
 
     @staticmethod
