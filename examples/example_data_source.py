@@ -1,5 +1,6 @@
 """
-Example of listing OCF and native Alation data sources.
+Example of listing native Alation data sources.
+Example of creating, listing, updating and deleting OCF Alation data sources.
 
 Prerequisites:
 
@@ -127,7 +128,7 @@ if datasource_get_response:
 # Update an OCF data source in Alation
 # ================================
 
-datasource_update_payload = allie.OCFDatasourcePatchItem(
+datasource_update_payload = allie.OCFDatasourcePutItem(
     description="Updated description"
 )
 

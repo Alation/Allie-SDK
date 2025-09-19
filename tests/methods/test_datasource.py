@@ -344,7 +344,7 @@ class TestDatasource(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_update_ocf_datasource(self, requests_mock):
-        datasource_update = OCFDatasourcePatchItem(description="Updated description")
+        datasource_update = OCFDatasourcePutItem(description="Updated description")
 
         datasource_api_response = {
             "uri": "mysql://<hostname>:<port>/<db_name>",

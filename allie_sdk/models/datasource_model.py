@@ -108,9 +108,10 @@ class OCFDatasourcePostItem(_OCFDatasourceBase):
 
 
 @dataclass(kw_only=True)
-class OCFDatasourcePatchItem(_OCFDatasourceBase):
+class OCFDatasourcePutItem(_OCFDatasourceBase):
     """Payload used when updating an existing OCF datasource."""
 
+    db_password: str = field(default=None)
     compose_default_uri: str = field(default=None)
 
     def generate_patch_payload(self) -> dict:

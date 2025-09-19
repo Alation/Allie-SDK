@@ -9,7 +9,7 @@ from ..models.datasource_model import (
     OCFDatasourceGetParams,
     OCFDatasourceParams,
     OCFDatasourcePostItem,
-    OCFDatasourcePatchItem,
+    OCFDatasourcePutItem,
     NativeDatasource,
     NativeDatasourceParams,
 )
@@ -113,7 +113,7 @@ class AlationDatasource(RequestHandler):
     def update_ocf_datasource(
         self,
         datasource_id: int,
-        datasource: OCFDatasourcePatchItem,
+        datasource: OCFDatasourcePutItem,
     ) -> OCFDatasource:
         """Update an existing OCF datasource."""
 
@@ -123,7 +123,7 @@ class AlationDatasource(RequestHandler):
         if not datasource:
             raise InvalidPostBody("Datasource payload is required for PUT requests.")
 
-        validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourcePatchItem,))
+        validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourcePutItem,))
         payload = datasource.generate_patch_payload()
 
         datasource_response = self.put(
