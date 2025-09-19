@@ -4,6 +4,14 @@ import logging
 import os
 import time
 
+log_level_name = os.getenv("ALATION_SDK_LOG_LEVEL", "INFO")
+try:
+    log_level = getattr(logging, log_level_name.upper())
+    if not isinstance(log_level, int):
+        log_level = logging.INFO
+except AttributeError:
+    log_level = logging.INFO
+
 
 def clean_old_logs(days: int = 7) -> None:
     """Remove log files older than the specified number of days."""
@@ -26,19 +34,19 @@ core_handlers = {
     "file_for_allie": {
         "class": "logging.FileHandler",
         "formatter": "standard",
-        "level": logging.DEBUG,
+        "level": log_level,
         "filename": f"logs/allie-sdk-{datetime.date.today()}.log",
     },
     "console_for_allie": {
         "class": "logging.StreamHandler",
         "formatter": "console",
-        "level": logging.INFO,
+        "level": log_level,
         "stream": "ext://sys.stdout",
     },
     "api_json": {
         "class": "logging.FileHandler",
         "formatter": "json",
-        "level": logging.DEBUG,
+        "level": log_level,
         "filename": f"logs/alation-rest-{datetime.date.today()}.json",
     },
 }
@@ -47,7 +55,7 @@ class LoggingConfigs(object):
     """
     Python Logging Configuration Dictionary.
 
-    Reads ALATION_SDK_LOGGING_HANDLERS env variable for the list of logger handlers.
+    Reads ALATION_SDK_LOG_HANDLERS env variable for the list of logger handlers.
 
     If unset or empty, the default handler console_for_allie is added.
 
@@ -62,7 +70,7 @@ class LoggingConfigs(object):
     @staticmethod
     def handlers_from_env() -> list[str]:
         """Return a list of logging handlers from the environment variable."""
-        handlers = os.getenv("ALATION_SDK_LOGGING_HANDLERS") or "console_for_allie"
+        handlers = os.getenv("ALATION_SDK_LOG_HANDLERS") or "console_for_allie"
         return handlers.strip().split(",")
 
     @staticmethod
@@ -101,7 +109,7 @@ class LoggingConfigs(object):
             loggers={
                 "allie_sdk_logger": {
                     "handlers": enabled_handlers,
-                    "level": logging.DEBUG,
+                    "level": log_level,
                 }
             },
         )
