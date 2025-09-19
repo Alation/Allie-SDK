@@ -5,15 +5,15 @@ import requests
 from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import *
 from ..models.datasource_model import (
-    EmptyResponse,
     OCFDatasource,
     OCFDatasourceGetParams,
     OCFDatasourceParams,
-    OCFDatasourcePost,
-    OCFDatasourceUpdatePayload,
+    OCFDatasourcePostItem,
+    OCFDatasourcePatchItem,
     NativeDatasource,
     NativeDatasourceParams,
 )
+from ..models.job_model import *
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
@@ -73,14 +73,14 @@ class AlationDatasource(RequestHandler):
             return datasources_checked
         return []
 
-    def create_ocf_datasource(self, datasource: OCFDatasourcePost) -> OCFDatasource:
+    def create_ocf_datasource(self, datasource: OCFDatasourcePostItem) -> OCFDatasource:
         """Create a new OCF datasource."""
 
         if not datasource:
             raise InvalidPostBody("Datasource payload is required for POST requests.")
 
-        validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourcePost,))
-        payload = datasource.generate_api_post_payload()
+        validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourcePostItem,))
+        payload = datasource.generate_post_payload()
 
         datasource_response = self.post(
             url='/integration/v2/datasource/',
@@ -113,7 +113,7 @@ class AlationDatasource(RequestHandler):
     def update_ocf_datasource(
         self,
         datasource_id: int,
-        datasource: OCFDatasourceUpdatePayload,
+        datasource: OCFDatasourcePatchItem,
     ) -> OCFDatasource:
         """Update an existing OCF datasource."""
 
@@ -123,8 +123,8 @@ class AlationDatasource(RequestHandler):
         if not datasource:
             raise InvalidPostBody("Datasource payload is required for PUT requests.")
 
-        validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourceUpdatePayload,))
-        payload = datasource.generate_api_put_payload()
+        validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourcePatchItem,))
+        payload = datasource.generate_patch_payload()
 
         datasource_response = self.put(
             url=f'/integration/v2/datasource/{datasource_id}/',
@@ -133,18 +133,18 @@ class AlationDatasource(RequestHandler):
 
         return OCFDatasource.from_api_response(datasource_response)
 
-    def delete_ocf_datasource(self, datasource_id: int) -> EmptyResponse:
+    def delete_ocf_datasource(self, datasource_id: int) -> JobDetails:
+        # The original Alation API call doesn't return anything on success
         """Delete an OCF datasource."""
 
         if datasource_id is None:
             raise InvalidPostBody("'datasource_id' must be provided to delete a datasource.")
 
         datasource_response = self.delete(
-            url=f'/integration/v2/datasource/{datasource_id}/',
-            is_async=True,
+            url = f'/integration/v2/datasource/{datasource_id}/',
+            is_async = False,
         )
 
         if isinstance(datasource_response, dict):
-            return EmptyResponse.from_api_response(datasource_response)
+            return JobDetails.from_api_response(datasource_response)
 
-        return EmptyResponse()

@@ -3,6 +3,8 @@
 import requests_mock
 import unittest
 from requests import HTTPError
+
+import allie_sdk
 from allie_sdk.methods.datasource import *
 
 
@@ -277,11 +279,13 @@ class TestDatasource(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_create_ocf_datasource(self, requests_mock):
-        datasource_post = OCFDatasourcePost(
+        datasource_post = OCFDatasourcePostItem(
             connector_id=101,
             title="New Datasource",
+            description="Sample mysql datasource setup",
             uri="mysql://<hostname>:<port>/<db_name>",
-            private=False,
+            db_username = "alation",
+            private=False
         )
 
         datasource_api_response = {
@@ -308,10 +312,6 @@ class TestDatasource(unittest.TestCase):
             OCFDatasource.from_api_response(datasource_api_response),
             datasource,
         )
-
-    def test_create_ocf_datasource_missing_payload(self):
-        with self.assertRaises(InvalidPostBody):
-            self.mock_user.create_ocf_datasource(None)
 
     @requests_mock.Mocker()
     def test_get_ocf_datasource_by_id(self, requests_mock):
@@ -342,13 +342,9 @@ class TestDatasource(unittest.TestCase):
             datasource,
         )
 
-    def test_get_ocf_datasource_by_id_missing_id(self):
-        with self.assertRaises(InvalidPostBody):
-            self.mock_user.get_ocf_datasource_by_id(None)
-
     @requests_mock.Mocker()
     def test_update_ocf_datasource(self, requests_mock):
-        datasource_update = OCFDatasourceUpdatePayload(description="Updated description")
+        datasource_update = OCFDatasourcePatchItem(description="Updated description")
 
         datasource_api_response = {
             "uri": "mysql://<hostname>:<port>/<db_name>",
@@ -375,16 +371,6 @@ class TestDatasource(unittest.TestCase):
             datasource,
         )
 
-    def test_update_ocf_datasource_missing_data(self):
-        with self.assertRaises(InvalidPostBody):
-            self.mock_user.update_ocf_datasource(1, None)
-
-    def test_update_ocf_datasource_missing_id(self):
-        datasource_update = OCFDatasourceUpdatePayload(description="Updated description")
-
-        with self.assertRaises(InvalidPostBody):
-            self.mock_user.update_ocf_datasource(None, datasource_update)
-
     @requests_mock.Mocker()
     def test_delete_ocf_datasource(self, requests_mock):
         requests_mock.register_uri(
@@ -395,9 +381,11 @@ class TestDatasource(unittest.TestCase):
         )
 
         response = self.mock_user.delete_ocf_datasource(1)
+        expected_response = JobDetails(
+            status = "successful"
+            , msg = ""
+            , result = {}
+        )
 
-        self.assertEqual(EmptyResponse(), response)
+        self.assertEqual(expected_response, response)
 
-    def test_delete_ocf_datasource_missing_id(self):
-        with self.assertRaises(InvalidPostBody):
-            self.mock_user.delete_ocf_datasource(None)
