@@ -32,6 +32,7 @@ class TestDocument(unittest.TestCase):
                 "description": "Relevant data and articles for Sales Analytics",
                 "template_id": 47,
                 "parent_folder_id": 1,
+                "parent_document_id": 99,
                 "nav_link_folder_ids": [
                     14,
                     165

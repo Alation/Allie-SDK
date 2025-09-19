@@ -17,6 +17,7 @@ class TestDocumentModels(unittest.TestCase):
             "description": "Relevant data and articles for Sales Analytics",
             "template_id": 47,
             "parent_folder_id": 1,
+            "parent_document_id": 99,
             "nav_link_folder_ids": [14,165],
             "document_hub_id": 1,
             "custom_fields": [
@@ -43,6 +44,7 @@ class TestDocumentModels(unittest.TestCase):
             description = "Relevant data and articles for Sales Analytics",
             template_id = 47,
             parent_folder_id = 1,
+            parent_document_id = 99,
             nav_link_folder_ids = [
                 14,
                 165
@@ -67,6 +69,7 @@ class TestDocumentModels(unittest.TestCase):
             , description = "This is the description for KPI 1"
             , template_id = 12
             , parent_folder_id = 1
+            , parent_document_id = 2
             , nav_link_folder_ids = [ 6 ]
             , document_hub_id = 2
             , custom_fields = [
@@ -91,6 +94,7 @@ class TestDocumentModels(unittest.TestCase):
             , "description": "This is the description for KPI 1"
             , "template_id": 12
             , "parent_folder_id": 1
+            , "parent_document_id": 2
             , "nav_link_folder_ids": [ 6 ]
             , "document_hub_id": 2
             , "custom_fields": [
@@ -118,6 +122,7 @@ class TestDocumentModels(unittest.TestCase):
             , description = "This is the description for KPI 1"
             , template_id = 12
             , parent_folder_id = 1
+            , parent_document_id = 2
             , nav_link_folder_ids = [ 6 ]
             , document_hub_id = 2
             , custom_fields = [
@@ -143,6 +148,7 @@ class TestDocumentModels(unittest.TestCase):
             , "description": "This is the description for KPI 1"
             , "template_id": 12
             , "parent_folder_id": 1
+            , "parent_document_id": 2
             , "nav_link_folder_ids": [ 6 ]
             , "document_hub_id": 2
             , "custom_fields": [
@@ -157,6 +163,6 @@ class TestDocumentModels(unittest.TestCase):
                 }
             ]
         }
-        
+
 
         self.assertEqual(input_transformed, output)
