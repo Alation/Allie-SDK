@@ -79,6 +79,27 @@ class SchemaItem(BaseRDBMSItem):
 
         return payload
 
+
+@dataclass
+class SchemaPatchItem(BaseRDBMSItem):
+    id: int = field(default=None)
+    db_comment: str = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.id is None:
+            raise InvalidPostBody("'id' is a required field for Schema PATCH payload body")
+        payload = {'id': self.id}
+        if self.title:
+            payload['title'] = self.title
+        if self.description:
+            payload['description'] = self.description
+        if self.db_comment:
+            payload['db_comment'] = self.db_comment
+        if self.custom_fields:
+            payload['custom_fields'] = self._create_fields_payload()
+
+        return payload
+
 @dataclass
 class SchemaParams(BaseRDBMSParams):
     pass

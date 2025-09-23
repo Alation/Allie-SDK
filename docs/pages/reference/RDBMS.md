@@ -78,7 +78,20 @@ Attributes:
 
 | Name         | Type                  | Description                                                  |
 |--------------|-----------------------|--------------------------------------------------------------|
-| db_comment   | str         | Comments on the schema from the data source. Defaults to empty text if not passed in the request. | 
+| db_comment   | str         | Comments on the schema from the data source. Defaults to empty text if not passed in the request. |
+
+### SchemaPatchItem
+Python object used to update an existing `Schema` in Alation and passed in the parameter `schemas` as a list in the function `patch_schemas`.
+
+Attributes:
+
+| Name         | Required | Type | Description |
+|--------------|:--------:|------|-------------|
+| id           | TRUE     | int  | Identifier of the schema to be updated. |
+| title        | FALSE    | str  | The title of the schema. |
+| description  | FALSE    | str  | Description of the schema. |
+| db_comment   | FALSE    | str  | Comments on the schema from the data source. |
+| custom_fields | FALSE   | list | A list of `CustomFieldValueItem` objects containing custom field information relative to the schema. |
 
 ### SchemaParams
 Optional item used to filter the response of the returned data from the function `get_schemas`.
@@ -267,6 +280,24 @@ Args:
 
 Returns:
 * list of job details
+
+### patch_schemas
+
+```python
+patch_schemas(ds_id: int, schemas: list[SchemaPatchItem]) -> list[allie_sdk.models.job_model.JobDetailsRdbms]
+```
+
+Patch (Update) Alation Schema Objects.
+
+Args:
+   - `ds_id` (int): ID of the Alation Schemas' Parent Datasource.
+   - `schemas` (list[SchemaPatchItem]): Alation Schemas to be updated.
+
+Returns:
+   - `list[JobDetailsRdbms]`: result of the job
+
+Raises:
+   - `requests.HTTPError`: If the API returns a non-success status code.
 
 ### get_tables
 
