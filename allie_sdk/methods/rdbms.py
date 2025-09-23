@@ -6,8 +6,9 @@ import requests
 from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.rdbms_model import (
+
     Schema, SchemaItem, SchemaParams, SchemaPatchItem,
-    Table, TableItem, TableParams,
+    Table, TableItem, TablePatchItem, TableParams,
     Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams
 )
 from ..models.job_model import *
@@ -134,6 +135,28 @@ class AlationRDBMS(AsyncHandler):
         validate_rest_payload(tables, (TableItem,))
         payload = [item.generate_api_post_payload() for item in tables]
         async_results = self.async_post(f'/integration/v2/table/?ds_id={ds_id}', payload)
+
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
+        return []
+
+    def patch_tables(self, ds_id: int, tables: list[TablePatchItem]) -> list[JobDetailsRdbms]:
+        """Patch (Update) Alation Table Objects.
+
+        Args:
+            ds_id (int): ID of the Alation Tables' Parent Datasource.
+            tables (list[TablePatchItem]): Alation Tables to be updated.
+
+        Returns:
+            list[JobDetailsRdbms]: Result of the job
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        item: TablePatchItem
+        validate_rest_payload(tables, (TablePatchItem,))
+        payload = [item.generate_api_patch_payload() for item in tables]
+        async_results = self.async_patch(f'/integration/v2/table/?ds_id={ds_id}', payload)
 
         if async_results:
             return [JobDetailsRdbms.from_api_response(item) for item in async_results]

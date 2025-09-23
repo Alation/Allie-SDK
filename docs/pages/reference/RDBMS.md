@@ -125,9 +125,29 @@ Attributes:
 | table_type_name |  FALSE    | str         | The datasource specific name. |  
 | owner |  FALSE    | str         | Name of the database account that owns this table. | 
 | sql |  FALSE    | str         | Data definition language (SQL query) associated with table or view. | 
-| base_table_key |  FALSE    | str         | The API key for referencing the base table when the table type is a `SYNONYM`. Note: Make sure the base_table_key is a valid and exists in the catalog. | 
-| partition_definition |  FALSE    | str         | The name/information of the partition from the source database.| 
-| partition_columns |  FALSE    | list         | List of partition columns. | 
+| base_table_key |  FALSE    | str         | The API key for referencing the base table when the table type is a `SYNONYM`. Note: Make sure the base_table_key is a valid and exists in the catalog. |
+| partition_definition |  FALSE    | str         | The name/information of the partition from the source database.|
+| partition_columns |  FALSE    | list         | List of partition columns. |
+
+### TablePatchItem
+Python object used to update an existing `Table` in Alation and passed in the parameter `tables` as a list in the function `patch_tables`.
+
+Attributes:
+
+| Name         | Required | Type                  | Description                                                  |
+|--------------|:--------:|-----------------------|--------------------------------------------------------------|
+| id |  TRUE    | int         | Identifier of the catalog table to update. |
+| title |  FALSE    | str         | Updated title of the table. |
+| description |  FALSE    | str         | Updated description of the table. |
+| table_comment |  FALSE    | str         | Comments/information on the table from the source database. |
+| table_type |  FALSE    | str         | Updated type of the table. Value can be `TABLE`, `VIEW` or `SYNONYM`. |
+| table_type_name |  FALSE    | str         | Updated datasource specific name. |
+| owner |  FALSE    | str         | Updated owner of the table. |
+| sql |  FALSE    | str         | Updated DDL (SQL query) associated with the table or view. |
+| base_table_key |  FALSE    | str         | Updated API key for referencing the base table when the table type is a `SYNONYM`. |
+| partition_definition |  FALSE    | str         | Updated partition information from the source database. |
+| partition_columns |  FALSE    | list         | Updated list of partition columns. |
+| custom_fields |  FALSE    | list         | A list of `CustomFieldValueItem` objects containing updated custom field information. |
 
 ### TableParams
 Optional Model item used to filter the response of the returned data from the get function `get_tables`.
@@ -308,6 +328,24 @@ Args:
 
 Returns:
 * list of job details
+
+### patch_tables
+
+```python
+patch_tables(ds_id: int, tables: list[TablePatchItem]) -> list[allie_sdk.models.job_model.JobDetailsRdbms]
+```
+
+Patch (Update) Alation Table Objects.
+
+Args:
+   - `ds_id` (int): ID of the Alation Tables' Parent Datasource.
+   - `tables` (list[TablePatchItem]): Alation Tables to be updated.
+
+Returns:
+   - `list[JobDetailsRdbms]`: result of the job
+
+Raises:
+   - `requests.HTTPError`: If the API returns a non-success status code.
 
 ### get_columns
 
