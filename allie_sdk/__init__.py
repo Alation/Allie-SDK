@@ -36,6 +36,8 @@ from .models import (
     DocumentHubFolderPostItem,
     DocumentHubFolderPutItem,
     OCFDatasource,
+    OCFDatasourcePutItem,
+    OCFDatasourcePostItem,
     OCFDatasourceParams,
     NativeDatasource,
     NativeDatasourceParams,
