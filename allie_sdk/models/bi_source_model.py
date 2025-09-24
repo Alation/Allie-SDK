@@ -1,33 +1,35 @@
 """Alation REST API BI Source Models."""
-
-import inspect
 from ..core.custom_exceptions import InvalidPostBody, validate_rest_payload
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, asdict
 from ..core.data_structures import BaseClass, BaseParams
 from datetime import datetime
 
 
 @dataclass(kw_only = True)
 class BISourceBaseParams(BaseParams):
-    oids: set = field(default_factory=set)
     keyField: set = field(default_factory=set)
+    oids: set = field(default_factory=set)
+
+@dataclass(kw_only = True)
+class BIFolderParams(BISourceBaseParams):
+    pass
+
+@dataclass(kw_only = True)
+class BIFolderDeleteParams(BaseParams):
+    bi_server_id:int = field(default = None)
+    oids:list = field(default_factory=list)
+
+@dataclass(kw_only = True)
+class BIReportParams(BISourceBaseParams):
+    pass
+
+@dataclass(kw_only = True)
+class BIReportDeleteParams(BISourceBaseParams):
+    pass
 
 
 @dataclass(kw_only = True)
-class BISourceParams(BISourceBaseParams):
-    limit: set = field(default_factory=set)
-    offset: set = field(default_factory=set)
-
-
-@dataclass(kw_only = True)
-class BaseBISourceItem:
-    def class_to_dict(self, cls):
-        # Generate dict from class with only fields that are not None
-        return {item.name: getattr(cls, item.name) for item in fields(cls) if getattr(cls, item.name) is not None}
-
-
-@dataclass(kw_only = True)
-class BaseBISourceItemWithSharedFields(BaseBISourceItem):
+class BaseBISourceItemWithSharedFields(BaseClass):
     name: str
     external_id: str
     source_url: str
@@ -88,7 +90,7 @@ class BIServer(BaseClass):
 
 
 @dataclass(kw_only = True)
-class BIServerItem(BaseBISourceItem):
+class BIServerItem(BaseClass):
     uri: str = field(default=None)
     title: str = field(default=None)
     description: str = field(default=None)
@@ -158,29 +160,18 @@ class BIFolderItem(BaseBISourceItemWithSharedFields):
     parent_folder: str = field(default=None)
 
     def generate_api_payload(self):
-        payload = self.class_to_dict(self)
+        payload = asdict(
+            self,
+            dict_factory=lambda values: {
+                key: value for key, value in values
+                if value is not None
+            }
+        )
 
         return payload
 
 
 # BI Report
-@dataclass(kw_only = True)
-class BIReportItem(BaseBISourceItemWithSharedFields):
-    owner: str
-    report_type: str
-    created_at: datetime = field(default=None)
-    last_updated: datetime = field(default=None)
-    num_accesses: int = field(default=None)
-    popularity: int = field(default=None)
-    parent_folder: str = field(default=None)
-    parent_reports: list = field(default=None)
-    parent_datasources: list = field(default=None)
-
-    def generate_api_payload(self):
-        payload = self.class_to_dict(self)
-
-        return payload
-
 
 @dataclass(kw_only = True)
 class BIReport(BaseClass):
@@ -202,6 +193,28 @@ class BIReport(BaseClass):
     sub_reports: list = field(default=None)
     report_columns: list = field(default=None)
 
+@dataclass(kw_only = True)
+class BIReportItem(BaseBISourceItemWithSharedFields):
+    owner: str
+    report_type: str
+    created_at: datetime = field(default=None)
+    last_updated: datetime = field(default=None)
+    num_accesses: int = field(default=None)
+    popularity: int = field(default=None)
+    parent_folder: str = field(default=None)
+    parent_reports: list = field(default=None)
+    parent_datasources: list = field(default=None)
+
+    def generate_api_payload(self):
+        payload = asdict(
+            self,
+            dict_factory=lambda values: {
+                key: value for key, value in values
+                if value is not None
+            }
+        )
+
+        return payload
 
 # BI Report Column
 @dataclass(kw_only = True)
@@ -217,7 +230,13 @@ class BIReportColumnItem(BaseBISourceItemWithSharedFields):
     parent_datasource_columns: list = field(default=None)
 
     def generate_api_payload(self):
-        payload = self.class_to_dict(self)
+        payload = asdict(
+            self,
+            dict_factory=lambda values: {
+                key: value for key, value in values
+                if value is not None
+            }
+        )
         print(payload)
 
         return payload

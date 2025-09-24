@@ -440,7 +440,7 @@ class TestBISource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         bi_servers = self.mock_user.get_bi_folders(
             bi_server_id = bi_server_id
-            , query_params = BISourceParams(
+            , query_params = BIServerParams(
                 oids = [ bi_folder_id ]
             )
         )
@@ -492,7 +492,7 @@ class TestBISource(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        bi_servers = self.mock_user.create_bi_folders(
+        bi_servers = self.mock_user.create_or_update_bi_folders_using_external_id(
             bi_server_id = bi_server_id
             , bi_folders = [
                 BIFolderItem(
