@@ -17,7 +17,13 @@ import configparser
 # Set Global Variables
 # ================================
 
+BI_FOLDER_NAME = "Product Data Domains"
+BI_FOLDER_EXTERNAL_ID = "product_data_domains"
 
+BI_REPORT_NAME = "XYZ Report"
+BI_REPORT_EXTERNAL_ID = "xyz_report"
+
+BI_REPORT_COLUMN_NAME = "Sales"
 
 # ================================
 # Define Logging Config
@@ -163,12 +169,10 @@ alation = allie.Alation(
 # CREATE BI FOLDERS
 # ================================
 
-bi_server_id = 21 # TODO: REMOVE LATER !!!
-BI_FOLDER_NAME = "Product Data Domains"
-BI_FOLDER_EXTERNAL_ID = "product_data_domains"
+existing_bi_server_id = 21 # TODO: REMOVE LATER !!!
 
 created_bi_folder = alation.bi_source.create_or_update_bi_folders_using_external_id(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
     , bi_folders = [
         allie.BIFolderItem(
             name = BI_FOLDER_NAME # required
@@ -211,7 +215,7 @@ else:
 
 
 existing_bi_folders = alation.bi_source.get_bi_folders(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
 )
 
 """
@@ -239,7 +243,7 @@ else:
 # ================================
 
 existing_bi_report = alation.bi_source.get_a_bi_folder(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
     , bi_folder_id = existing_bi_folder_id
 )
 
@@ -255,7 +259,7 @@ else:
 # ================================
 
 update_bi_folder = alation.bi_source.update_bi_folder_using_internal_id(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
     , bi_folder_id = existing_bi_folder_id
     , bi_folder = allie.BIFolderItem(
         name = f"{BI_FOLDER_NAME} - UPDATED" # required
@@ -286,14 +290,12 @@ else:
 # CREATE BI REPORTS
 # ================================
 
-BI_REPORT_NAME = "XYZ Report"
-
 created_bi_reports = alation.bi_source.create_or_update_bi_reports_using_external_id(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
     , bi_reports = [
         allie.BIReportItem(
             name = BI_REPORT_NAME
-            , external_id = "xyz_report"
+            , external_id = BI_REPORT_EXTERNAL_ID
             , source_url = "/a/b/c"
             , bi_object_type = "report" # freetext
             , report_type = "SIMPLE"
@@ -323,7 +325,7 @@ else:
 # ================================
 
 existing_bi_reports = alation.bi_source.get_bi_reports(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
 )
 
 existing_bi_report_ids = []
@@ -346,7 +348,7 @@ else:
 # ================================
 
 existing_bi_report = alation.bi_source.get_a_bi_report(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
     , bi_report_id = existing_bi_report_id
 )
 
@@ -362,11 +364,11 @@ else:
 # ================================
 
 updated_bi_report = alation.bi_source.update_bi_report_using_internal_id(
-    bi_server_id = bi_server_id
+    bi_server_id = existing_bi_server_id
     , bi_report_id = existing_bi_report_id
     , bi_report = allie.BIReportItem(
         name = f"{BI_REPORT_NAME} - UPDATED"
-        , external_id = "xyz_report"
+        , external_id = BI_REPORT_EXTERNAL_ID
         , source_url = "/a/b/c"
         , bi_object_type="report"  # freetext
         , report_type="SIMPLE"
@@ -385,14 +387,129 @@ else:
     logging.error(f"Unexpected result ... I don't know what to do ...")
     sys.exit(1)
 
+# ================================
+# CREATE BI REPORT COLUMN
+# ================================
+
+created_bi_report_columns = alation.bi_source.create_or_update_bi_report_columns_using_external_id(
+    bi_server_id = existing_bi_server_id
+    , bi_report_columns = [
+        allie.BIReportColumnItem(
+            name=BI_REPORT_COLUMN_NAME
+            , external_id='report_col_ext_id_1'
+            , created_at=None
+            , last_updated=None
+            , source_url='http://bi.server/sales'
+            , bi_object_type='column'
+            , description_at_source='Sales data'
+            , data_type='number'
+            , role='dimension'
+            , expression='SUM(sales)'
+            , values=['100', '200', '300']
+            , report= BI_REPORT_EXTERNAL_ID
+            # , parent_datasource_columns=['ds_col_1'] # TODO: Needs to be replaced with existing reference
+        )
+    ]
+)
+
+if created_bi_report_columns is None:
+    logging.error("Tried to create BI Report Column but received no response ...")
+    sys.exit(1)
+elif isinstance(created_bi_report_columns, list):
+    for c in created_bi_report_columns:
+        if c.status == "successful":
+            created_bi_report_columns_result = c.result[0]
+            logging.info(f"Number of BI Reports created: {created_bi_report_columns_result}")
+        else:
+            logging.error(f"Tried to create BI Folders but received {created_bi_report_columns_result.status}: {created_bi_report_columns_result.result}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
+# GET BI REPORT COLUMN
+# ================================
+
+existing_bi_report_columns = alation.bi_source.get_bi_report_columns(
+    bi_server_id = existing_bi_server_id
+)
+
+existing_bi_report_columns_ids= []
+
+if existing_bi_report_columns is None or len(existing_bi_report_columns) == 0:
+    logging.warning("No BI Report Columns were found.")
+elif isinstance(existing_bi_report_columns, list):
+    logging.info(f"Found {len(existing_bi_report_columns)} BI Reports:")
+    for r in existing_bi_report_columns:
+        logging.info(f"{r.name}")
+        existing_bi_report_columns_ids.append(r.id)
+        if r.name == BI_REPORT_COLUMN_NAME:
+            existing_bi_report_column_id = r.id
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
+# UPDATE BI REPORT COLUMN
+# ================================
+
+updated_bi_report_column = alation.bi_source.update_bi_report_column_using_internal_id(
+    bi_server_id = existing_bi_server_id
+    , bi_report_column_id = existing_bi_report_column_id
+    , bi_report_column = allie.BIReportColumnItem(
+        name=f'{BI_REPORT_COLUMN_NAME} - UPDATED'
+        , external_id='report_col_ext_id_1'
+        , created_at=None
+        , last_updated=None
+        , source_url='http://bi.server/sales'
+        , bi_object_type='column'
+        , description_at_source='Sales data - UPDATED'
+        , data_type='number'
+        , role='dimension'
+        , expression='SUM(sales)'
+        , values=['100', '200', '300']
+        , report= BI_REPORT_EXTERNAL_ID
+        # , parent_datasource_columns=['ds_col_1'] # TODO: Needs to be replaced with existing reference
+    )
+)
+
+if updated_bi_report_column is None:
+    logging.error("Tried to update BI Report Column but received no response ...")
+    sys.exit(1)
+elif isinstance(updated_bi_report_column, allie.BIReportColumn):
+    logging.info(f"{updated_bi_report_column.name} was successfully updated.")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
+# DELETE BI REPORT COLUMN
+# ================================
+
+deleted_bi_report_columns = alation.bi_source.delete_bi_report_columns(
+    bi_server_id = existing_bi_server_id
+    , query_params = allie.BIReportColumnParams(
+        keyField = "id"
+        , oids = existing_bi_report_columns_ids
+    )
+)
+
+if deleted_bi_report_columns is None:
+    logging.error("Tried to delete BI Report Column but received no response ...")
+    sys.exit(1)
+elif isinstance(deleted_bi_report_columns, allie.JobDetails):
+    logging.info(f"Delete BI Report Column status: {deleted_bi_report_columns.status}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 # ================================
 # DELETE BI REPORTS
 # ================================
 
 deleted_bi_reports = alation.bi_source.delete_bi_reports(
-    bi_server_id = bi_server_id
-    , query_params = allie.BIReportDeleteParams(
+    bi_server_id = existing_bi_server_id
+    , query_params = allie.BIReportParams(
         keyField = "id"
         , oids = existing_bi_report_ids
     )
@@ -413,8 +530,8 @@ else:
 
 
 deleted_bi_folders = alation.bi_source.delete_bi_folders(
-    bi_server_id = bi_server_id
-    , query_params = allie.BIFolderDeleteParams(
+    bi_server_id = existing_bi_server_id
+    , query_params = allie.BIFolderParams(
         oids = [existing_bi_folder_id]
     )
 )

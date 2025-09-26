@@ -512,3 +512,48 @@ class TestBISource(unittest.TestCase):
         )
 
         self.assertEqual(success_response, bi_servers)
+
+    # TODO: Test Cases for BIReport Methods
+
+    @requests_mock.Mocker()
+    def test_get_bi_report_columns(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+
+        # What does the response look like for the request?
+        api_response = [
+            {
+                "id": 1,
+                "name": "sales_column",
+                "external_id": "ext_id_1",
+                "source_url": "http://bi.server/sales",
+                "bi_object_type": "column",
+                "description_at_source": "Sales data",
+                "data_type": "number",
+                "role": "dimension",
+                "expression": "SUM(sales)",
+                "values": ["100", "200", "300"],
+                "report": "report_1",
+                "parent_datasource_columns": ["ds_col_1"],
+                "parent_report_columns": ["rpt_col_1"],
+                "derived_report_columns": ["derived_col_1"]
+            }
+        ]
+
+        expected_result = [BIReportColumn.from_api_response(item) for item in api_response]
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/column/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.get_bi_report_columns(
+            bi_server_id=BI_SERVER_ID
+        )
+
+        self.assertEqual(expected_result, actual_result)

@@ -23,7 +23,7 @@ class AlationBISource(AsyncHandler):
         """
         super().__init__(session = session, host = host, access_token=access_token)
 
-        self._bi_source_endpoint = 'integration/v2/bi/server/'
+        self._bi_source_endpoint = '/integration/v2/bi/server/'
 
     def get_bi_servers(self, query_params: BIServerParams = None) -> list[BIServer]:
         """Get multiple Alation BI Servers.
@@ -138,16 +138,21 @@ class AlationBISource(AsyncHandler):
         validate_query_params(query_params, BIFolderParams)
         params = query_params.generate_params_dict() if query_params else None
 
-        if params and params.get('oids') and isinstance(params.get('oids'), list):
-            params['oids'] = ','.join(map(str, params['oids']))
-        bi_folders = self.get(f'{self._bi_source_endpoint}{bi_server_id}/folder/', query_params=params)
+        bi_folders = self.get(
+            url = f'{self._bi_source_endpoint}{bi_server_id}/folder/'
+            , query_params=params
+        )
 
         if bi_folders:
             return [BIFolder.from_api_response(bi_folder) for bi_folder in bi_folders]
         return []
 
     # Note: Using get_bi_folders we can get a similar result to get_a_bi_folder
-    def get_a_bi_folder(self, bi_server_id: int, bi_folder_id: int) -> BIFolder:
+    def get_a_bi_folder(
+            self
+            , bi_server_id: int
+            , bi_folder_id: int
+    ) -> BIFolder:
         """Get an Alation BI Folder.
 
         Args:
@@ -220,7 +225,7 @@ class AlationBISource(AsyncHandler):
             , expected_types = (BIFolderItem,)
         )
         payload = bi_folder.generate_api_payload()
-        LOGGER.debug(payload)
+
         updated_bi_folder = self.patch(
             url = f'{self._bi_source_endpoint}{bi_server_id}/folder/{bi_folder_id}/'
             , body=payload
@@ -232,7 +237,7 @@ class AlationBISource(AsyncHandler):
     def delete_bi_folders(
             self
             , bi_server_id: int
-            , query_params: BIFolderDeleteParams
+            , query_params: BIFolderParams
     ) -> JobDetails:
         """
         Delete Alation BI Folders. Note that all bulk DELETE methods require a range of IDs.
@@ -240,7 +245,7 @@ class AlationBISource(AsyncHandler):
 
         Args:
             bi_server_id (int): Alation BI Server ID to delete the BI folders from.
-            query_params (BIFolderDeleteParams): Alation BI Folder params. This is mandatory.
+            query_params (BIFolderParams): Alation BI Folder params. This is mandatory.
 
         Returns:
             JobDetails
@@ -248,12 +253,8 @@ class AlationBISource(AsyncHandler):
         """
 
 
-        validate_query_params(query_params, BIFolderDeleteParams)
+        validate_query_params(query_params, BIFolderParams)
         params = query_params.generate_params_dict() if query_params else None
-
-        if isinstance(params.get('oids'), list):
-            params['oids'] = ','.join(map(str, params['oids']))
-
 
         deleted = self.delete(url = f'{self._bi_source_endpoint}{bi_server_id}/folder/', query_params=params)
 
@@ -324,8 +325,7 @@ class AlationBISource(AsyncHandler):
         """
         validate_query_params(query_params, BIReportParams)
         params = query_params.generate_params_dict() if query_params else None
-        if params and params.get('oids') and isinstance(params.get('oids'), list):
-            params['oids'] = ','.join(map(str, params['oids']))
+
         bi_reports = self.get(f'{self._bi_source_endpoint}{bi_server_id}/report/', query_params=params)
 
         if bi_reports:
@@ -347,23 +347,20 @@ class AlationBISource(AsyncHandler):
         if bi_report:
             return BIReport.from_api_response(bi_report)
 
-    def delete_bi_reports(self, bi_server_id: int, query_params: BIReportDeleteParams) -> JobDetails:
+    def delete_bi_reports(self, bi_server_id: int, query_params: BIReportParams) -> JobDetails:
         """Delete Alation BI reports. This method is not allowed for non-virtual BI Servers.
 
         Args:
             bi_server_id (int): Alation BI Server ID to delete the BI reports from.
-            query_params (BIReportDeleteParams): Alation BI Folder params.
+            query_params (BIReportParams): Alation BI Report params.
 
         Returns:
-            bool: Success of the API DELETE Call.
+            JobDetails
 
         """
 
-        validate_query_params(query_params, BIReportDeleteParams)
+        validate_query_params(query_params, BIReportParams)
         params = query_params.generate_params_dict()
-
-        if isinstance(params.get('oids'), list):
-            params['oids'] = ','.join(map(str, params['oids']))
 
         deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/report/', query_params=params)
 
@@ -418,7 +415,11 @@ class AlationBISource(AsyncHandler):
         if updated_bi_report:
             return BIReport.from_api_response(updated_bi_report)
 
-    def create_bi_report_columns(self, bi_server_id: int, bi_report_columns: list) -> bool:
+    def create_or_update_bi_report_columns_using_external_id(
+            self
+            , bi_server_id: int
+            , bi_report_columns: list[BIReportColumnItem]
+    ) -> list[JobDetails]:
         """Post (Create/Update) Alation BI Report Columns.
         If an object with a matching external_id exists, it is updated with the given payload. Otherwise, it is created.
         This method is not allowed for non-virtual BI Servers.
@@ -428,12 +429,104 @@ class AlationBISource(AsyncHandler):
             bi_report_columns (list): list of Alation BI Report Columns to be created/updated.
 
         Returns:
-            bool: Success of the API POST Call.
+            list of JobDetails
 
         """
-        validate_rest_payload(bi_report_columns, (BIReportColumnItem,))
+        validate_rest_payload(
+            payload = bi_report_columns
+            , expected_types = (BIReportColumnItem,)
+        )
         payload = [item.generate_api_payload() for item in bi_report_columns]
-        LOGGER.debug(payload)
-        async_result = self.async_post(f'{self._bi_source_endpoint}{bi_server_id}/report/column/', payload=payload)
 
-        return True if not async_result else False
+        async_results = self.async_post(
+            url = f'{self._bi_source_endpoint}{bi_server_id}/report/column/'
+            , payload=payload
+        )
+
+        if async_results:
+            return [JobDetails.from_api_response(item) for item in async_results]
+        return []
+
+    def update_bi_report_column_using_internal_id(
+            self
+            , bi_server_id: int
+            , bi_report_column_id: int
+            , bi_report_column: BIReportColumnItem
+    ) -> BIReportColumn:
+        """Patch (Update) Alation BI Report Columns.
+        This method will partially update a single Report Column.
+        This method is not allowed for non-virtual BI Servers.
+
+        Args:
+            bi_server_id (int): Alation BI Server ID to update BI Report Columns for.
+            bi_report_column (BIReportColumnItem): Alation BI Report Column to be updated.
+
+        Returns:
+            BIReportColumn
+
+        """
+        validate_rest_payload(
+            payload = [bi_report_column]
+            , expected_types = (BIReportColumnItem,)
+        )
+        payload = bi_report_column.generate_api_payload()
+
+        result = self.patch(
+            url = f'{self._bi_source_endpoint}{bi_server_id}/report/column/{bi_report_column_id}/'
+            , body = payload
+        )
+
+        if result:
+            return BIReportColumn.from_api_response(result)
+
+    def get_bi_report_columns(
+            self
+            , bi_server_id: str
+            , query_params: Optional[BIReportColumnParams] = None
+    ) -> list[BIReportColumn]:
+        """
+        GET a set of report columns from a specified BI Server.
+
+        Args:
+            server_id (str): The ID of the BI server.
+            query_params (BIReportColumnParams): REST API Get Filter Values.
+
+        Returns:
+            list[BIReportColumn]: A list of ReportColumn objects.
+        """
+        validate_query_params(query_params, BIReportColumnParams)
+        params = query_params.generate_params_dict() if query_params else None
+
+        url = f"{self._bi_source_endpoint}{bi_server_id}/report/column/"
+        bi_report_columns = self.get(url=url, query_params=params)
+
+        if bi_report_columns:
+            return [BIReportColumn.from_api_response(data) for data in bi_report_columns]
+        return []
+
+    def delete_bi_report_columns(
+            self
+            , bi_server_id: int
+            , query_params: BIReportColumnParams
+    ) -> JobDetails:
+        """Delete Alation BI report columns. This method is not allowed for non-virtual BI Servers.
+
+        Args:
+            bi_server_id (int): Alation BI Server ID to delete the BI reports from.
+            query_params (BIReportColumnParams): Alation BI Report Column params.
+
+        Returns:
+            JobDetails
+
+        """
+
+        validate_query_params(query_params, BIReportColumnParams)
+        params = query_params.generate_params_dict()
+
+        deleted = self.delete(
+            url = f'{self._bi_source_endpoint}{bi_server_id}/report/column/'
+            , query_params=params
+        )
+
+        if deleted:
+            return JobDetails.from_api_response(deleted)
