@@ -237,7 +237,7 @@ class AlationBISource(AsyncHandler):
     def delete_bi_folders(
             self
             , bi_server_id: int
-            , query_params: BIFolderParams
+            , query_params: BIFolderParams = None
     ) -> JobDetails:
         """
         Delete Alation BI Folders. Note that all bulk DELETE methods require a range of IDs.
@@ -252,9 +252,11 @@ class AlationBISource(AsyncHandler):
 
         """
 
-
-        validate_query_params(query_params, BIFolderParams)
-        params = query_params.generate_params_dict() if query_params else None
+        if query_params:
+            validate_query_params(query_params, BIFolderParams)
+            params = query_params.generate_params_dict() if query_params else None
+        else:
+            params = None
 
         deleted = self.delete(url = f'{self._bi_source_endpoint}{bi_server_id}/folder/', query_params=params)
 
@@ -347,7 +349,11 @@ class AlationBISource(AsyncHandler):
         if bi_report:
             return BIReport.from_api_response(bi_report)
 
-    def delete_bi_reports(self, bi_server_id: int, query_params: BIReportParams) -> JobDetails:
+    def delete_bi_reports(
+            self
+            , bi_server_id: int
+            , query_params: BIReportParams = None
+    ) -> JobDetails:
         """Delete Alation BI reports. This method is not allowed for non-virtual BI Servers.
 
         Args:
@@ -359,8 +365,11 @@ class AlationBISource(AsyncHandler):
 
         """
 
-        validate_query_params(query_params, BIReportParams)
-        params = query_params.generate_params_dict()
+        if query_params:
+            validate_query_params(query_params, BIReportParams)
+            params = query_params.generate_params_dict()
+        else:
+            params = None
 
         deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/report/', query_params=params)
 
@@ -379,7 +388,7 @@ class AlationBISource(AsyncHandler):
 
         """
 
-        deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/report/{bi_report_id}')
+        deleted = self.delete(f'{self._bi_source_endpoint}{bi_server_id}/report/{bi_report_id}/')
 
         if deleted:
             return JobDetails.from_api_response(deleted)
@@ -507,7 +516,7 @@ class AlationBISource(AsyncHandler):
     def delete_bi_report_columns(
             self
             , bi_server_id: int
-            , query_params: BIReportColumnParams
+            , query_params: BIReportColumnParams = None
     ) -> JobDetails:
         """Delete Alation BI report columns. This method is not allowed for non-virtual BI Servers.
 
@@ -520,8 +529,11 @@ class AlationBISource(AsyncHandler):
 
         """
 
-        validate_query_params(query_params, BIReportColumnParams)
-        params = query_params.generate_params_dict()
+        if query_params:
+            validate_query_params(query_params, BIReportColumnParams)
+            params = query_params.generate_params_dict()
+        else:
+            params = None
 
         deleted = self.delete(
             url = f'{self._bi_source_endpoint}{bi_server_id}/report/column/'

@@ -306,6 +306,11 @@ created_bi_reports = alation.bi_source.create_or_update_bi_reports_using_externa
     ]
 )
 
+"""
+async_results = [{'msg': 'Job finished in 0.057239 seconds at 2025-09-30 07:03:24.836810+00:00', 'result': ['1 BIReport object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.06s'], 'status': 'successful'}]
+created_bi_reports = [JobDetails(status='successful', msg='Job finished in 0.057239 seconds at 2025-09-30 07:03:24.836810+00:00', result=['1 BIReport object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.06s'])]
+"""
+
 if created_bi_reports is None:
     logging.error("Tried to create BI Report but received no response ...")
     sys.exit(1)
@@ -412,6 +417,11 @@ created_bi_report_columns = alation.bi_source.create_or_update_bi_report_columns
     ]
 )
 
+"""
+async_result = [{'msg': 'Job finished in 0.05236 seconds at 2025-09-30 07:24:27.631871+00:00', 'result': ['1 BIReportColumn object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.05s'], 'status': 'successful'}]
+created_bi_report_columns = [JobDetails(status='successful', msg='Job finished in 0.05236 seconds at 2025-09-30 07:24:27.631871+00:00', result=['1 BIReportColumn object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.05s'])]
+"""
+
 if created_bi_report_columns is None:
     logging.error("Tried to create BI Report Column but received no response ...")
     sys.exit(1)
@@ -493,6 +503,10 @@ deleted_bi_report_columns = alation.bi_source.delete_bi_report_columns(
         , oids = existing_bi_report_columns_ids
     )
 )
+
+"""
+deleted_bi_report_columns = JobDetails(status='successful', msg='', result='')
+"""
 
 if deleted_bi_report_columns is None:
     logging.error("Tried to delete BI Report Column but received no response ...")

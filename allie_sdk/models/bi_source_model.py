@@ -7,8 +7,8 @@ from typing import Optional
 
 @dataclass(kw_only = True)
 class BIObjectBaseParams(BaseParams):
-    keyField: str = field(default=None, metadata={'description': 'A comma-separated list of ObjectIDs to fetch.'})
-    oids: str = field(default=None, metadata={'description': 'The type of ID used in the ObjectIDs parameter. Can be either "id" or "external_id".'})
+    keyField: str = field(default=None, metadata={'description':'The type of ID used in the ObjectIDs parameter. Can be either "id" or "external_id".'})
+    oids: str = field(default=None, metadata={'description': 'A comma-separated list of ObjectIDs to fetch.'})
 
     def __post_init__(self):
         if self.oids:

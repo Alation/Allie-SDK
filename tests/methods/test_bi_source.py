@@ -440,7 +440,7 @@ class TestBISource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         bi_servers = self.mock_user.get_bi_folders(
             bi_server_id = bi_server_id
-            , query_params = BIServerParams(
+            , query_params = BIFolderParams(
                 oids = [ bi_folder_id ]
             )
         )
@@ -513,7 +513,399 @@ class TestBISource(unittest.TestCase):
 
         self.assertEqual(success_response, bi_servers)
 
-    # TODO: Test Cases for BIReport Methods
+    @requests_mock.Mocker()
+    def test_update_bi_folder_using_internal_id(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        BI_FOLDER_ID = 123
+
+        # What does the response look like for the request?
+        api_response = dict(
+            id=BI_FOLDER_ID
+            , name = "Product Data Domains"  # required
+            , external_id = "product_data_domains"  # required
+            , source_url = "/a/b/c"  # required
+            , bi_object_type = "Project"
+            , description_at_source = "And here goes the description ..."
+            , owner = "Peter Summer"
+            , created_at = "2025-04-10T00:00:00.000000-08:00"
+            , last_updated = "2025-04-10T00:00:00.000000-08:00"
+            , num_reports = 2
+            , num_report_accesses = 343
+            , parent_folder = ""
+        )
+
+        expected_result = BIFolder(
+            id=BI_FOLDER_ID
+            , name = "Product Data Domains"  # required
+            , external_id = "product_data_domains"  # required
+            , source_url = "/a/b/c"  # required
+            , bi_object_type = "Project"
+            , description_at_source = "And here goes the description ..."
+            , owner = "Peter Summer"
+            , created_at = "2025-04-10T00:00:00.000000-08:00"
+            , last_updated = "2025-04-10T00:00:00.000000-08:00"
+            , num_reports = 2
+            , num_report_accesses = 343
+            , parent_folder = ""
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='PATCH',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/folder/{BI_FOLDER_ID}/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.update_bi_folder_using_internal_id(
+            bi_server_id=BI_SERVER_ID
+            , bi_folder_id=BI_FOLDER_ID
+            , bi_folder=BIFolderItem(
+                name="Product Data Domains"  # required
+                , external_id="product_data_domains"  # required
+                , source_url="/a/b/c"  # required
+                , bi_object_type="Project"
+                , description_at_source="And here goes the description ..."
+                , owner="Peter Summer"
+                , created_at="2025-04-10T00:00:00.000000-08:00"
+                , last_updated="2025-04-10T00:00:00.000000-08:00"
+                , num_reports=2
+                , num_report_accesses=343
+                , parent_folder=""
+            )
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_delete_bi_folders(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+
+        # What does the response look like for the request?
+        api_response = ""
+
+        expected_result = JobDetails(
+            status="successful"
+            , msg=""
+            , result=""
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='DELETE'
+            , url=f'/integration/v2/bi/server/{BI_SERVER_ID}/folder/'
+            , json=api_response
+            , status_code=204
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.delete_bi_folders(
+            bi_server_id=BI_SERVER_ID
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    # ------------------------------
+    # --------- BI REPORTS ---------
+    # ------------------------------
+
+    @requests_mock.Mocker()
+    def test_get_bi_reports(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+
+        # What does the response look like for the request?
+        api_response = [
+            dict(
+                name = "abc"
+                , external_id = "123"
+                , source_url = "/a/b/c"
+                , bi_object_type = "report" # freetext
+                , report_type = "SIMPLE"
+                , description_at_source = "And here goes the description ... CREATED"
+                , owner = "Peter Summer"
+                , parent_folder = "p_888"
+            )
+        ]
+
+        expected_result = [
+            BIReport(
+                name = "abc"
+                , external_id = "123"
+                , source_url = "/a/b/c"
+                , bi_object_type = "report" # freetext
+                , report_type = "SIMPLE"
+                , description_at_source = "And here goes the description ... CREATED"
+                , owner = "Peter Summer"
+                , parent_folder = "p_888"
+                , sub_reports = None
+                , report_columns = None
+            )
+        ]
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.get_bi_reports(
+            bi_server_id=BI_SERVER_ID
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_get_bi_reports_with_query_params(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+
+        # What does the response look like for the request?
+        api_response = [
+            dict(
+                name="abc"
+                , external_id="123"
+                , source_url="/a/b/c"
+                , bi_object_type="report"  # freetext
+                , report_type="SIMPLE"
+                , description_at_source="And here goes the description ... CREATED"
+                , owner="Peter Summer"
+                , parent_folder="p_888"
+            )
+        ]
+
+        expected_result = [
+            BIReport(
+                name="abc"
+                , external_id="123"
+                , source_url="/a/b/c"
+                , bi_object_type="report"  # freetext
+                , report_type="SIMPLE"
+                , description_at_source="And here goes the description ... CREATED"
+                , owner="Peter Summer"
+                , parent_folder="p_888"
+                , sub_reports=None
+                , report_columns=None
+            )
+        ]
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.get_bi_reports(
+            bi_server_id=BI_SERVER_ID
+            , query_params = BIReportParams(
+                keyField = "external_id"
+                , oids = "123"
+            )
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_create_or_update_bi_reports_using_external_id(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        JOB_ID = 27809
+
+        # What does the response look like for the create document request?
+        api_response = {
+            "job_id": JOB_ID
+        }
+
+        # Override the function API call
+        requests_mock.register_uri(
+            method='POST',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/',
+            json=api_response,
+            status_code=202
+        )
+
+        # What does the response look like for the Job?
+        job_api_response = {
+            'msg': 'Job finished in 0.057239 seconds at 2025-09-30 07:03:24.836810+00:00'
+            , 'result': ['1 BIReport object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.06s']
+            , 'status': 'successful'
+        }
+
+        # Override the job API call
+        # Note: The id in the job URL corresponds to the task id in api_response defined above
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/api/v1/bulk_metadata/job/?id={JOB_ID}',
+            json=job_api_response
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.create_or_update_bi_reports_using_external_id(
+            bi_server_id = BI_SERVER_ID
+            , bi_reports =[
+                BIReportItem(
+                    name="xyz"
+                    , external_id="report_xyz"
+                    , source_url="/a/b/c"
+                    , bi_object_type="report"
+                    , report_type="SIMPLE"
+                    , description_at_source="And here goes the description ... CREATED"
+                    , owner="Peter Summer"
+                    , parent_folder="parent_xyz"
+                )
+            ]
+        )
+
+        function_expected_result = [
+            JobDetails(
+                status='successful'
+                , msg='Job finished in 0.057239 seconds at 2025-09-30 07:03:24.836810+00:00'
+                , result=['1 BIReport object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.06s']
+            )
+        ]
+
+        self.assertEqual(function_expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_update_bi_report_using_internal_id(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        BI_REPORT_ID = 123
+
+        # What does the response look like for the request?
+        api_response = dict(
+            id = BI_REPORT_ID
+            , name="abc"
+            , external_id="ext_123"
+            , source_url="/a/b/c"
+            , bi_object_type="report"  # freetext
+            , report_type="SIMPLE"
+            , description_at_source="And here goes the description ... UPDATED"
+            , owner="Peter Summer"
+            , parent_folder="p_888"
+        )
+
+        expected_result = BIReport(
+            id = BI_REPORT_ID
+            , name="abc"
+            , external_id="ext_123"
+            , source_url="/a/b/c"
+            , bi_object_type="report"  # freetext
+            , report_type="SIMPLE"
+            , description_at_source="And here goes the description ... UPDATED"
+            , owner="Peter Summer"
+            , parent_folder="p_888"
+            , sub_reports=None
+            , report_columns=None
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='PATCH',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/{BI_REPORT_ID}/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.update_bi_report_using_internal_id(
+            bi_server_id = BI_SERVER_ID
+            , bi_report_id = BI_REPORT_ID
+            , bi_report = BIReportItem(
+                name="abc"
+                , external_id="ext_123"
+                , source_url="/a/b/c"
+                , bi_object_type="report"  # freetext
+                , report_type="SIMPLE"
+                , description_at_source="And here goes the description ... UPDATED"
+                , owner="Peter Summer"
+                , parent_folder="p_888"
+            )
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_delete_a_bi_report(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        BI_REPORT_ID = 123
+
+        # What does the response look like for the request?
+        api_response = ""
+
+        expected_result = JobDetails(
+            status = "successful"
+            , msg = ""
+            , result = ""
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='DELETE'
+            , url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/{BI_REPORT_ID}/'
+            , json=api_response
+            , status_code=204
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.delete_a_bi_report(
+            bi_server_id=BI_SERVER_ID
+            , bi_report_id=BI_REPORT_ID
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_delete_bi_reports(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        BI_REPORT_ID = 123
+
+        # What does the response look like for the request?
+        api_response = ""
+
+        expected_result = JobDetails(
+            status="successful"
+            , msg=""
+            , result=""
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='DELETE'
+            , url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/'
+            , json=api_response
+            , status_code=204
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.delete_bi_reports(
+            bi_server_id=BI_SERVER_ID
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    # ------------------------------
+    # ----- BI REPORT COLUMNS ------
+    # ------------------------------
 
     @requests_mock.Mocker()
     def test_get_bi_report_columns(self, requests_mock):
@@ -553,6 +945,219 @@ class TestBISource(unittest.TestCase):
 
         # --- TEST THE FUNCTION --- #
         actual_result = self.mock_user.get_bi_report_columns(
+            bi_server_id=BI_SERVER_ID
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_get_bi_report_columns_with_query_params(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+
+        # What does the response look like for the request?
+        api_response = [
+            {
+                "id": 1,
+                "name": "sales_column",
+                "external_id": "ext_id_1",
+                "source_url": "http://bi.server/sales",
+                "bi_object_type": "column",
+                "description_at_source": "Sales data",
+                "data_type": "number",
+                "role": "dimension",
+                "expression": "SUM(sales)",
+                "values": ["100", "200", "300"],
+                "report": "report_1",
+                "parent_datasource_columns": ["ds_col_1"],
+                "parent_report_columns": ["rpt_col_1"],
+                "derived_report_columns": ["derived_col_1"]
+            }
+        ]
+
+        expected_result = [BIReportColumn.from_api_response(item) for item in api_response]
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/column/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.get_bi_report_columns(
+            bi_server_id=BI_SERVER_ID
+            , query_params = BIReportColumnParams(
+                keyField = "external_id"
+                , oids = "ext_id_1"
+            )
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_create_or_update_bi_report_columns_using_external_id(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        JOB_ID = 27809
+
+        # What does the response look like for the create document request?
+        api_response = {
+            "job_id": JOB_ID
+        }
+
+        # Override the function API call
+        requests_mock.register_uri(
+            method='POST',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/column/',
+            json=api_response,
+            status_code=202
+        )
+
+        # What does the response look like for the Job?
+        job_api_response = {
+            'msg': 'Job finished in 0.05236 seconds at 2025-09-30 07:24:27.631871+00:00'
+            , 'result': ['1 BIReportColumn object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.05s']
+            , 'status': 'successful'
+        }
+
+        # Override the job API call
+        # Note: The id in the job URL corresponds to the task id in api_response defined above
+        requests_mock.register_uri(
+            method='GET',
+            url=f'/api/v1/bulk_metadata/job/?id={JOB_ID}',
+            json=job_api_response
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.create_or_update_bi_report_columns_using_external_id(
+            bi_server_id=BI_SERVER_ID
+            , bi_report_columns=[
+                BIReportColumnItem(
+                    name="xyz"
+                    , external_id='report_col_ext_id_1'
+                    , created_at=None
+                    , last_updated=None
+                    , source_url='http://bi.server/sales'
+                    , bi_object_type='column'
+                    , description_at_source='Sales data'
+                    , data_type='number'
+                    , role='dimension'
+                    , expression='SUM(sales)'
+                    , values=['100', '200', '300']
+                    , report="rep_1"
+                )
+            ]
+        )
+
+        function_expected_result = [
+            JobDetails(
+                status='successful'
+                , msg='Job finished in 0.05236 seconds at 2025-09-30 07:24:27.631871+00:00'
+                , result=['1 BIReportColumn object(s) received, 1 existing object(s) updated', 'BI_V2_API_SYNCING took 0.05s']
+            )
+        ]
+
+        self.assertEqual(function_expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_update_bi_report_column_using_internal_id(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+        BI_REPORT_COLUMN_ID = 123
+
+        # What does the response look like for the request?
+        api_response = dict(
+            id=BI_REPORT_COLUMN_ID
+            , name = 'abc - UPDATED'
+            , external_id = 'report_col_ext_id_1'
+            , created_at = None
+            , last_updated = None
+            , source_url = 'http://bi.server/sales'
+            , bi_object_type = 'column'
+            , description_at_source = 'Sales data - UPDATED'
+            , data_type = 'number'
+            , role = 'dimension'
+            , expression = 'SUM(sales)'
+            , values = ['100', '200', '300']
+            , report = "ext_123"
+        )
+
+        expected_result = BIReportColumn(
+            id=BI_REPORT_COLUMN_ID
+            , name = 'abc - UPDATED'
+            , external_id = 'report_col_ext_id_1'
+            , created_at = None
+            , last_updated = None
+            , source_url = 'http://bi.server/sales'
+            , bi_object_type = 'column'
+            , description_at_source = 'Sales data - UPDATED'
+            , data_type = 'number'
+            , role = 'dimension'
+            , expression = 'SUM(sales)'
+            , values = ['100', '200', '300']
+            , report = "ext_123"
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='PATCH',
+            url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/column/{BI_REPORT_COLUMN_ID}/',
+            json=api_response,
+            status_code=200
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.update_bi_report_column_using_internal_id(
+            bi_server_id=BI_SERVER_ID
+            , bi_report_column_id=BI_REPORT_COLUMN_ID
+            , bi_report_column=BIReportColumnItem(
+                name='abc - UPDATED'
+                , external_id='report_col_ext_id_1'
+                , created_at=None
+                , last_updated=None
+                , source_url='http://bi.server/sales'
+                , bi_object_type='column'
+                , description_at_source='Sales data - UPDATED'
+                , data_type='number'
+                , role='dimension'
+                , expression='SUM(sales)'
+                , values=['100', '200', '300']
+                , report= "ext_123"
+            )
+        )
+
+        self.assertEqual(expected_result, actual_result)
+
+    @requests_mock.Mocker()
+    def test_delete_bi_report_columns(self, requests_mock):
+        # --- PREPARE THE TEST SETUP --- #
+
+        BI_SERVER_ID = 1
+
+        # What does the response look like for the request?
+        api_response = ""
+
+        expected_result = JobDetails(
+            status="successful"
+            , msg=""
+            , result=""
+        )
+
+        # Override the document API call
+        requests_mock.register_uri(
+            method='DELETE'
+            , url=f'/integration/v2/bi/server/{BI_SERVER_ID}/report/column/'
+            , json=api_response
+            , status_code=204
+        )
+
+        # --- TEST THE FUNCTION --- #
+        actual_result = self.mock_user.delete_bi_report_columns(
             bi_server_id=BI_SERVER_ID
         )
 
