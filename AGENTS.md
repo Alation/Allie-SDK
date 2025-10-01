@@ -25,3 +25,10 @@ pip install -r requirements-dev.txt
 
 - use Python type hints
 - use double quotes instead of single quotes were possible
+
+# Code Standards
+
+- always add logging
+- no failing silently (always throw errors)
+- robust error handling
+- use the most up-to-date packages and technologies
