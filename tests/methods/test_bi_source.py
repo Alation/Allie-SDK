@@ -338,6 +338,7 @@ class TestBISource(unittest.TestCase):
                 , subfolders=['2a41d8b2-038d-49f2-8afc-24520bab929f']
                 , connections=[]
                 , reports=[]
+                , datasources = []
             )
             , BIFolder(
                 id=17
@@ -356,6 +357,7 @@ class TestBISource(unittest.TestCase):
                 , subfolders=[]
                 , connections=[]
                 , reports=['663b9e9a-d6dc-4554-a0d3-9379a6586897', '90274a21-e533-4506-b23a-2f5e6b75e15c']
+                , datasources=['919cf9a1-cd06-422a-b239-b82948e0dde1']
             )
         ]
 
@@ -424,6 +426,7 @@ class TestBISource(unittest.TestCase):
                 , subfolders=['2a41d8b2-038d-49f2-8afc-24520bab929f']
                 , connections=[]
                 , reports=[]
+                , datasources = []
             )
         ]
 
