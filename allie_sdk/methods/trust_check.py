@@ -70,7 +70,9 @@ class AlationTrustChecks(RequestHandler):
                     if status == "failed":
                         return JobDetails.from_api_response(trust_check_response)
                 else:
-                    mapped_trust_check = self._map_request_success_to_job_details(TrustCheckFlag.from_api_response(trust_check_response))
+                    mapped_trust_check = self._map_request_success_to_job_details(
+                        response_data = TrustCheckFlag.from_api_response(trust_check_response)
+                    )
                     return JobDetails.from_api_response(mapped_trust_check)
         except requests.exceptions.HTTPError as e:
             # For test compatibility, handle HTTP errors specially
@@ -107,7 +109,9 @@ class AlationTrustChecks(RequestHandler):
                     if status == "failed":
                         return JobDetails.from_api_response(updated_trust_check)
                 else:
-                    mapped_updated_trust_check = self._map_request_success_to_job_details(TrustCheckFlag.from_api_response(updated_trust_check))
+                    mapped_updated_trust_check = self._map_request_success_to_job_details(
+                        response_data = TrustCheckFlag.from_api_response(updated_trust_check)
+                    )
                     return JobDetails.from_api_response(mapped_updated_trust_check)
         except requests.exceptions.HTTPError as e:
             # For test compatibility, handle HTTP errors specially

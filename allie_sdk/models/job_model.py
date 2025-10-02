@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from ..core.data_structures import BaseClass
 import json
+import inspect
 
 @dataclass
 class AsyncJobDetails(BaseClass):
@@ -35,6 +36,31 @@ class JobDetails(BaseClass):
     status: str = field(default = None)
     msg: str = field(default = None)
     result: str | dict | list = field(default = None)
+
+
+# --- BI SERVER POST --- #
+@dataclass(kw_only = True)
+class JobDetailsBIServerPostResult(BaseClass):
+    Status: str = field(default=None)
+    Count: int = field(default=None)
+    ServerIDs: list = field(default=None)
+    Errors: list = field(default=None)
+
+    @classmethod
+    def _from_api_response(cls, body_params: dict):
+        return cls(**{
+            k.replace(' ', ''): v for k, v in body_params.items()
+            if k.replace(' ', '') in inspect.signature(cls).parameters
+        })
+
+@dataclass(kw_only = True)
+class JobDetailsBIServerPost(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, dict):
+            # Note: There is a space in "Server IDs"
+            if all(var in ("Status", "Count", "Server IDs", "Errors") for var in self.result.keys()):
+                self.result = JobDetailsBIServerPostResult._from_api_response(self.result)
 
 # --- DOCUMENT POST --- #
 

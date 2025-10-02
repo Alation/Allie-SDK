@@ -172,7 +172,8 @@ class AsyncHandler(RequestHandler):
                     # check if the response includes a job_id and only then fetch job details
                     if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
                         job = AlationJob(self.access_token, self.session, self.host, async_response)
-                        results.extend(job.check_job_status())
+                        job_status = job.check_job_status()
+                        results.extend(job_status)
                     else:
                         # add the error details to the results list
                         results.append(async_response)

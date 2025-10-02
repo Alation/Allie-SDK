@@ -1,33 +1,46 @@
 """Alation REST API Methods."""
 
 import logging.config
+import os
+import sys
 
 import requests
+import time
 
 from .core.logs import LoggingConfigs
+
 from .methods import (
-    AlationAuthentication,
-    AlationBusinessPolicy,
-    AlationConnector,
-    AlationCustomField,
-    AlationCustomTemplate,
-    AlationDataQuality,
-    AlationDatasource,
-    AlationDocument,
-    AlationDocumentHubFolder,
-    AlationDomain,
-    AlationGlossaryTerm,
-    AlationGroup,
-    AlationOtype,
-    AlationPolicyGroup,
-    AlationRDBMS,
-    AlationTrustChecks,
-    AlationUser,
-    AlationVirtualDataSource,
-    AlationVirtualFileSystem,
-    AlationVisualConfig,
+    AlationAuthentication
+    , AlationBISource
+    , AlationBusinessPolicy
+    , AlationConnector
+    , AlationCustomField
+    , AlationCustomTemplate
+    , AlationDataQuality
+    , AlationDatasource
+    , AlationDocument
+    , AlationDocumentHubFolder
+    , AlationDomain
+    , AlationGlossaryTerm
+    , AlationGroup
+    , AlationOtype
+    , AlationPolicyGroup
+    , AlationRDBMS
+    , AlationTrustChecks
+    , AlationUser
+    , AlationVirtualFileSystem
+    , AlationVirtualDataSource
+    , AlationVisualConfig
 )
+
 from .models import JobDetails
+
+os.makedirs('logs', exist_ok=True)
+for log_file in os.listdir('logs'):
+    log = os.path.join('./logs', log_file)
+    if os.stat(log).st_mtime < time.time() - 7 * 86400:
+        if os.path.isfile(log):
+            os.remove(log)
 
 logging.config.dictConfig(LoggingConfigs.logging_configs())
 LOGGER = logging.getLogger('allie_sdk_logger')
@@ -86,6 +99,9 @@ class Alation(object):
             )
 
         # Initialize Remaining Alation API Methods
+        self.bi_source = AlationBISource(
+            access_token=self.access_token, session=session, host=host
+        )
         self.connector = AlationConnector(
             access_token=self.access_token, session=session, host=host
         )
