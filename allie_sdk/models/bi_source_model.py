@@ -137,6 +137,7 @@ class BIFolder(BaseClass):
     subfolders: list = field(default=None)
     connections: list = field(default=None)
     reports: list = field(default=None)
+    datasources: list = field(default=None) # not listed in docu or yaml spec, but return by request call
 
     def __post_init__(self):
         if isinstance(self.created_at, str):

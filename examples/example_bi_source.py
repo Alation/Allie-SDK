@@ -66,110 +66,110 @@ alation = allie.Alation(
 # CREATE BI SERVER
 # ================================
 
-# created_bi_servers = alation.bi_source.create_bi_servers(
-#     [
-#         allie.BIServerItem(
-#             uri = "http://localhost:5000/bi_servers"
-#             , title = "BI Server Test"
-#             , description = "BI Server Test"
-#             , name_configuration = allie.BIServerNameConfiguration(
-#                 bi_report = "BI Report"
-#                 , bi_datasource = "BI Data Source"
-#                 , bi_folder = "BI Folder"
-#                 , bi_connection = "BI Connection"
-#             )
-#         )
-#     ]
-# )
-#
-# if created_bi_servers is None:
-#     logging.error("Tried to create BI Server but received no response ...")
-#     sys.exit(1)
-# elif isinstance(created_bi_servers, allie.JobDetailsBIServerPost):
-#     if created_bi_servers.status == "successful":
-#         created_bi_server_id = created_bi_servers.result.ServerIDs[0]
-#         logging.info(f"Number of BI Servers created: {created_bi_servers.result.Count}")
-#         logging.info(f"The following BI Servers were created (IDs): {created_bi_server_id}")
-#     else:
-#         logging.error(f"Tried to create BI Servers but received {created_bi_servers.status}: {created_bi_servers.result}")
-# else:
-#     logging.error(f"Unexpected result ... I don't know what to do ...")
-#     sys.exit(1)
-#
-# # ================================
-# # GET BI SERVERS
-# # ================================
-#
-# existing_bi_servers = alation.bi_source.get_bi_servers()
-#
-#
-# if existing_bi_servers is None or len(existing_bi_servers) == 0:
-#     logging.warning("No BI Server was found.")
-# elif isinstance(existing_bi_servers, list):
-#     logging.info(f"Found {len(existing_bi_servers)} BI Servers:")
-#     for d in existing_bi_servers:
-#         logging.info(f"{d.title}")
-# else:
-#     print(f"Unexpected result ... I don't know what to do ...")
-#     sys.exit(1)
-#
-# # ================================
-# # GET ONE BI SERVER
-# # ================================
-#
-# existing_bi_servers = alation.bi_source.get_bi_servers(
-#     query_params = allie.BIServerParams(
-#         oids=[ created_bi_server_id ]
-#     )
-# )
-#
-# if existing_bi_servers is None or len(existing_bi_servers) == 0:
-#     logging.warning("No BI Server was found.")
-# elif isinstance(existing_bi_servers, list):
-#     logging.info(f"Found {len(existing_bi_servers)} BI Servers:")
-#     for d in existing_bi_servers:
-#         logging.info(f"{d.title}")
-# else:
-#     print(f"Unexpected result ... I don't know what to do ...")
-#     sys.exit(1)
-#
-# # ================================
-# # UPDATE BI SERVER
-# # ================================
-#
-# updated_bi_server = alation.bi_source.update_bi_server(
-#     bi_server_id = created_bi_server_id
-#     , bi_server = allie.BIServerItem(
-#             uri = "http://localhost:5000/bi_servers"
-#             , title = "BI Server Test"
-#             , description = "BI Server Test UPDATED"
-#             , name_configuration = allie.BIServerNameConfiguration(
-#                 bi_report = "BI Report"
-#                 , bi_datasource = "BI Data Source"
-#                 , bi_folder = "BI Folder"
-#                 , bi_connection = "BI Connection"
-#             )
-#         )
-# )
-#
-# if updated_bi_server is None:
-#     logging.error("Tried to update BI Server but received no response ...")
-#     sys.exit(1)
-# elif isinstance(updated_bi_server, allie.JobDetails):
-#     if updated_bi_server.status == "successful":
-#         logging.info(f"BI Server updated.")
-#     else:
-#         logging.error(f"Tried to update BI Server but received {updated_bi_server.status}: {updated_bi_server.result}")
-# else:
-#     logging.error(f"Unexpected result ... I don't know what to do ...")
-#     sys.exit(1)
+created_bi_servers = alation.bi_source.create_bi_servers(
+    [
+        allie.BIServerItem(
+            uri = "http://localhost:5000/bi_servers"
+            , title = "BI Server Test"
+            , description = "BI Server Test"
+            , name_configuration = allie.BIServerNameConfiguration(
+                bi_report = "BI Report"
+                , bi_datasource = "BI Data Source"
+                , bi_folder = "BI Folder"
+                , bi_connection = "BI Connection"
+            )
+        )
+    ]
+)
+
+if created_bi_servers is None:
+    logging.error("Tried to create BI Server but received no response ...")
+    sys.exit(1)
+elif isinstance(created_bi_servers, allie.JobDetailsBIServerPost):
+    if created_bi_servers.status == "successful":
+        created_bi_server_id = created_bi_servers.result.ServerIDs[0]
+        logging.info(f"Number of BI Servers created: {created_bi_servers.result.Count}")
+        logging.info(f"The following BI Servers were created (IDs): {created_bi_server_id}")
+    else:
+        logging.error(f"Tried to create BI Servers but received {created_bi_servers.status}: {created_bi_servers.result}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
+# GET BI SERVERS
+# ================================
+
+existing_bi_servers = alation.bi_source.get_bi_servers()
+
+
+if existing_bi_servers is None or len(existing_bi_servers) == 0:
+    logging.warning("No BI Server was found.")
+elif isinstance(existing_bi_servers, list):
+    logging.info(f"Found {len(existing_bi_servers)} BI Servers:")
+    for d in existing_bi_servers:
+        logging.info(f"{d.title}")
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
+# GET ONE BI SERVER
+# ================================
+
+existing_bi_servers = alation.bi_source.get_bi_servers(
+    query_params = allie.BIServerParams(
+        oids=[ created_bi_server_id ]
+    )
+)
+
+if existing_bi_servers is None or len(existing_bi_servers) == 0:
+    logging.warning("No BI Server was found.")
+elif isinstance(existing_bi_servers, list):
+    logging.info(f"Found {len(existing_bi_servers)} BI Servers:")
+    for d in existing_bi_servers:
+        logging.info(f"{d.title}")
+else:
+    print(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
+
+# ================================
+# UPDATE BI SERVER
+# ================================
+
+updated_bi_server = alation.bi_source.update_bi_server(
+    bi_server_id = created_bi_server_id
+    , bi_server = allie.BIServerItem(
+            uri = "http://localhost:5000/bi_servers"
+            , title = "BI Server Test"
+            , description = "BI Server Test UPDATED"
+            , name_configuration = allie.BIServerNameConfiguration(
+                bi_report = "BI Report"
+                , bi_datasource = "BI Data Source"
+                , bi_folder = "BI Folder"
+                , bi_connection = "BI Connection"
+            )
+        )
+)
+
+if updated_bi_server is None:
+    logging.error("Tried to update BI Server but received no response ...")
+    sys.exit(1)
+elif isinstance(updated_bi_server, allie.JobDetails):
+    if updated_bi_server.status == "successful":
+        logging.info(f"BI Server updated.")
+    else:
+        logging.error(f"Tried to update BI Server but received {updated_bi_server.status}: {updated_bi_server.result}")
+else:
+    logging.error(f"Unexpected result ... I don't know what to do ...")
+    sys.exit(1)
 
 
 # ================================
 # CREATE BI FOLDERS
 # ================================
 
-existing_bi_server_id = 21 # TODO: REMOVE LATER !!!
+existing_bi_server_id = created_bi_server_id
 
 created_bi_folder = alation.bi_source.create_or_update_bi_folders_using_external_id(
     bi_server_id = existing_bi_server_id

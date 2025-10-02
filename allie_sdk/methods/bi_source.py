@@ -15,7 +15,7 @@ class AlationBISource(AsyncHandler):
 
     def __init__(self, access_token: str, session: requests.Session,
                  host: str):
-        """Creates an instance of the Documents  object.
+        """Creates an instance of the BISource object.
         Args:
             access_token (str): Alation REST API Access Token.
             session (requests.Session): Python requests common session.
@@ -29,7 +29,7 @@ class AlationBISource(AsyncHandler):
         """Get multiple Alation BI Servers.
 
         Args:
-            query_params (BIServerParams): REST API Get Filter Values.
+            query_params (BIServerParams): REST API Get Filter Values
 
         Returns:
             list: Alation BI Servers
@@ -90,7 +90,7 @@ class AlationBISource(AsyncHandler):
             bi_server (BIServerItem): Alation BI Server to be updated.
 
         Returns:
-            JJobDetails
+            JobDetails
 
         """
         try:
@@ -133,7 +133,6 @@ class AlationBISource(AsyncHandler):
 
         Returns:
             list: Alation BI Folders
-
         """
         validate_query_params(query_params, BIFolderParams)
         params = query_params.generate_params_dict() if query_params else None
