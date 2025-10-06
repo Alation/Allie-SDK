@@ -79,6 +79,27 @@ class SchemaItem(BaseRDBMSItem):
 
         return payload
 
+
+@dataclass
+class SchemaPatchItem(BaseRDBMSItem):
+    id: int = field(default=None)
+    db_comment: str = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.id is None:
+            raise InvalidPostBody("'id' is a required field for Schema PATCH payload body")
+        payload = {'id': self.id}
+        if self.title:
+            payload['title'] = self.title
+        if self.description:
+            payload['description'] = self.description
+        if self.db_comment:
+            payload['db_comment'] = self.db_comment
+        if self.custom_fields:
+            payload['custom_fields'] = self._create_fields_payload()
+
+        return payload
+
 @dataclass
 class SchemaParams(BaseRDBMSParams):
     pass
@@ -132,6 +153,50 @@ class TableItem(BaseRDBMSItem):
             payload['custom_fields'] = self._create_fields_payload()
 
         return payload
+
+
+@dataclass
+class TablePatchItem(BaseRDBMSItem):
+    id: int = field(default=None)
+    table_comment: str = field(default=None)
+    table_type: str = field(default=None)
+    table_type_name: str = field(default=None)
+    owner: str = field(default=None)
+    sql: str = field(default=None)
+    base_table_key: str = field(default=None)
+    partition_definition: str = field(default=None)
+    partition_columns: list = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.id is None:
+            raise InvalidPostBody("'id' is a required field for Table PATCH payload body")
+
+        payload = {'id': self.id}
+        if self.title:
+            payload['title'] = self.title
+        if self.description:
+            payload['description'] = self.description
+        if self.table_comment:
+            payload['table_comment'] = self.table_comment
+        if self.table_type:
+            payload['table_type'] = self.table_type
+        if self.table_type_name:
+            payload['table_type_name'] = self.table_type_name
+        if self.owner:
+            payload['owner'] = self.owner
+        if self.sql:
+            payload['sql'] = self.sql
+        if self.base_table_key:
+            payload['base_table_key'] = self.base_table_key
+        if self.partition_definition:
+            payload['partition_definition'] = self.partition_definition
+        if self.partition_columns:
+            payload['partition_columns'] = self.partition_columns
+        if self.custom_fields:
+            payload['custom_fields'] = self._create_fields_payload()
+
+        return payload
+
 
 @dataclass
 class TableParams(BaseRDBMSParams):

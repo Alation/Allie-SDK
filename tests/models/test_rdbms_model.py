@@ -188,6 +188,54 @@ class TestRDBMSModels(unittest.TestCase):
 
         self.assertRaises(InvalidPostBody, lambda: mock_table.generate_api_post_payload())
 
+    def test_table_patch_item_payload(self):
+
+        mock_table = TablePatchItem(
+            id=123,
+            title='Updated Title',
+            description='Updated Description',
+            table_comment='Updated comment',
+            table_type='VIEW',
+            table_type_name='View',
+            owner='Alation_PS',
+            sql='select 1',
+            base_table_key='1.test.base',
+            partition_definition='P1',
+            partition_columns=['col_a', 'col_b'],
+            custom_fields=[
+                CustomFieldValueItem(field_id=1, value=CustomFieldStringValueItem(value='Testing')),
+                CustomFieldValueItem(field_id=2, value=[CustomFieldDictValueItem(otype='Table', oid=5)])
+            ]
+        )
+
+        expected_payload = {
+            'id': 123,
+            'title': 'Updated Title',
+            'description': 'Updated Description',
+            'table_comment': 'Updated comment',
+            'table_type': 'VIEW',
+            'table_type_name': 'View',
+            'owner': 'Alation_PS',
+            'sql': 'select 1',
+            'base_table_key': '1.test.base',
+            'partition_definition': 'P1',
+            'partition_columns': ['col_a', 'col_b'],
+            'custom_fields': [
+                {'field_id': 1, 'value': 'Testing'},
+                {'field_id': 2, 'value': [{'otype': 'table', 'oid': 5}]}
+            ]
+        }
+
+        self.assertEqual(mock_table.generate_api_patch_payload(), expected_payload)
+
+    def test_table_patch_item_exception_missing_id(self):
+
+        mock_table = TablePatchItem(
+            title='Updated Title'
+        )
+
+        self.assertRaises(InvalidPostBody, lambda: mock_table.generate_api_patch_payload())
+
     def test_column(self):
 
         column_response = {

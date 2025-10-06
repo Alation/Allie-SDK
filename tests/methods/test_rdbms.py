@@ -121,8 +121,102 @@ class TestRDBMS(unittest.TestCase):
         # Now we expect an HTTPError to be raised
         with self.assertRaises(requests.exceptions.HTTPError) as context:
             self.mock_user.post_schemas(ds_id=1, schemas=mock_schema_list)
-        
+
         # Verify the error response contains expected information
+        self.assertEqual(context.exception.response.status_code, 400)
+
+    @requests_mock.Mocker()
+    def test_success_patch_schemas(self, requests_mock):
+
+        schemas = [
+            SchemaPatchItem(
+                id=1,
+                title='Updated Schema Title',
+                description='Updated description for schema',
+                db_comment='New database comment'
+            )
+        ]
+
+        async_response = {
+            "job_id": 27808
+        }
+
+        requests_mock.register_uri(
+            method='PATCH',
+            url='/integration/v2/schema/?ds_id=1',
+            json=async_response,
+            status_code=202
+        )
+
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 5.01234 seconds at 2023-11-30 16:15:20.000000+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 schema objects.",
+                    "mapping": [
+                        {"id": 1, "key": "1.ORDERS"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        requests_mock.register_uri(
+            method='GET',
+            url='/api/v1/bulk_metadata/job/?id=27808',
+            json=job_api_response
+        )
+
+        async_result = self.mock_user.patch_schemas(
+            ds_id=1,
+            schemas=schemas
+        )
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful",
+                msg="Job finished in 5.01234 seconds at 2023-11-30 16:15:20.000000+00:00",
+                result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 schema objects.",
+                        mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=1,
+                                key="1.ORDERS"
+                            )
+                        ],
+                        errors=[]
+                    )
+                ]
+            )
+        ]
+
+        self.assertEqual(expected_result, async_result)
+
+    @requests_mock.Mocker()
+    def test_failed_patch_schemas(self, requests_mock):
+        mock_schema = SchemaPatchItem(id=1)
+        mock_schema_list = [mock_schema]
+
+        failed_response = {
+            "detail": "Incorrect input data. Please fix the errors and post the data.",
+            "errors": [
+                {
+                    "id": [
+                        "400068: id is a required input"
+                    ]
+                }
+            ],
+            "code": "400010"
+        }
+
+        requests_mock.register_uri('PATCH', '/integration/v2/schema/?ds_id=1',
+                      json=failed_response, status_code=400)
+
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            self.mock_user.patch_schemas(ds_id=1, schemas=mock_schema_list)
+
         self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
@@ -247,8 +341,102 @@ class TestRDBMS(unittest.TestCase):
         # Now we expect an HTTPError to be raised
         with self.assertRaises(requests.exceptions.HTTPError) as context:
             self.mock_user.post_tables(ds_id=1, tables=mock_table_list)
-        
+
         # Verify the error response contains expected information
+        self.assertEqual(context.exception.response.status_code, 400)
+
+    @requests_mock.Mocker()
+    def test_success_patch_tables(self, requests_mock):
+
+        tables = [
+            TablePatchItem(
+                id=1,
+                title='Updated Table Title',
+                description='Updated Table Description',
+                table_comment='Updated comment'
+            )
+        ]
+
+        async_response = {
+            "job_id": 27810
+        }
+
+        requests_mock.register_uri(
+            method='PATCH',
+            url='/integration/v2/table/?ds_id=1',
+            json=async_response,
+            status_code=202
+        )
+
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 5.000000 seconds at 2023-11-30 16:21:37.152796+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 table objects.",
+                    "mapping": [
+                        {"id": 1, "key": "1.schema.table"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        requests_mock.register_uri(
+            method='GET',
+            url='/api/v1/bulk_metadata/job/?id=27810',
+            json=job_api_response
+        )
+
+        async_result = self.mock_user.patch_tables(
+            ds_id=1,
+            tables=tables
+        )
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful",
+                msg="Job finished in 5.000000 seconds at 2023-11-30 16:21:37.152796+00:00",
+                result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 table objects.",
+                        mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=1,
+                                key="1.schema.table"
+                            )
+                        ],
+                        errors=[]
+                    )
+                ]
+            )
+        ]
+
+        self.assertEqual(expected_result, async_result)
+
+    @requests_mock.Mocker()
+    def test_failed_patch_tables(self, requests_mock):
+        mock_table = TablePatchItem(id=1)
+        mock_table_list = [mock_table]
+
+        failed_response = {
+            "detail": "Incorrect input data. Please fix the errors and post the data.",
+            "errors": [
+                {
+                    "id": [
+                        "400068: id is a required input"
+                    ]
+                }
+            ],
+            "code": "400010",
+        }
+
+        requests_mock.register_uri('PATCH', '/integration/v2/table/?ds_id=1',
+                      json=failed_response, status_code=400)
+
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            self.mock_user.patch_tables(ds_id=1, tables=mock_table_list)
+
         self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
