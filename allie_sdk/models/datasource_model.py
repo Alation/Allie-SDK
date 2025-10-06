@@ -1,24 +1,32 @@
 
 """Alation REST API Datasource Data Models."""
 
+import dataclasses
 from dataclasses import dataclass, field
+
 from ..core.data_structures import BaseClass, BaseParams
-from ..core.custom_exceptions import validate_rest_payload, InvalidPostBody
+from ..core.custom_exceptions import InvalidPostBody
 
 # DATA MODELS FOR OCF DATA SOURCES
 
 @dataclass(kw_only=True)
-class OCFDatasource(BaseClass):
-    uri:str = field(default=None)
-    connector_id:int = field(default=None)
-    db_username:str = field(default=None)
-    title:str = field(default=None)
-    description:str = field(default=None)
-    private:bool = field(default=None)
-    is_hidden:bool = field(default=None)
+class _OCFDatasourceBase(BaseClass):
+    uri: str = field(default=None)
+    connector_id: int = field(default=None)
+    db_username: str = field(default=None)
+    title: str = field(default=None)
+    description: str = field(default=None)
+    private: bool = field(default=None)
+    # is_hidden: bool = field(default=None) => not available in PATCH request
+
+
+@dataclass(kw_only=True)
+class OCFDatasource(_OCFDatasourceBase):
+
+    is_hidden:bool = field(default=False)
     id:int = field(default=None)
     supports_explain:bool = field(default=None)
-    data_upload_disabled_message:bool = field(default=None)
+    data_upload_disabled_message:str = field(default=None)
     is_gone:bool = field(default=None)
     supports_qli_diagnostics:bool = field(default=None)
     latest_extraction_time:str = field(default=None)
@@ -62,12 +70,77 @@ class OCFDatasource(BaseClass):
         if isinstance(self.latest_extraction_time, str):
             self.latest_extraction_time = self.convert_timestamp(self.latest_extraction_time)
 
+
+@dataclass(kw_only=True)
+class OCFDatasourcePostItem(_OCFDatasourceBase):
+    """Payload used to create a new OCF datasource."""
+
+    is_hidden: bool = field(default=False)
+    db_password: str = field(default=None)
+
+    _MANDATORY_FIELDS = {
+        "connector_id"
+        , "title"
+        , "db_username"
+        , "uri"
+    }
+
+    def generate_post_payload(self) -> dict:
+
+        if self.connector_id is None:
+            raise InvalidPostBody("'connector_id' is required for the Datasource POST payload.")
+        if self.title is None:
+            raise InvalidPostBody("'title' is required for the Datasource POST payload.")
+        if self.db_username is None:
+            raise InvalidPostBody("'db_username' is required for the Datasource POST payload.")
+        if self.uri is None:
+            raise InvalidPostBody("'uri' is required for the Datasource POST payload.")
+
+        payload = dataclasses.asdict(
+            self,
+            dict_factory=lambda values: {
+                key: value for key, value in values
+                if value is not None
+            }
+        )
+
+        return payload
+
+
+@dataclass(kw_only=True)
+class OCFDatasourcePutItem(_OCFDatasourceBase):
+    """Payload used when updating an existing OCF datasource."""
+
+    db_password: str = field(default=None)
+    compose_default_uri: str = field(default=None)
+
+    def generate_put_payload(self) -> dict:
+
+        payload = dataclasses.asdict(
+            self,
+            dict_factory=lambda values: {
+                key: value for key, value in values
+                if value is not None
+            }
+        )
+
+        return payload
+
 @dataclass(kw_only=True)
 class OCFDatasourceParams(BaseParams):
     include_hidden:bool = field(default=False)
+    exclude_suspended:bool = field(default=False)
 
 
+@dataclass(kw_only=True)
+class OCFDatasourceGetParams(BaseParams):
+    """Query parameters available when retrieving a datasource by id."""
+    exclude_suspended:bool = field(default=False)
+
+# ---------------------------------------------------------------------------#
 # DATA MODELS FOR OLD NATIVE CONNECTORS AND RELATIONAL VIRTUAL DATA SOURCES
+# ---------------------------------------------------------------------------#
+
 @dataclass(kw_only=True)
 class NativeDatasource(BaseClass):
     dbtype: str = field(default=None)
