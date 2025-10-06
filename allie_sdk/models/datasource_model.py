@@ -114,7 +114,7 @@ class OCFDatasourcePutItem(_OCFDatasourceBase):
     db_password: str = field(default=None)
     compose_default_uri: str = field(default=None)
 
-    def generate_patch_payload(self) -> dict:
+    def generate_put_payload(self) -> dict:
 
         payload = dataclasses.asdict(
             self,

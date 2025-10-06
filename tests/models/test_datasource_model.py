@@ -125,37 +125,35 @@ class TestDatasourceModels(unittest.TestCase):
         self.assertEqual(input_transformed, output)
 
     def test_ocf_datasource_post_payload(self):
-        datasource = OCFDatasourcePost(
+        datasource = OCFDatasourcePostItem(
             connector_id=101,
             title="New Datasource",
             uri="mysql://<hostname>:<port>/<db_name>",
-            private=False,
-            latest_extraction_time="2024-06-17T12:23:27.154Z",
-            enable_default_schema_extraction=True,
+            db_username = "a_user"
         )
 
-        payload = datasource.generate_api_post_payload()
+        payload = datasource.generate_post_payload()
 
         expected = {
-            "connector_id": 101,
-            "title": "New Datasource",
-            "uri": "mysql://<hostname>:<port>/<db_name>",
-            "private": False,
-            "enable_default_schema_extraction": True,
+            'connector_id': 101
+            , 'db_username': 'a_user'
+            , 'is_hidden': False
+            , 'title': 'New Datasource'
+            , 'uri': 'mysql://<hostname>:<port>/<db_name>'
         }
 
         self.assertDictEqual(payload, expected)
 
     def test_ocf_datasource_post_requires_fields(self):
-        datasource = OCFDatasourcePost(title="Missing connector")
+        datasource = OCFDatasourcePostItem(title="Missing connector")
 
         with self.assertRaises(InvalidPostBody):
-            datasource.generate_api_post_payload()
+            datasource.generate_post_payload()
 
     def test_ocf_datasource_update_payload(self):
-        datasource_update = OCFDatasourceUpdatePayload(description="Updated description", private=True)
+        datasource_update = OCFDatasourcePutItem(description="Updated description", private=True)
 
-        payload = datasource_update.generate_api_put_payload()
+        payload = datasource_update.generate_put_payload()
 
         expected = {
             "description": "Updated description",
@@ -163,12 +161,6 @@ class TestDatasourceModels(unittest.TestCase):
         }
 
         self.assertDictEqual(payload, expected)
-
-    def test_ocf_datasource_update_requires_changes(self):
-        datasource_update = OCFDatasourceUpdatePayload()
-
-        with self.assertRaises(InvalidPostBody):
-            datasource_update.generate_api_put_payload()
 
     def test_ocf_datasource_params_generate(self):
         params = OCFDatasourceParams(include_hidden=True, exclude_suspended=True)

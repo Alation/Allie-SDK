@@ -124,7 +124,7 @@ class AlationDatasource(RequestHandler):
             raise InvalidPostBody("Datasource payload is required for PUT requests.")
 
         validate_rest_payload(payload=[datasource], expected_types=(OCFDatasourcePutItem,))
-        payload = datasource.generate_patch_payload()
+        payload = datasource.generate_put_payload()
 
         datasource_response = self.put(
             url=f'/integration/v2/datasource/{datasource_id}/',
