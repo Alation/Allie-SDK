@@ -7,7 +7,13 @@ import requests
 from ..core.request_handler import RequestHandler
 from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
-from ..models.domain_model import Domain, DomainMembership, DomainParams
+from ..models.domain_model import (
+    Domain,
+    DomainMembership,
+    DomainMembershipRule,
+    DomainMembershipRuleRequest,
+    DomainParams,
+)
 from ..models.job_model import JobDetails
 from .job import AlationJob
 
@@ -117,4 +123,51 @@ class AlationDomain(AsyncHandler):
                         , result = None
                     )
                 ]
+
+    def view_domain_membership_rules(
+        self,
+        rules_request: DomainMembershipRuleRequest,
+        limit: int | None = None,
+        skip: int | None = None,
+    ) -> list[DomainMembershipRule]:
+        """Retrieve membership rules applied to the requested domains."""
+
+        if not rules_request:
+            return []
+
+        validate_rest_payload(
+            payload=[rules_request],
+            expected_types=(DomainMembershipRuleRequest,),
+        )
+
+        payload = rules_request.generate_api_post_payload()
+
+        query_params = {}
+        if limit is not None:
+            query_params["limit"] = limit
+        if skip is not None:
+            query_params["skip"] = skip
+
+        response = self.post(
+            url='/domain/membership/view_rules/',
+            body=payload,
+            query_params=query_params or None,
+        )
+
+        def _map_rules(items: list) -> list[DomainMembershipRule]:
+            return [DomainMembershipRule.from_api_response(item) for item in items]
+
+        if isinstance(response, list):
+            return _map_rules(response)
+
+        if isinstance(response, dict):
+            # handle wrapped responses such as {"results": [...]}
+            if "results" in response and isinstance(response["results"], list):
+                return _map_rules(response["results"])
+
+            # handle single rule response
+            if any(key in response for key in ("domain_id", "otype", "oid")):
+                return _map_rules([response])
+
+        return []
 

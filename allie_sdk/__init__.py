@@ -47,6 +47,8 @@ from .models import (
     DocumentParams,
     Domain,
     DomainParams,
+    DomainMembershipRule,
+    DomainMembershipRuleRequest,
     DomainMembership,
     GlossaryTerm,
     GlossaryTermItem,
