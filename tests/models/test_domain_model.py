@@ -48,7 +48,7 @@ class TestDomainModels(unittest.TestCase):
 
     def test_domain_membership_rule_request_payload(self):
         request = DomainMembershipRuleRequest(
-            domain_id=[1, 2],
+            domain_ids=[1, 2],
             exclude=True,
             recursive=False,
         )

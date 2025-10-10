@@ -56,11 +56,11 @@ Python object used to filter domain membership rules returned by `view_domain_me
 
 Attributes:
 
-| Name | Type | Description |
-|------|------|-------------|
-| domain_id | list[int] | Domain identifiers whose rules should be returned. |
-| exclude | bool | Return rules that exclude (`True`) or include (`False`) objects in a domain. |
-| recursive | bool | Optional. Filter rules that are recursive (`True`) or non-recursive (`False`). |
+| Name       | Type | Description |
+|------------|------|-------------|
+| domain_ids | list[int] | Domain identifiers whose rules should be returned. |
+| exclude    | bool | Return rules that exclude (`True`) or include (`False`) objects in a domain. |
+| recursive  | bool | Optional. Filter rules that are recursive (`True`) or non-recursive (`False`). |
 
 ### DomainMembershipRule
 
@@ -111,9 +111,7 @@ Returns:
 ```
 view_domain_membership_rules(
     self,
-    rules_request: DomainMembershipRuleRequest,
-    limit: int | None = None,
-    skip: int | None = None,
+    rules_request: DomainMembershipRuleRequest
 ) -> list[DomainMembershipRule]
 ```
 
@@ -121,8 +119,6 @@ Browse the membership rules that are applied to the requested domains.
 
 Args:
 - `rules_request`: Filters describing which rules should be returned.
-- `limit`: Optional pagination limit for the response.
-- `skip`: Optional pagination offset for the response.
 
 Returns:
 - List of `DomainMembershipRule` instances representing the matching rules.

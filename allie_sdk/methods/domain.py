@@ -124,11 +124,9 @@ class AlationDomain(AsyncHandler):
                     )
                 ]
 
-    def view_domain_membership_rules(
+    def get_domain_membership_rules(
         self,
         rules_request: DomainMembershipRuleRequest,
-        limit: int | None = None,
-        skip: int | None = None,
     ) -> list[DomainMembershipRule]:
         """Retrieve membership rules applied to the requested domains."""
 
@@ -142,16 +140,9 @@ class AlationDomain(AsyncHandler):
 
         payload = rules_request.generate_api_post_payload()
 
-        query_params = {}
-        if limit is not None:
-            query_params["limit"] = limit
-        if skip is not None:
-            query_params["skip"] = skip
-
         response = self.post(
-            url='/domain/membership/view_rules/',
-            body=payload,
-            query_params=query_params or None,
+            url='/integration/v2/domain/membership/view_rules/',
+            body=payload
         )
 
         def _map_rules(items: list) -> list[DomainMembershipRule]:
@@ -159,15 +150,6 @@ class AlationDomain(AsyncHandler):
 
         if isinstance(response, list):
             return _map_rules(response)
-
-        if isinstance(response, dict):
-            # handle wrapped responses such as {"results": [...]}
-            if "results" in response and isinstance(response["results"], list):
-                return _map_rules(response["results"])
-
-            # handle single rule response
-            if any(key in response for key in ("domain_id", "otype", "oid")):
-                return _map_rules([response])
 
         return []
 

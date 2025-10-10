@@ -118,12 +118,12 @@ if domain_id:
     # ================================
 
     rules_request = allie.DomainMembershipRuleRequest(
-        domain_id=[domain_id],
+        domain_ids=[domain_id],
         exclude=DOMAIN_RULES_EXCLUDE,
         recursive=DOMAIN_RULES_RECURSIVE,
     )
 
-    rules = alation.domain.view_domain_membership_rules(rules_request)
+    rules = alation.domain.get_domain_membership_rules(rules_request)
 
     if not rules:
         logging.info("No membership rules matched the supplied filters.")

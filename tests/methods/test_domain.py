@@ -96,14 +96,14 @@ class TestDomain(unittest.TestCase):
 
         requests_mock.register_uri(
             method='POST',
-            url='/domain/membership/view_rules/',
+            url='/integration/v2/domain/membership/view_rules/',
             json=api_response,
             status_code=200,
         )
 
-        rules = self.mock_user.view_domain_membership_rules(
+        rules = self.mock_user.get_domain_membership_rules(
             DomainMembershipRuleRequest(
-                domain_id=[1],
+                domain_ids=[1],
                 exclude=False,
             )
         )

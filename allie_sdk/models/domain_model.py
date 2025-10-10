@@ -17,10 +17,10 @@ class Domain(BaseClass):
 @dataclass(kw_only = True)
 class DomainMembership(BaseClass):
     id:int = field(default = None)
-    exclude:bool = field(default = False)
-    recursive: bool = field(default=False)
     oid:list[int] = field(default_factory = list)
     otype:str = field(default = None)
+    exclude: bool = field(default=False)
+    recursive: bool = field(default=False)
 
     # PREPARE PAYLOAD
     # make sure payload includes only fields with values
@@ -42,12 +42,12 @@ class DomainMembership(BaseClass):
 # class for viewing membership rules applied on a domain
 @dataclass(kw_only = True)
 class DomainMembershipRuleRequest(BaseClass):
-    domain_id: list[int] = field(default_factory=list)
+    domain_ids: list[int] = field(default_factory=list)
     exclude: bool | None = field(default=None)
     recursive: bool | None = field(default=None)
 
     def generate_api_post_payload(self) -> dict:
-        if not self.domain_id:
+        if not self.domain_ids:
             raise InvalidPostBody(
                 "'domain_id' is a required field for the DomainMembershipRuleRequest POST payload body"
             )
@@ -58,7 +58,7 @@ class DomainMembershipRuleRequest(BaseClass):
             )
 
         payload = {
-            "domain_id": self.domain_id,
+            "domain_id": self.domain_ids,
             "exclude": self.exclude,
         }
 
