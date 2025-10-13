@@ -25,6 +25,10 @@ DOMAIN_ASSIGNMENT_OBJECT_IDS = [1,2,3]
 # object type of the objects that should be assigned to the domain mentioned above
 DOMAIN_ASSIGNMENT_OBJECT_TYPE = "table"
 
+# Optional filters used when viewing domain membership rules.
+DOMAIN_RULES_EXCLUDE = False
+DOMAIN_RULES_RECURSIVE = None  # Set to True/False to filter by recursive rules
+
 # ================================
 # Define Logging Config
 # ================================
@@ -108,3 +112,29 @@ if domain_id:
     else:
         logging.info("Unexpected result ... I don't know what to do")
         sys.exit(1)
+
+    # ================================
+    # VIEW DOMAIN MEMBERSHIP RULES
+    # ================================
+
+    rules_request = allie.DomainMembershipRuleRequest(
+        domain_ids=[domain_id],
+        exclude=DOMAIN_RULES_EXCLUDE,
+        recursive=DOMAIN_RULES_RECURSIVE,
+    )
+
+    rules = alation.domain.get_domain_membership_rules(rules_request)
+
+    if not rules:
+        logging.info("No membership rules matched the supplied filters.")
+    else:
+        logging.info("Membership rules found:")
+        for rule in rules:
+            logging.info(
+                "Domain %s applies to otype '%s' (oid=%s), exclude=%s, recursive=%s",
+                rule.domain_id,
+                rule.otype,
+                rule.oid,
+                rule.exclude,
+                rule.recursive,
+            )
