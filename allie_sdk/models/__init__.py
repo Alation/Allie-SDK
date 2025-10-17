@@ -3,6 +3,7 @@ from .business_policy_model import *
 from .connector_model import *
 from .custom_field_model import *
 from .custom_template_model import *
+from .data_dictionary_model import *
 from .data_quality_model import *
 from .document_hub_folder_model import *
 from .datasource_model import *
