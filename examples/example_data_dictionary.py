@@ -38,7 +38,7 @@ alation = allie.Alation(
     refresh_token=ALATION_API_REFRESH_TOKEN,
 )
 
-payload = allie.UploadDataDictionaryRequestPayload(
+payload = allie.DataDictionaryItem(
     overwrite_values=True,
     allow_reset=False,
     file=DATA_DICTIONARY_PATH,
@@ -50,25 +50,23 @@ task = alation.data_dictionary.upload_data_dictionary(
     payload,
 )
 
-logging.info("Data dictionary upload task created with id: %s", task.task.id)
+logging.info(f"Data dictionary upload task created with id: {task.task.id}")
 
 # Poll the task endpoint for a short time just to illustrate usage
 task_details = alation.data_dictionary.get_data_dictionary_task_details(task.task.id)
 
 while task_details.state != "COMPLETED":
+    batches_completed = task_details.progress.batches_completed if task_details.progress else 0
+    total_batches = task_details.progress.total_batches if task_details.progress else 0
     logging.info(
-        "Task %s currently in state %s (batches completed: %s/%s)",
-        task_details.id,
-        task_details.state,
-        task_details.progress.batches_completed if task_details.progress else 0,
-        task_details.progress.total_batches if task_details.progress else 0,
+        f"Task {task_details.id} currently in state {task_details.state} (batches completed: {batches_completed}/{total_batches})"
     )
     sleep(2)
     task_details = alation.data_dictionary.get_data_dictionary_task_details(task.task.id)
 
-logging.info("Task %s completed with status %s", task_details.id, task_details.status)
+logging.info(f"Task {task_details.id} completed with status {task_details.status}")
 
 if task_details.status != "SUCCEEDED":
     errors = alation.data_dictionary.get_data_dictionary_task_errors(task_details.id)
     if errors:
-        logging.info("First reported error: %s", errors[0].error_message)
+        logging.info(f"First reported error: {errors[0].error_message}")

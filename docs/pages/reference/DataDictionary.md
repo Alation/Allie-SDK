@@ -40,7 +40,7 @@ Represents a single error emitted during processing. Inspect the nested `details
 Upload a data dictionary file for a supported catalog object. Returns `AsyncTaskDetails` describing the asynchronous task.
 
 ```python
-payload = allie.UploadDataDictionaryRequestPayload(
+payload = allie.DataDictionaryItem(
     overwrite_values=True,
     allow_reset=False,
     file="/path/to/dictionary.csv",

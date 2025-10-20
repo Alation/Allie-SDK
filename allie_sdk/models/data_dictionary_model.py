@@ -45,7 +45,7 @@ class AsyncTask(BaseClass):
                 for link in self.links
             ]
 
-
+# TODO: Isn't this structure used elsewhere as well? I remember Mario talking about this?
 @dataclass(kw_only=True)
 class AsyncTaskDetails(BaseClass):
     """Container model for asynchronous task details."""
@@ -201,7 +201,7 @@ class DataDictionaryTaskError(BaseClass):
 
 
 @dataclass
-class UploadDataDictionaryRequestPayload:
+class DataDictionaryItem:
     """Represents the payload for uploading a data dictionary file."""
 
     overwrite_values: bool

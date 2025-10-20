@@ -115,7 +115,7 @@ from .models import (
     TrustCheckFlagItem,
     TrustCheckFlagParams,
     TrustCheckFlagSubject,
-    UploadDataDictionaryRequestPayload,
+    DataDictionaryItem,
     User,
     UserParams,
     VirtualDataSource,

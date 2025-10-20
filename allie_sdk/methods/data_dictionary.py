@@ -13,7 +13,7 @@ from ..models.data_dictionary_model import (
     AsyncTaskDetails,
     DataDictionaryTaskDetails,
     DataDictionaryTaskError,
-    UploadDataDictionaryRequestPayload,
+    DataDictionaryItem,
 )
 
 LOGGER = logging.getLogger('allie_sdk_logger')
@@ -42,14 +42,14 @@ class AlationDataDictionary(RequestHandler):
         self,
         object_type: str,
         object_id: int | str,
-        payload: UploadDataDictionaryRequestPayload,
+        payload: DataDictionaryItem,
     ) -> AsyncTaskDetails:
         """Upload a data dictionary file for a catalog object."""
 
         self._validate_object_type(object_type)
         self._validate_object_id(object_id)
 
-        validate_rest_payload([payload], expected_types=(UploadDataDictionaryRequestPayload,))
+        validate_rest_payload([payload], expected_types=(DataDictionaryItem,))
 
         data, files, closeables = payload.generate_multipart_payload()
         url = f'/integration/v1/data_dictionary/{object_type}/{object_id}/upload/'
@@ -63,6 +63,7 @@ class AlationDataDictionary(RequestHandler):
         finally:
             self._close_file_handles(closeables)
 
+    # TODO: This and the below methods should really be included in Allie-SDK core, or?
     def get_data_dictionary_task_details(self, task_id: str) -> DataDictionaryTaskDetails:
         """Retrieve details of an asynchronous data dictionary upload task."""
 

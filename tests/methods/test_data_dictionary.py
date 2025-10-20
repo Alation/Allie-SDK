@@ -7,7 +7,7 @@ from allie_sdk.models.data_dictionary_model import (
     AsyncTaskDetails,
     DataDictionaryTaskDetails,
     DataDictionaryTaskError,
-    UploadDataDictionaryRequestPayload,
+    DataDictionaryItem,
 )
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
@@ -40,7 +40,7 @@ class TestDataDictionary:
             status_code=202,
         )
 
-        payload = UploadDataDictionaryRequestPayload(
+        payload = DataDictionaryItem(
             overwrite_values=True,
             allow_reset=True,
             file=b"name,description",
@@ -114,7 +114,7 @@ class TestDataDictionary:
         assert result[0].fatal is True
 
     def test_upload_data_dictionary_invalid_object_type(self):
-        payload = UploadDataDictionaryRequestPayload(
+        payload = DataDictionaryItem(
             overwrite_values=True,
             file=b"name,description",
         )
@@ -123,7 +123,7 @@ class TestDataDictionary:
             self.client.upload_data_dictionary('invalid', 1, payload)
 
     def test_upload_data_dictionary_missing_object_id(self):
-        payload = UploadDataDictionaryRequestPayload(
+        payload = DataDictionaryItem(
             overwrite_values=True,
             file=b"name,description",
         )

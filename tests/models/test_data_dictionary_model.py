@@ -8,7 +8,7 @@ from allie_sdk.models.data_dictionary_model import (
     AsyncTaskDetails,
     DataDictionaryTaskDetails,
     DataDictionaryTaskError,
-    UploadDataDictionaryRequestPayload,
+    DataDictionaryItem,
 )
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
@@ -100,7 +100,7 @@ def test_data_dictionary_task_error_from_api():
 
 
 def test_upload_payload_from_bytes():
-    payload = UploadDataDictionaryRequestPayload(
+    payload = DataDictionaryItem(
         overwrite_values=True,
         allow_reset=False,
         file=b"column,description",
@@ -121,7 +121,7 @@ def test_upload_payload_from_path(tmp_path: Path):
     file_path = tmp_path / "dd.csv"
     file_path.write_text("column,description")
 
-    payload = UploadDataDictionaryRequestPayload(
+    payload = DataDictionaryItem(
         overwrite_values=False,
         file=str(file_path),
     )
@@ -136,19 +136,19 @@ def test_upload_payload_from_path(tmp_path: Path):
 
 
 def test_upload_payload_invalid_file():
-    payload = UploadDataDictionaryRequestPayload(
+    payload = DataDictionaryItem(
         overwrite_values=True,
         file=BytesIO(b"column"),
     )
 
     with pytest.raises(InvalidPostBody):
-        UploadDataDictionaryRequestPayload(
+        DataDictionaryItem(
             overwrite_values="yes",  # type: ignore[arg-type]
             file=BytesIO(b"column"),
         )
 
     with pytest.raises(InvalidPostBody):
-        UploadDataDictionaryRequestPayload(
+        DataDictionaryItem(
             overwrite_values=True,
             file_name=" ",
             file="/tmp/non-existing-file.csv",
