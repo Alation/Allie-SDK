@@ -4,17 +4,19 @@ from __future__ import annotations
 
 import logging
 from typing import Iterable
+from time import sleep
 
 import requests
 
 from ..core.custom_exceptions import InvalidPostBody, validate_rest_payload
 from ..core.request_handler import RequestHandler
 from ..models.data_dictionary_model import (
-    AsyncTaskDetails,
+    DataDictionaryAsyncTaskDetails,
     DataDictionaryTaskDetails,
     DataDictionaryTaskError,
     DataDictionaryItem,
 )
+from ..models.job_model import *
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
@@ -38,32 +40,6 @@ class AlationDataDictionary(RequestHandler):
 
         super().__init__(session=session, host=host, access_token=access_token)
 
-    def upload_data_dictionary(
-        self,
-        object_type: str,
-        object_id: int | str,
-        payload: DataDictionaryItem,
-    ) -> AsyncTaskDetails:
-        """Upload a data dictionary file for a catalog object."""
-
-        self._validate_object_type(object_type)
-        self._validate_object_id(object_id)
-
-        validate_rest_payload([payload], expected_types=(DataDictionaryItem,))
-
-        data, files, closeables = payload.generate_multipart_payload()
-        url = f'/integration/v1/data_dictionary/{object_type}/{object_id}/upload/'
-
-        try:
-            LOGGER.info(
-                "Uploading data dictionary for object_type='%s', object_id='%s'", object_type, object_id
-            )
-            response = self.put(url=url, body=data, files=files)
-            return AsyncTaskDetails.from_api_response(response)
-        finally:
-            self._close_file_handles(closeables)
-
-    # TODO: This and the below methods should really be included in Allie-SDK core, or?
     def get_data_dictionary_task_details(self, task_id: str) -> DataDictionaryTaskDetails:
         """Retrieve details of an asynchronous data dictionary upload task."""
 
@@ -99,6 +75,75 @@ class AlationDataDictionary(RequestHandler):
             else item
             for item in response
         ]
+
+    def upload_data_dictionary(
+        self,
+        object_type: str,
+        object_id: int | str,
+        payload: DataDictionaryItem,
+    ) -> JobDetails:
+        """Upload a data dictionary file for a catalog object."""
+
+        self._validate_object_type(object_type)
+        self._validate_object_id(object_id)
+
+        validate_rest_payload([payload], expected_types=(DataDictionaryItem,))
+
+        data, files, closeables = payload.generate_multipart_payload()
+        url = f'/integration/v1/data_dictionary/{object_type}/{object_id}/upload/'
+
+        result = ""
+
+        try:
+            LOGGER.info(
+                "Uploading data dictionary for object_type='%s', object_id='%s'", object_type, object_id
+            )
+            """
+            The data dict upload is an async job. Why are we not using async_put here? Reasons:
+            
+            - async_put doesn't expect file input (it splits a payload into batches for processing)
+            - the async_handler uses the job status endpoint to get the status 
+            
+            So overall it was easier to just keep the logic contained within here.
+            """
+
+            response = self.put(url=url, body=data, files=files)
+            task =  DataDictionaryAsyncTaskDetails.from_api_response(response)
+
+            # Poll the task endpoint for a short time just to illustrate usage
+            task_details = self.get_data_dictionary_task_details(task.task.id)
+
+            while task_details.state != "COMPLETED":
+                batches_completed = task_details.progress.batches_completed if task_details.progress else 0
+                total_batches = task_details.progress.total_batches if task_details.progress else 0
+                logging.info(
+                    f"Task {task_details.id} currently in state {task_details.state} (batches completed: {batches_completed}/{total_batches})"
+                )
+                sleep(2)
+                task_details = self.get_data_dictionary_task_details(task.task.id)
+
+            logging.info(f"Task {task_details.id} completed with status {task_details.status}")
+
+            if task_details.status != "SUCCEEDED":
+                errors = self.get_data_dictionary_task_errors(task_details.id)
+                if errors:
+                    logging.info(f"First reported error: {errors[0].error_message}")
+                result = JobDetails(
+                    status = "failed"
+                    , msg = errors[0].error_message
+                    , result = ""
+                )
+            else:
+                result = JobDetails(
+                    status = "successful"
+                    , msg = f"Upload stats: {task_details.result}. Link to status report: {task_details.report_download_link}"
+                    , result = ""
+                )
+
+        finally:
+            self._close_file_handles(closeables)
+
+        return result
 
     @staticmethod
     def _close_file_handles(closeables: Iterable):

@@ -4,7 +4,7 @@ import pytest
 
 from allie_sdk.methods.data_dictionary import AlationDataDictionary, SUPPORTED_OBJECT_TYPES
 from allie_sdk.models.data_dictionary_model import (
-    AsyncTaskDetails,
+    DataDictionaryAsyncTaskDetails,
     DataDictionaryTaskDetails,
     DataDictionaryTaskError,
     DataDictionaryItem,
@@ -49,7 +49,7 @@ class TestDataDictionary:
 
         result = self.client.upload_data_dictionary('data', 1, payload)
 
-        assert isinstance(result, AsyncTaskDetails)
+        assert isinstance(result, DataDictionaryAsyncTaskDetails)
         assert result.task.state == 'QUEUED'
 
         request_body = mocker.last_request.body

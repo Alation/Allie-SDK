@@ -24,7 +24,7 @@ class AsyncTaskLink(BaseClass):
 
 
 @dataclass(kw_only=True)
-class AsyncTask(BaseClass):
+class DataDictionaryAsyncTask(BaseClass):
     """Represents an asynchronous task registered by Alation."""
 
     id: str = field(default=None)
@@ -47,14 +47,14 @@ class AsyncTask(BaseClass):
 
 # TODO: Isn't this structure used elsewhere as well? I remember Mario talking about this?
 @dataclass(kw_only=True)
-class AsyncTaskDetails(BaseClass):
+class DataDictionaryAsyncTaskDetails(BaseClass):
     """Container model for asynchronous task details."""
 
-    task: AsyncTask = field(default=None)
+    task: DataDictionaryAsyncTask = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.task, dict):
-            self.task = AsyncTask.from_api_response(self.task)
+            self.task = DataDictionaryAsyncTask.from_api_response(self.task)
 
 
 @dataclass(kw_only=True)

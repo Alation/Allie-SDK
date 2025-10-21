@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from allie_sdk.models.data_dictionary_model import (
-    AsyncTaskDetails,
+    DataDictionaryAsyncTaskDetails,
     DataDictionaryTaskDetails,
     DataDictionaryTaskError,
     DataDictionaryItem,
@@ -29,9 +29,9 @@ def test_async_task_details_from_api():
         }
     }
 
-    result = AsyncTaskDetails.from_api_response(payload)
+    result = DataDictionaryAsyncTaskDetails.from_api_response(payload)
 
-    assert isinstance(result.task, AsyncTaskDetails.__annotations__["task"])
+    assert isinstance(result.task, DataDictionaryAsyncTaskDetails.__annotations__["task"])
     assert isinstance(result.task.ts_created, datetime)
     assert result.task.links[0].rel == "info and status"
 

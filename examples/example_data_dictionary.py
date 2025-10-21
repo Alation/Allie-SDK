@@ -1,4 +1,14 @@
-"""Example of uploading a data dictionary file via the Allie SDK."""
+"""
+Example of uploading a data dictionary file via the Allie SDK
+
+Prerequisites: UPDATE ++++
+
+- You adjusted the "config.ini" file with your settings.
+- Download the data dictionary from one Alation data source (that you can use for testing)
+- Make some adjustments to the data dictionary (e.g. change a description)
+- Adjust some variables in the code below (e.g. filename)
+
+"""
 
 import configparser
 import logging
@@ -9,19 +19,9 @@ from time import sleep
 import allie_sdk as allie
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    stream=sys.stdout,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-)
-
-
-CONFIG = configparser.ConfigParser()
-CONFIG.read("config.ini")
-
-ALATION_USER_ID = CONFIG.get(section="api", option="ALATION_USER_ID")
-ALATION_BASE_URL = CONFIG.get(section="api", option="ALATION_BASE_URL")
-ALATION_API_REFRESH_TOKEN = CONFIG.get(section="api", option="ALATION_API_REFRESH_TOKEN")
+# ================================
+# Set Global Variables
+# ================================
 
 # Update these variables for your environment
 TARGET_OBJECT_TYPE = "data"  # see SUPPORTED_OBJECT_TYPES for the full list
@@ -31,6 +31,30 @@ DATA_DICTIONARY_PATH = Path("./sample_data_dictionary.csv")
 if not DATA_DICTIONARY_PATH.exists():
     logging.error("Create a sample data dictionary file before running this example.")
     sys.exit(1)
+# ================================
+# Define Logging Config
+# ================================
+
+logging.basicConfig(
+  level=logging.INFO
+  , stream = sys.stdout
+  , format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# ================================
+# Source Global Config
+# ================================
+
+CONFIG = configparser.ConfigParser()
+CONFIG.read("config.ini")
+
+ALATION_USER_ID = CONFIG.get(section="api", option="ALATION_USER_ID")
+ALATION_BASE_URL = CONFIG.get(section="api", option="ALATION_BASE_URL")
+ALATION_API_REFRESH_TOKEN = CONFIG.get(section="api", option="ALATION_API_REFRESH_TOKEN")
+
+# ================================
+# Create session with your Alation instance
+# ================================
 
 alation = allie.Alation(
     host=ALATION_BASE_URL,
@@ -38,35 +62,22 @@ alation = allie.Alation(
     refresh_token=ALATION_API_REFRESH_TOKEN,
 )
 
+# ================================
+# DATA DICTIONARY UPLOAD
+# ================================
+
 payload = allie.DataDictionaryItem(
     overwrite_values=True,
     allow_reset=False,
     file=DATA_DICTIONARY_PATH,
 )
 
-task = alation.data_dictionary.upload_data_dictionary(
+result = alation.data_dictionary.upload_data_dictionary(
     TARGET_OBJECT_TYPE,
     TARGET_OBJECT_ID,
     payload,
 )
 
-logging.info(f"Data dictionary upload task created with id: {task.task.id}")
-
-# Poll the task endpoint for a short time just to illustrate usage
-task_details = alation.data_dictionary.get_data_dictionary_task_details(task.task.id)
-
-while task_details.state != "COMPLETED":
-    batches_completed = task_details.progress.batches_completed if task_details.progress else 0
-    total_batches = task_details.progress.total_batches if task_details.progress else 0
-    logging.info(
-        f"Task {task_details.id} currently in state {task_details.state} (batches completed: {batches_completed}/{total_batches})"
-    )
-    sleep(2)
-    task_details = alation.data_dictionary.get_data_dictionary_task_details(task.task.id)
-
-logging.info(f"Task {task_details.id} completed with status {task_details.status}")
-
-if task_details.status != "SUCCEEDED":
-    errors = alation.data_dictionary.get_data_dictionary_task_errors(task_details.id)
-    if errors:
-        logging.info(f"First reported error: {errors[0].error_message}")
+logging.info(f"Uploaded data dictionary file {DATA_DICTIONARY_PATH}")
+logging.info(f"Status: {result.status}")
+logging.info(f"Message: {result.msg}")

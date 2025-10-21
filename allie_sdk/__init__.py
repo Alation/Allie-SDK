@@ -1,8 +1,8 @@
 from .alation import Alation
 from .models import (
     AccessToken,
-    AsyncTask,
-    AsyncTaskDetails,
+    DataDictionaryAsyncTask,
+    DataDictionaryAsyncTaskDetails,
     AsyncTaskLink,
     BusinessPolicy,
     BusinessPolicyGroupIds,
