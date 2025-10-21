@@ -3,7 +3,6 @@
 import json
 import logging
 import requests
-import json
 
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
@@ -447,7 +446,7 @@ class RequestHandler(object):
                 # we just simply dump the output here
                 message = f'{message}\nERRORS: {json.dumps(error_errors)}'
 
-            if all(var is None for var in (error_code, error_title, error_title)):
+            if all(var is None for var in (error_code, error_title, error_detail)):
                 details['Error'] = response_data
                 message = f'{message}\nERROR: {response_data}'
 

@@ -191,7 +191,7 @@ class JobDetailsRdbmsResultMapping(BaseClass):
 @dataclass(kw_only = True)
 class JobDetailsRdbmsResult(BaseClass):
     response: str = field(default = None)
-    mapping: list[dict] = field(default_factory = list)
+    mapping: list[JobDetailsRdbmsResultMapping] = field(default_factory = list)
     errors: list = field(default_factory = list)
     def __post_init__(self):
         # Make sure the nested result gets converted to the proper data class

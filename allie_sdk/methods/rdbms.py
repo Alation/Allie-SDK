@@ -8,7 +8,7 @@ from ..core.custom_exceptions import validate_query_params, validate_rest_payloa
 from ..models.rdbms_model import (
     Schema, SchemaItem, SchemaParams,
     Table, TableItem, TableParams,
-    Column, ColumnItem, ColumnParams
+    Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams
 )
 from ..models.job_model import *
 
@@ -138,6 +138,28 @@ class AlationRDBMS(AsyncHandler):
         except requests.exceptions.HTTPError:
             # Re-raise the error
             raise
+
+    def patch_columns(self, ds_id: int, columns: list[ColumnPatchItem]) -> list[JobDetailsRdbms]:
+        """Patch (Update) Alation Column Objects.
+
+        Args:
+            ds_id (int): ID of the Alation Columns' Parent Datasource.
+            columns (list): Alation Columns to be updated.
+
+        Returns:
+            list[JobDetailsRdbms]: result of the job
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        item: ColumnPatchItem
+        validate_rest_payload(columns, (ColumnPatchItem,))
+        payload = [item.generate_api_patch_payload() for item in columns]
+        async_results = self.async_patch(f'/integration/v2/column/?ds_id={ds_id}', payload)
+
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
+        return []
 
     def post_columns(self, ds_id: int, columns: list) -> list[JobDetailsRdbms]:
         """Post (Create or Update) Alation Column Objects.

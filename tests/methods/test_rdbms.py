@@ -4,15 +4,17 @@ import requests_mock
 import unittest
 from allie_sdk.methods.rdbms import *
 
-MOCK_RDBMS = AlationRDBMS(
-    access_token='test', session=requests.session(), host='https://test.com'
-)
-
-
 class TestRDBMS(unittest.TestCase):
 
+    def setUp(self):
+        self.mock_user = AlationRDBMS(
+            access_token='test',
+            session=requests.session(),
+            host='https://test.com'
+        )
+
     @requests_mock.Mocker()
-    def test_success_get_schemas(self, m):
+    def test_success_get_schemas(self, requests_mock):
 
         mock_params = SchemaParams()
         mock_params.id.add(5)
@@ -42,26 +44,26 @@ class TestRDBMS(unittest.TestCase):
             }
         ]
         success_schemas = [Schema.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/v2/schema/?id=5', json=success_response)
-        schemas = MOCK_RDBMS.get_schemas(mock_params)
+        requests_mock.register_uri('GET', '/integration/v2/schema/?id=5', json=success_response)
+        schemas = self.mock_user.get_schemas(mock_params)
 
         self.assertEqual(success_schemas, schemas)
 
     @requests_mock.Mocker()
-    def test_failed_get_schemas(self, m):
+    def test_failed_get_schemas(self, requests_mock):
 
         failed_response = {
             "detail": "Invalid query parameters: [ids]",
             "code": "400006"
         }
-        m.register_uri('GET', '/integration/v2/schema/', json=failed_response, status_code=400)
+        requests_mock.register_uri('GET', '/integration/v2/schema/', json=failed_response, status_code=400)
         
         # The method should now raise an HTTPError for non-200 status codes
         with self.assertRaises(requests.exceptions.HTTPError):
-            MOCK_RDBMS.get_schemas()
+            self.mock_user.get_schemas()
 
     @requests_mock.Mocker()
-    def test_success_post_schemas(self, m):
+    def test_success_post_schemas(self, requests_mock):
 
         mock_schema = SchemaItem()
         mock_schema.key = '1.schema.test'
@@ -86,16 +88,16 @@ class TestRDBMS(unittest.TestCase):
                 }
             ]
         }
-        m.register_uri('POST', '/integration/v2/schema/?ds_id=1', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
-        async_result = MOCK_RDBMS.post_schemas(1, mock_schema_list)
+        requests_mock.register_uri('POST', '/integration/v2/schema/?ds_id=1', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        async_result = self.mock_user.post_schemas(1, mock_schema_list)
 
         input_transformed = [JobDetailsRdbms(**job_response)]
         # self.assertTrue(async_result)
         self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
-    def test_failed_post_schemas(self, m):
+    def test_failed_post_schemas(self, requests_mock):
         mock_schema = SchemaItem()
         mock_schema.key = '1.schema.test'
         mock_schema.title = 'Test Title'
@@ -113,18 +115,18 @@ class TestRDBMS(unittest.TestCase):
             ],
             "code": "400010"
         }
-        m.register_uri('POST', '/integration/v2/schema/?ds_id=1',
+        requests_mock.register_uri('POST', '/integration/v2/schema/?ds_id=1',
                       json=failed_response, status_code=400)
         
         # Now we expect an HTTPError to be raised
         with self.assertRaises(requests.exceptions.HTTPError) as context:
-            MOCK_RDBMS.post_schemas(ds_id=1, schemas=mock_schema_list)
+            self.mock_user.post_schemas(ds_id=1, schemas=mock_schema_list)
         
         # Verify the error response contains expected information
         self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
-    def test_success_get_tables(self, m):
+    def test_success_get_tables(self, requests_mock):
 
         mock_params = TableParams()
         mock_params.id.add(93)
@@ -160,26 +162,26 @@ class TestRDBMS(unittest.TestCase):
             }
         ]
         success_tables = [Table.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/v2/table/?id=93', json=success_response)
-        tables = MOCK_RDBMS.get_tables(mock_params)
+        requests_mock.register_uri('GET', '/integration/v2/table/?id=93', json=success_response)
+        tables = self.mock_user.get_tables(mock_params)
 
         self.assertEqual(success_tables, tables)
 
     @requests_mock.Mocker()
-    def test_failed_get_tables(self, m):
+    def test_failed_get_tables(self, requests_mock):
 
         failed_response = {
             "detail": "Invalid query parameters: [ids]",
             "code": "400006"
         }
-        m.register_uri('GET', '/integration/v2/table/', json=failed_response, status_code=400)
+        requests_mock.register_uri('GET', '/integration/v2/table/', json=failed_response, status_code=400)
         
         # The method should now raise an HTTPError for non-200 status codes
         with self.assertRaises(requests.exceptions.HTTPError):
-            MOCK_RDBMS.get_tables()
+            self.mock_user.get_tables()
 
     @requests_mock.Mocker()
-    def test_success_post_tables(self, m):
+    def test_success_post_tables(self, requests_mock):
 
         mock_table = TableItem()
         mock_table.key = '1.schema.test'
@@ -212,16 +214,16 @@ class TestRDBMS(unittest.TestCase):
             ]
         }
 
-        m.register_uri('POST', '/integration/v2/table/?ds_id=1', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
-        async_result = MOCK_RDBMS.post_tables(1, mock_table_list)
+        requests_mock.register_uri('POST', '/integration/v2/table/?ds_id=1', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        async_result = self.mock_user.post_tables(1, mock_table_list)
 
         input_transformed = [JobDetailsRdbms(**job_response)]
         # self.assertTrue(async_result)
         self.assertEqual(input_transformed, async_result)
 
     @requests_mock.Mocker()
-    def test_failed_post_tables(self, m):
+    def test_failed_post_tables(self, requests_mock):
         mock_table = TableItem()
         mock_table.key = '1.schema.test'
         mock_table.title = 'Test Title'
@@ -239,18 +241,18 @@ class TestRDBMS(unittest.TestCase):
             ],
             "code": "400010"
         }
-        m.register_uri('POST', '/integration/v2/table/?ds_id=1',
+        requests_mock.register_uri('POST', '/integration/v2/table/?ds_id=1',
                       json=failed_response, status_code=400)
         
         # Now we expect an HTTPError to be raised
         with self.assertRaises(requests.exceptions.HTTPError) as context:
-            MOCK_RDBMS.post_tables(ds_id=1, tables=mock_table_list)
+            self.mock_user.post_tables(ds_id=1, tables=mock_table_list)
         
         # Verify the error response contains expected information
         self.assertEqual(context.exception.response.status_code, 400)
 
     @requests_mock.Mocker()
-    def test_success_get_columns(self, m):
+    def test_success_get_columns(self, requests_mock):
 
         mock_params = ColumnParams()
         mock_params.id.add(1613)
@@ -302,62 +304,111 @@ class TestRDBMS(unittest.TestCase):
             }
         ]
         success_columns = [Column.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/v2/column/?id=1613', json=success_response)
-        columns = MOCK_RDBMS.get_columns(mock_params)
+        requests_mock.register_uri('GET', '/integration/v2/column/?id=1613', json=success_response)
+        columns = self.mock_user.get_columns(mock_params)
 
         self.assertEqual(success_columns, columns)
 
     @requests_mock.Mocker()
-    def test_failed_get_columns(self, m):
+    def test_failed_get_columns(self, requests_mock):
 
         failed_response = {
             "detail": "Invalid query parameters: [ids]",
             "code": "400006"
         }
-        m.register_uri('GET', '/integration/v2/column/', json=failed_response, status_code=400)
+        requests_mock.register_uri('GET', '/integration/v2/column/', json=failed_response, status_code=400)
         
         # The method should now raise an HTTPError for non-200 status codes
         with self.assertRaises(requests.exceptions.HTTPError):
-            MOCK_RDBMS.get_columns()
+            self.mock_user.get_columns()
 
     @requests_mock.Mocker()
-    def test_success_post_columns(self, m):
+    def test_success_post_columns(self, requests_mock):
 
-        mock_column = ColumnItem()
-        mock_column.key = '1.schema.test'
-        mock_column.title = 'Test Title'
-        mock_column.description = 'Test Description'
-        mock_column.column_type = 'VARCHAR'
-        mock_column_list = [mock_column]
+        # --- PREPARE THE TEST SETUP --- #
 
+        # payload for the main request
+        columns = [
+            ColumnItem(
+                key=f"1.ORDERS.refunds.id"
+                , column_type="INTEGER"
+                , title="ID"
+                , description="This is the id column of the refunds table ..."
+                , index=ColumnIndex(
+                    isPrimaryKey=True
+                    , isForeignKey=False
+                    , referencedColumnId=None
+                    , isOtherIndex=False
+                )
+            )
+        ]
+
+
+        # What does the response look like for the main request?
         async_response = {
-            "job_id": 1
+            "job_id": 27809
         }
-        job_response = {
+
+        # Override the main API call
+        requests_mock.register_uri(
+            method='POST',
+            url='/integration/v2/column/?ds_id=1',
+            json=async_response,
+            status_code=202
+        )
+
+        # What does the response look like for the Job?
+        job_api_response = {
             "status": "successful",
             "msg": "Job finished in 6.076855 seconds at 2023-11-30 16:21:37.152796+00:00",
             "result": [
                 {
-                    "response": "Upserted 2 attribute objects.",
+                    "response": "Upserted 1 attribute objects.",
                     "mapping": [
-                        {"id": 17634, "key": "9.sales.orders.id"},
-                        {"id": 17646, "key": "9.sales.orders.discount"},
+                        {"id": 17634, "key": "1.ORDERS.refunds.id"}
                     ],
                     "errors": []
                 }
             ]
         }
 
-        m.register_uri('POST', '/integration/v2/column/?ds_id=1', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
-        async_result = MOCK_RDBMS.post_columns(1, mock_column_list)
+        # Override the job API call
+        # Note: The id in the job URL corresponds to the task id in document_api_response defined above
+        requests_mock.register_uri(
+            method='GET'
+            , url='/api/v1/bulk_metadata/job/?id=27809'
+            , json=job_api_response
+        )
 
-        input_transformed = [JobDetailsRdbms(**job_response)]
+        # --- TEST THE FUNCTION --- #
+        async_result = self.mock_user.post_columns(
+            ds_id = 1
+            , columns = columns
+        )
+
+        expected_result = [
+            JobDetailsRdbms(
+                status = "successful"
+                , msg = "Job finished in 6.076855 seconds at 2023-11-30 16:21:37.152796+00:00"
+                , result = [
+                    JobDetailsRdbmsResult(
+                        response = "Upserted 1 attribute objects."
+                        , mapping = [
+                            JobDetailsRdbmsResultMapping(
+                                id = 17634
+                                , key = "1.ORDERS.refunds.id"
+                            )
+                        ]
+                        , errors = []
+                    )
+                ]
+            )
+        ]
         # self.assertTrue(async_result)
-        self.assertEqual(input_transformed, async_result)
+        self.assertEqual(expected_result, async_result)
 
     @requests_mock.Mocker()
-    def test_failed_post_columns(self, m):
+    def test_failed_post_columns(self, requests_mock):
         mock_column = ColumnItem()
         mock_column.key = '1.schema.test'
         mock_column.title = 'Test Title'
@@ -376,14 +427,123 @@ class TestRDBMS(unittest.TestCase):
             ],
             "code": "400010"
         }
-        m.register_uri('POST', '/integration/v2/column/?ds_id=1',
+        requests_mock.register_uri('POST', '/integration/v2/column/?ds_id=1',
                       json=failed_response, status_code=400)
         
         # Now we expect an HTTPError to be raised
         with self.assertRaises(requests.exceptions.HTTPError) as context:
-            MOCK_RDBMS.post_columns(ds_id=1, columns=mock_column_list)
+            self.mock_user.post_columns(ds_id=1, columns=mock_column_list)
         
         # Verify the error response contains expected information
+        self.assertEqual(context.exception.response.status_code, 400)
+
+    @requests_mock.Mocker()
+    def test_success_patch_column(self, requests_mock):
+
+        # --- PREPARE THE TEST SETUP --- #
+
+        # payload for the main request
+        columns = [
+            ColumnPatchItem(
+                id=1
+                , title='Updated Title'
+                , description="This is the id column of the refunds table ..."
+                , index=ColumnIndex(
+                    isPrimaryKey=True
+                    , isForeignKey=False
+                    , referencedColumnId=None
+                    , isOtherIndex=False
+                )
+            )
+        ]
+
+        # What does the response look like for the main request?
+        async_response = {
+            "job_id": 27809
+        }
+
+        # Override the main API call
+        requests_mock.register_uri(
+            method='PATCH',
+            url='/integration/v2/column/?ds_id=1',
+            json=async_response,
+            status_code=202
+        )
+
+        # What does the response look like for the Job?
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 6.076855 seconds at 2023-11-30 16:21:37.152796+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 attribute objects.",
+                    "mapping": [
+                        {"id": 1, "key": "1.ORDERS.refunds.id"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        # Override the job API call
+        # Note: The id in the job URL corresponds to the task id in document_api_response defined above
+        requests_mock.register_uri(
+            method='GET'
+            , url='/api/v1/bulk_metadata/job/?id=27809'
+            , json=job_api_response
+        )
+
+        # --- TEST THE FUNCTION --- #
+
+        async_result = self.mock_user.patch_columns(
+            ds_id=1
+            , columns = columns
+        )
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful"
+                , msg="Job finished in 6.076855 seconds at 2023-11-30 16:21:37.152796+00:00"
+                , result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 attribute objects."
+                        , mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=1
+                                , key="1.ORDERS.refunds.id"
+                            )
+                        ]
+                        , errors=[]
+                    )
+                ]
+            )
+        ]
+
+        self.assertEqual(expected_result, async_result)
+
+    @requests_mock.Mocker()
+    def test_failed_patch_columns(self, requests_mock):
+        mock_column = ColumnPatchItem(id=1)
+        mock_column_list = [mock_column]
+
+        failed_response = {
+            "detail": "Incorrect input data. Please fix the errors and post the data.",
+            "errors": [
+                {
+                    "id": [
+                        "400068: id is a required input"
+                    ]
+                }
+            ],
+            "code": "400010",
+        }
+
+        requests_mock.register_uri('PATCH', '/integration/v2/column/?ds_id=1',
+                      json=failed_response, status_code=400)
+
+        with self.assertRaises(requests.exceptions.HTTPError) as context:
+            self.mock_user.patch_columns(ds_id=1, columns=mock_column_list)
+
         self.assertEqual(context.exception.response.status_code, 400)
 
 

@@ -10,6 +10,7 @@ from .models import (
     Column,
     ColumnIndex,
     ColumnItem,
+    ColumnPatchItem,
     ColumnParams,
     Connector,
     CustomField,
