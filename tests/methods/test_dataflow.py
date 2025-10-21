@@ -72,7 +72,7 @@ class TestDataflow(unittest.TestCase):
             dataflow_objects=[Dataflow(external_id="api/df101")]
         )
         result = self.mock_df.create_or_replace_dataflows(payload)
-        expected = [JobDetails.from_api_response(job_response)]
+        expected = [JobDetailsDataflowPost.from_api_response(job_response)]
         self.assertEqual(result, expected)
 
     @requests_mock.Mocker()
@@ -97,7 +97,7 @@ class TestDataflow(unittest.TestCase):
         )
         items = [DataflowPatchItem(id=1, title="New")]
         result = self.mock_df.update_dataflows(items)
-        expected = [JobDetails.from_api_response(job_response)]
+        expected = [JobDetailsDataflowPost.from_api_response(job_response)]
         self.assertEqual(result, expected)
 
     @requests_mock.Mocker()
@@ -121,5 +121,5 @@ class TestDataflow(unittest.TestCase):
             status_code=200
         )
         result = self.mock_df.delete_dataflows([1], DataflowParams(keyField='id'))
-        expected = [JobDetails.from_api_response(job_response)]
+        expected = [JobDetailsDataflowDelete.from_api_response(job_response)]
         self.assertEqual(result, expected)

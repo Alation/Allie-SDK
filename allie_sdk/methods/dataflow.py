@@ -4,7 +4,7 @@ import requests
 from ..core.async_handler import AsyncHandler
 from ..core.custom_exceptions import validate_query_params, validate_rest_payload
 from ..models.dataflow_model import Dataflow, DataflowPatchItem, DataflowPayload, DataflowParams
-from ..models.job_model import JobDetails
+from ..models.job_model import JobDetails, JobDetailsDataflowPost, JobDetailsDataflowDelete
 
 LOGGER = logging.getLogger('allie_sdk_logger')
 
@@ -42,7 +42,7 @@ class AlationDataflow(AsyncHandler):
         payload_dict = payload.generate_api_post_payload()
         async_results = self.async_post_dict_payload('/integration/v2/dataflow/', payload_dict)
         if async_results:
-            return [JobDetails.from_api_response(item) for item in async_results]
+            return [JobDetailsDataflowPost.from_api_response(item) for item in async_results]
         return []
 
     def update_dataflows(self, dataflows: list[DataflowPatchItem]) -> list[JobDetails]:
@@ -53,7 +53,7 @@ class AlationDataflow(AsyncHandler):
         async_results = self.async_patch('/integration/v2/dataflow/', payload=payload)
         if async_results:
             # return [JobDetails.from_api_response(async_results['result']
-            return [JobDetails.from_api_response(item) for item in async_results]
+            return [JobDetailsDataflowPost.from_api_response(item) for item in async_results]
         return []
 
     def delete_dataflows(
@@ -69,6 +69,6 @@ class AlationDataflow(AsyncHandler):
             '/integration/v2/dataflow/', payload=object_ids, query_params=params
         )
         if async_results:
-            return [JobDetails.from_api_response(item) for item in async_results]
+            return [JobDetailsDataflowDelete.from_api_response(item) for item in async_results]
         return []
 

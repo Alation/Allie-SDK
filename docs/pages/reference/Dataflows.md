@@ -80,7 +80,7 @@ Returns:
 ### create_or_replace_dataflows
 
 ```
-create_or_replace_dataflows(payload: DataflowPayload) -> list[JobDetails]
+create_or_replace_dataflows(payload: DataflowPayload) -> list[JobDetailsDataflowPost]
 ```
 Create/Replace Dataflow objects with related lineage paths
 
@@ -93,7 +93,7 @@ Returns:
 ### update_dataflows
 
 ```
-update_dataflows(payload: list[DataflowPatchItem] -> list[JobDetails]
+update_dataflows(payload: list[DataflowPatchItem] -> list[JobDetailsDataflowPost]
 ```
 Update Dataflow objects definition. This method cannot be used to update lineage paths. 
 
@@ -106,7 +106,7 @@ Returns:
 ### delete_dataflows
 
 ```
-delete_dataflows(object_ids: list, query_params: DataflowParams) -> list[JobDetails]
+delete_dataflows(object_ids: list, query_params: DataflowParams) -> list[JobDetailsDataflowPost]
 ```
 Get Dataflow objects with related lineage paths 
 

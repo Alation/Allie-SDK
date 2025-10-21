@@ -88,18 +88,22 @@ df_payload.dataflow_objects = [dflow1, dflow2]
 df_payload.paths = paths
 
 result = alation.dataflow.create_or_replace_dataflows(df_payload)
+
+# result contains status and list of added/updated objects
 print(result)
 
-# ================================
-# GET DATAFLOW OBJECTS WITH LINEAGE PATHS
-# ================================
+modified_dataflows = []
+if result[0].status == 'successful':
+    modified_dataflows.append(result[0].result[0].mapping)
+    print(f"Number of dataflows added/updated: {result[0].result[0].response}")
+    for map in result[0].result[0].mapping:
+        print(f"The following dataaflow was modified: {map}" )
+    # print(f"The following dataaflows were updated (IDs): {map for map in result[0].result[0].mapping]}")
 
-# GET DATAFLOW Objects
 
-params = allie.DataflowParams(keyField="external_id")
-dataflows = alation.dataflow.get_dataflows(["api/df101", "api/df102"], params)
+# find the api/df102 mapping
+sample_dataflow = next((d for d in result[0].result[0].mapping if d.external_id == "api/df102"), None)
 
-print(dataflows)
 
 # ================================
 # UPDATE/PATCH DATAFLOW OBJECTS (WITHOUT LINEAGE PATHS)
@@ -113,7 +117,7 @@ dflowpatch = allie.DataflowPatchItem(
     , description="<p>Sample description</p>>"
     , content="select c.id, c.amount from customers;"
     , group_name="Snowflake-12"
-    , id=85)
+    , id=sample_dataflow.id)
 
 result = alation.dataflow.update_dataflows([dflowpatch])
 
