@@ -3,7 +3,7 @@ from .models import (
     AccessToken,
     DataDictionaryAsyncTask,
     DataDictionaryAsyncTaskDetails,
-    AsyncTaskLink,
+    DataDictionaryAsyncTaskLink,
     BusinessPolicy,
     BusinessPolicyGroupIds,
     BusinessPolicyParams,

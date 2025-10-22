@@ -14,7 +14,6 @@ import configparser
 import logging
 import sys
 from pathlib import Path
-from time import sleep
 
 import allie_sdk as allie
 

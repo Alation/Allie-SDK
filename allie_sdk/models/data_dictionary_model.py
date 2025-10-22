@@ -16,13 +16,17 @@ DEFAULT_UPLOAD_FILENAME = "data_dictionary.csv"
 
 
 @dataclass(kw_only=True)
-class AsyncTaskLink(BaseClass):
+class DataDictionaryAsyncTaskLink(BaseClass):
     """Represents a hyperlink associated with an asynchronous task."""
 
     rel: str = field(default=None)
     href: str = field(default=None)
 
-
+"""
+The Policy endpoint uses quite a similar structure, just that instead
+of ts_created ts_started is used. This is the main reason why we didn't generalise
+this one here.
+"""
 @dataclass(kw_only=True)
 class DataDictionaryAsyncTask(BaseClass):
     """Represents an asynchronous task registered by Alation."""
@@ -31,7 +35,7 @@ class DataDictionaryAsyncTask(BaseClass):
     type: str = field(default=None)
     state: str = field(default=None)
     ts_created: datetime = field(default=None)
-    links: list[AsyncTaskLink] = field(default_factory=list)
+    links: list[DataDictionaryAsyncTaskLink] = field(default_factory=list)
 
     def __post_init__(self):
         if isinstance(self.ts_created, str):
@@ -39,13 +43,12 @@ class DataDictionaryAsyncTask(BaseClass):
 
         if self.links:
             self.links = [
-                AsyncTaskLink.from_api_response(link)
+                DataDictionaryAsyncTaskLink.from_api_response(link)
                 if isinstance(link, dict)
                 else link
                 for link in self.links
             ]
 
-# TODO: Isn't this structure used elsewhere as well? I remember Mario talking about this?
 @dataclass(kw_only=True)
 class DataDictionaryAsyncTaskDetails(BaseClass):
     """Container model for asynchronous task details."""

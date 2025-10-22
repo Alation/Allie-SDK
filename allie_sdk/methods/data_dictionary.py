@@ -38,9 +38,10 @@ class AlationDataDictionary(RequestHandler):
     def __init__(self, access_token: str, session: requests.Session, host: str):
         """Creates an instance of the DataDictionary object."""
 
+
         super().__init__(session=session, host=host, access_token=access_token)
 
-    def get_data_dictionary_task_details(self, task_id: str) -> DataDictionaryTaskDetails:
+    def _get_data_dictionary_task_details(self, task_id: str) -> DataDictionaryTaskDetails:
         """Retrieve details of an asynchronous data dictionary upload task."""
 
         if not task_id:
@@ -54,7 +55,7 @@ class AlationDataDictionary(RequestHandler):
 
         return DataDictionaryTaskDetails.from_api_response(response)
 
-    def get_data_dictionary_task_errors(self, task_id: str) -> list[DataDictionaryTaskError]:
+    def _get_data_dictionary_task_errors(self, task_id: str) -> list[DataDictionaryTaskError]:
         """Retrieve the errors reported for a data dictionary upload task."""
 
         if not task_id:
@@ -111,7 +112,7 @@ class AlationDataDictionary(RequestHandler):
             task =  DataDictionaryAsyncTaskDetails.from_api_response(response)
 
             # Poll the task endpoint for a short time just to illustrate usage
-            task_details = self.get_data_dictionary_task_details(task.task.id)
+            task_details = self._get_data_dictionary_task_details(task.task.id)
 
             while task_details.state != "COMPLETED":
                 batches_completed = task_details.progress.batches_completed if task_details.progress else 0
@@ -120,12 +121,12 @@ class AlationDataDictionary(RequestHandler):
                     f"Task {task_details.id} currently in state {task_details.state} (batches completed: {batches_completed}/{total_batches})"
                 )
                 sleep(2)
-                task_details = self.get_data_dictionary_task_details(task.task.id)
+                task_details = self._get_data_dictionary_task_details(task.task.id)
 
             logging.info(f"Task {task_details.id} completed with status {task_details.status}")
 
-            if task_details.status != "SUCCEEDED":
-                errors = self.get_data_dictionary_task_errors(task_details.id)
+            if task_details.status == "FAILED":
+                errors = self._get_data_dictionary_task_errors(task_details.id)
                 if errors:
                     logging.info(f"First reported error: {errors[0].error_message}")
                 result = JobDetails(
@@ -133,11 +134,23 @@ class AlationDataDictionary(RequestHandler):
                     , msg = errors[0].error_message
                     , result = ""
                 )
-            else:
+            elif task_details.status == "PARTIALLY_SUCCEEDED":
+                result = JobDetails(
+                    status = "partially_successful"
+                    , msg = ""
+                    , result = task_details
+                )
+            elif task_details.status == "SUCCEEDED":
                 result = JobDetails(
                     status = "successful"
                     , msg = f"Upload stats: {task_details.result}. Link to status report: {task_details.report_download_link}"
-                    , result = ""
+                    , result = task_details
+                )
+            else:
+                result = JobDetails(
+                    status = "unexpected status - check result for details"
+                    , msg = ""
+                    , result = task_details
                 )
 
         finally:

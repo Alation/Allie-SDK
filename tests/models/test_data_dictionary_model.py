@@ -1,15 +1,7 @@
-from datetime import datetime
-from io import BytesIO
-from pathlib import Path
-
 import pytest
+import datetime
 
-from allie_sdk.models.data_dictionary_model import (
-    DataDictionaryAsyncTaskDetails,
-    DataDictionaryTaskDetails,
-    DataDictionaryTaskError,
-    DataDictionaryItem,
-)
+from allie_sdk.models.data_dictionary_model import *
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 
@@ -31,9 +23,24 @@ def test_async_task_details_from_api():
 
     result = DataDictionaryAsyncTaskDetails.from_api_response(payload)
 
-    assert isinstance(result.task, DataDictionaryAsyncTaskDetails.__annotations__["task"])
-    assert isinstance(result.task.ts_created, datetime)
-    assert result.task.links[0].rel == "info and status"
+    expected_result = DataDictionaryAsyncTaskDetails(
+        task = (
+            DataDictionaryAsyncTask(
+                id='68575488-5fad-4117-927f-1e23576e733a'
+                , type='COMMIT_TO_CATALOG'
+                , state='QUEUED'
+                , ts_created=datetime(2023, 8, 17, 11, 23, 19, 766425)
+                , links=[
+                    DataDictionaryAsyncTaskLink(
+                        rel='info and status'
+                        , href='http://localhost:8000/integration/v1/data_dictionary/tasks/68575488-5fad-4117-927f-1e23576e733a'
+                    )
+                ]
+            )
+        )
+    )
+
+    assert  expected_result == result
 
 
 def test_data_dictionary_task_details_from_api():
@@ -64,10 +71,35 @@ def test_data_dictionary_task_details_from_api():
 
     result = DataDictionaryTaskDetails.from_api_response(payload)
 
-    assert result.progress.total_batches == 1
-    assert result.result.records.failed == 2
-    assert isinstance(result.ts_created, datetime)
-    assert result.dd_resource.otype == "data"
+    expected_result = DataDictionaryTaskDetails(
+        id='1e7a8e8f-fe46-4da4-8393-fce89be3ebcb'
+        , type='COMMIT_TO_CATALOG'
+        , state='COMPLETED'
+        , status='PARTIALLY_SUCCEEDED'
+        , progress=DataDictionaryTaskProgress(
+            total_batches=1
+            , batches_completed=1
+        )
+        , result=DataDictionaryTaskResult(
+            records=DataDictionaryTaskRecords(
+                total=351
+                , succeeded=349
+                , failed=2
+            )
+        )
+        , ts_created=datetime(2025, 4, 25, 3, 28, 26, 287938)
+        , ts_updated=datetime(2025, 4, 25, 3, 28, 35, 916508)
+        , ts_completed=datetime(2025, 4, 25, 3, 28, 35, 916048)
+        , dd_resource=DataDictionaryResource(
+            id='12b32089-e26a-45b6-816c-44364d395ba7'
+            , oid=1
+            , otype='data'
+            , user_id=1
+        )
+        , report_download_link='http://localhost:8000/download/data_dictionary/data_1_1_2023-08-17T11-35-03-577118.csv/'
+    )
+
+    assert expected_result == result
 
 
 def test_data_dictionary_task_error_from_api():
@@ -94,9 +126,28 @@ def test_data_dictionary_task_error_from_api():
 
     result = DataDictionaryTaskError.from_api_response(payload)
 
-    assert isinstance(result.timestamp, datetime)
-    assert result.details.items.range.start.key == "public.users"
-    assert result.details.items.total == 4
+    expected_result = DataDictionaryTaskError(
+        timestamp=datetime(2024, 3, 11, 12, 10, 25, 379537)
+        , name='TaskflowException'
+        , fatal=True
+        , error_message="'NoneType' object is not callable"
+        , original_error_message=None
+        , details=DataDictionaryTaskErrorDetails(
+            items=DataDictionaryTaskErrorDetailItems(
+                range=DataDictionaryTaskErrorRange(
+                    start=DataDictionaryTaskErrorRangeEndpoint(index=0, key='public.users')
+                    , end=DataDictionaryTaskErrorRangeEndpoint(index=3, key='public.users.email')
+                    , start_inclusive=True
+                    , end_inclusive=True
+                )
+                , total=4
+            )
+            , error="'NoneType' object is not callable"
+        )
+        , category='System Error'
+    )
+
+    assert expected_result == result
 
 
 def test_upload_payload_from_bytes():
