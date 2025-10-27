@@ -81,3 +81,41 @@ class TestDomain(unittest.TestCase):
             )
         ]
         self.assertEqual(function_expected_result, create_domain_membership_result)
+
+    @requests_mock.Mocker()
+    def test_view_domain_membership_rules(self, requests_mock):
+        api_response = [
+            {
+                "domain_id": 1,
+                "exclude": False,
+                "recursive": False,
+                "otype": "table",
+                "oid": 10,
+            }
+        ]
+
+        requests_mock.register_uri(
+            method='POST',
+            url='/integration/v2/domain/membership/view_rules/',
+            json=api_response,
+            status_code=200,
+        )
+
+        rules = self.mock_user.get_domain_membership_rules(
+            DomainMembershipRuleRequest(
+                domain_ids=[1],
+                exclude=False,
+            )
+        )
+
+        expected_rules = [
+            DomainMembershipRule(
+                domain_id=1,
+                exclude=False,
+                recursive=False,
+                otype="table",
+                oid=10,
+            )
+        ]
+
+        self.assertEqual(expected_rules, rules)

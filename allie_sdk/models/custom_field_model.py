@@ -8,7 +8,7 @@ from ..core.custom_exceptions import InvalidPostBody
 from ..core.data_structures import BaseClass, BaseParams
 
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomField(BaseClass):
     allow_multiple: bool = field(default=None)
     allowed_otypes: list = field(default=None)
@@ -22,7 +22,7 @@ class CustomField(BaseClass):
     options: list = field(default=None)
     tooltip_text: str = field(default=None)
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldItem(BaseClass):
     """
     Originally we didn't inherit from the BaseClass here
@@ -111,7 +111,7 @@ class CustomFieldItem(BaseClass):
         return payload
 
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldParams(BaseParams):
     id: set = field(default_factory=set)
     allow_multiple: bool = field(default=False)
@@ -127,22 +127,22 @@ class CustomFieldParams(BaseParams):
     tooltip_text__icontains: set = field(default_factory=set)
 
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldStringValue:
     value: str = field(default=None)
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldStringValueItem(CustomFieldStringValue):
     def return_value(self) -> str:
         return self.value
 
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldDictValue:
     otype: str = field(default=None)
     oid: int = field(default=None)
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldDictValueItem(CustomFieldDictValue):
     def return_value(self) -> dict:
         return {
@@ -151,18 +151,18 @@ class CustomFieldDictValueItem(CustomFieldDictValue):
         }
 
 
-@dataclass
-class BaseCustomFieldValue(BaseClass):
+@dataclass(kw_only = True)
+class _BaseCustomFieldValue(BaseClass):
     field_id: int = field(default=None)
     ts_updated: datetime = field(default=None)
     otype: str = field(default=None)
     oid: int = field(default=None)
-    value: CustomFieldStringValue | list[CustomFieldStringValue | CustomFieldDictValue] = field(default=None)
 
 
-@dataclass
-class CustomFieldValue(BaseCustomFieldValue):
+@dataclass(kw_only = True)
+class CustomFieldValue(_BaseCustomFieldValue):
     field_name:str = field(default=None) # this is only returned by some endpoints, e.g. documents API
+    value: CustomFieldStringValue | list[CustomFieldStringValue | CustomFieldDictValue] = field(default=None)
 
     def __post_init__(self):
         if self.value:
@@ -203,8 +203,9 @@ class CustomFieldValue(BaseCustomFieldValue):
 
             self.value = parsed_values
 
-@dataclass
-class CustomFieldValueItem(BaseCustomFieldValue):
+@dataclass(kw_only = True)
+class CustomFieldValueItem(_BaseCustomFieldValue):
+    value: CustomFieldStringValueItem | list[CustomFieldStringValueItem | CustomFieldDictValueItem] = field(default=None)
 
     def get_field_values(self) -> str | list:
         if isinstance(self.value, CustomFieldStringValueItem):
@@ -241,7 +242,7 @@ class CustomFieldValueItem(BaseCustomFieldValue):
 
         return payload
 
-@dataclass
+@dataclass(kw_only = True)
 class CustomFieldValueParams(BaseParams):
     otype: set = field(default_factory=set)
     oid: set = field(default_factory=set)

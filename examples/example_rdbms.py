@@ -21,7 +21,7 @@ from allie_sdk import JobDetailsRdbmsResult
 # ================================
 
 # adjust to your requirements
-DATA_SOURCE_ID = 3
+DATA_SOURCE_ID = 1
 
 # ================================
 # Define Logging Config
@@ -84,7 +84,7 @@ post_schema_response = alation.rdbms.post_schemas(
             , description = "This is the orders schema ..."
             , custom_fields = [
                 allie.CustomFieldValueItem(
-                    field_id = 8
+                    field_id = steward_field_id
                     , value = [
                         allie.CustomFieldDictValueItem(
                             otype = "user"
@@ -102,6 +102,7 @@ Example response content:
 [JobDetailsRdbms(status='successful', msg='Job finished in 0.445766 seconds at 2024-09-24 14:28:19.300729+00:00', result=[JobDetailsRdbmsResult(response='Upserted 1 schema objects.', mapping=[JobDetailsRdbmsResultMapping(id=218, key='193.ORDERS')], errors=[])])]
 """
 
+created_schema_id = None
 if post_schema_response is None:
     logging.error("Tried to submit request ... but somehow heard nothing back!")
     sys.exit(1)
@@ -117,6 +118,45 @@ else:
     else:
         logging.error("Unexpected result ... I don't know how to handle this ...")
         sys.exit(1)
+
+
+# ================================
+# UPDATE SCHEMA METADATA WITH PATCH
+# ================================
+
+if created_schema_id:
+    patch_schema_response = alation.rdbms.patch_schemas(
+        ds_id = DATA_SOURCE_ID
+        , schemas = [
+            allie.SchemaPatchItem(
+                id = created_schema_id
+                , title = "Orders - Updated"
+                , description = "This is the updated orders schema ..."
+            )
+        ]
+    )
+
+    """
+    Example response content:
+    [JobDetailsRdbms(status='successful', msg='Job finished in 0.301728 seconds at 2024-09-24 14:42:11.070983+00:00', result=[JobDetailsRdbmsResult(response='Updated 1 schema objects.', mapping=[JobDetailsRdbmsResultMapping(id=218, key='193.ORDERS')], errors=[])])]
+    """
+
+    if patch_schema_response is None:
+        logging.error("Tried to submit patch request ... but somehow heard nothing back!")
+        sys.exit(1)
+    else:
+        if isinstance(patch_schema_response, list):
+            for r in patch_schema_response:
+                if r.status == "successful":
+                    logging.info(r.result[0].response)
+                else:
+                    logging.error(f"Finished with status {r.status}: {r.result}")
+        else:
+            logging.error("Unexpected patch result ... I don't know how to handle this ...")
+            sys.exit(1)
+else:
+    logging.warning("Skipping schema patch example because no schema ID was captured from the create step.")
+
 
 # ================================
 # CREATE TABLE WITH TECHNICAL AND LOGICAL METADATA
@@ -156,39 +196,111 @@ else:
         sys.exit(1)
 
 # ================================
-# CREATE COLUMN WITH TECHNICAL AND LOGICAL METADATA
+# UPDATE TABLE WITH PATCH
 # ================================
 
-
-post_column_response = alation.rdbms.post_columns(
-    ds_id = DATA_SOURCE_ID
-    , columns = [
-        allie.ColumnItem(
-            key = f"{DATA_SOURCE_ID}.ORDERS.refunds.id"
-            , column_type = "INTEGER"
-            , title = "ID"
-            , description = "This is the id column of the refunds table ..."
+patch_table_response = alation.rdbms.patch_tables(
+    ds_id = DATA_SOURCE_ID,
+    tables = [
+        allie.TablePatchItem(
+            id = created_table_id,
+            title = "Refunds - Updated",
+            description = "Updated description for the refunds table ...",
+            table_comment = "Updated comment"
         )
     ]
 )
 
-"""
-Example response content:
-[JobDetailsRdbms(status='successful', msg='Job finished in 0.586626 seconds at 2024-09-24 14:32:38.439446+00:00', result=[JobDetailsRdbmsResult(response='Upserted 1 attribute objects.', mapping=[JobDetailsRdbmsResultMapping(id=848418, key='193.ORDERS.refunds.id')], errors=[])])]
-"""
-
-if post_column_response is None:
-    logging.error("Tried to submit request ... but somehow heard nothing back!")
+if patch_table_response is None:
+    logging.error("Tried to submit table patch request ... but somehow heard nothing back!")
     sys.exit(1)
 else:
-    if isinstance(post_column_response, list):
-        for r in post_column_response:
+    if isinstance(patch_table_response, list):
+        for r in patch_table_response:
             if r.status == "successful":
-                created_column_id = r.result[0].mapping[0].id
                 logging.info(r.result[0].response)
-                logging.info(f"The following columns were created (IDs): {created_column_id}")
             else:
                 logging.error(f"Finished with status {r.status}: {r.result}")
     else:
         logging.error("Unexpected result ... I don't know how to handle this ...")
         sys.exit(1)
+
+# ================================
+# CREATE COLUMN WITH TECHNICAL AND LOGICAL METADATA
+# ================================
+
+#
+# post_column_response = alation.rdbms.post_columns(
+#     ds_id = DATA_SOURCE_ID
+#     , columns = [
+#         allie.ColumnItem(
+#             key = f"{DATA_SOURCE_ID}.ORDERS.refunds.id"
+#             , column_type = "INTEGER"
+#             , title = "ID"
+#             , description = "This is the id column of the refunds table ..."
+#             , index = allie.ColumnIndex(
+#                 isPrimaryKey = True
+#                 , isForeignKey = False
+#                 , referencedColumnId = None
+#                 , isOtherIndex = False
+#             )
+#         )
+#     ]
+# )
+#
+# """
+# Example response content:
+# [JobDetailsRdbms(status='successful', msg='Job finished in 0.586626 seconds at 2024-09-24 14:32:38.439446+00:00', result=[JobDetailsRdbmsResult(response='Upserted 1 attribute objects.', mapping=[JobDetailsRdbmsResultMapping(id=848418, key='193.ORDERS.refunds.id')], errors=[])])]
+# """
+#
+# if post_column_response is None:
+#     logging.error("Tried to submit request ... but somehow heard nothing back!")
+#     sys.exit(1)
+# else:
+#     if isinstance(post_column_response, list):
+#         for r in post_column_response:
+#             if r.status == "successful":
+#                 created_column_id = r.result[0].mapping[0].id
+#                 logging.info(r.result[0].response)
+#                 logging.info(f"The following columns were created (IDs): {created_column_id}")
+#             else:
+#                 logging.error(f"Finished with status {r.status}: {r.result}")
+#     else:
+#         logging.error("Unexpected result ... I don't know how to handle this ...")
+#         sys.exit(1)
+#
+# # ================================
+# # UPDATE COLUMN WITH PATCH
+# # ================================
+#
+# patch_column_response = alation.rdbms.patch_columns(
+#     ds_id = DATA_SOURCE_ID,
+#     columns = [
+#         allie.ColumnPatchItem(
+#             id = created_column_id
+#             , title = "ID"
+#             , description = "Updated description for the id column ..."
+#             , index=allie.ColumnIndex(
+#                 isPrimaryKey=True
+#                 , isForeignKey=False
+#                 , referencedColumnId=None
+#                 , isOtherIndex=False
+#             )
+#         )
+#     ]
+# )
+#
+# if patch_column_response is None:
+#     logging.error("Tried to submit patch request ... but somehow heard nothing back!")
+#     sys.exit(1)
+# else:
+#     if isinstance(patch_column_response, list):
+#         for r in patch_column_response:
+#             if r.status == "successful":
+#                 logging.info(r.result[0].response)
+#             else:
+#                 logging.error(f"Finished with status {r.status}: {r.result}")
+#     else:
+#         logging.error("Unexpected result ... I don't know how to handle this ...")
+#         sys.exit(1)
+#
