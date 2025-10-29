@@ -5,7 +5,8 @@ import requests
 
 from ..core.request_handler import RequestHandler
 from ..core.custom_exceptions import InvalidPostBody, validate_rest_payload
-from ..models.query_model import Query, QueryCreateRequest
+from ..models.job_model import JobDetails
+from ..models.query_model import Query, QueryItem
 
 LOGGER = logging.getLogger("allie_sdk_logger")
 
@@ -18,13 +19,13 @@ class AlationQuery(RequestHandler):
 
         super().__init__(session=session, host=host, access_token=access_token)
 
-    def create_query(self, query: QueryCreateRequest) -> Query:
+    def create_query(self, query: QueryItem) -> Query:
         """Create a new query in Alation."""
 
         if not query:
             raise InvalidPostBody("Query payload is required for POST requests.")
 
-        validate_rest_payload(payload=[query], expected_types=(QueryCreateRequest,))
+        validate_rest_payload(payload=[query], expected_types=(QueryItem,))
         payload = query.generate_api_post_payload()
 
         query_response = self.post(
@@ -32,7 +33,28 @@ class AlationQuery(RequestHandler):
             body=payload,
         )
 
-        return Query.from_api_response(query_response)
+        if query_response:
+            datasource_id = query_response.get("datasource_id")
+            if datasource_id:
+                result = JobDetails(
+                    status = "successful"
+                    , msg = ""
+                    , result = Query.from_api_response(query_response)
+                )
+            else:
+                result = JobDetails(
+                    status="failed"
+                    , msg=""
+                    , result=query_response
+                )
+        else:
+            result = JobDetails(
+                status="failed"
+                , msg=""
+                , result=""
+            )
+
+        return result
 
     def get_query_sql(self, query_id: int) -> str:
         """Retrieve the saved SQL text for a query."""

@@ -1,7 +1,7 @@
 """Alation REST API Job Data Models."""
 
 from dataclasses import dataclass, field
-
+from typing import Literal
 from ..core.data_structures import BaseClass
 import json
 
@@ -29,10 +29,9 @@ The solution to this was to have `job.py` return just the vanilla job object and
 to do the transformation/mapping in the specific methods. This provides the necessary context.
 """
 
-
 @dataclass(kw_only = True)
 class JobDetails(BaseClass):
-    status: str = field(default = None)
+    status: Literal["successful", "partially_successful", "failed"]
     msg: str = field(default = None)
     result: str | dict | list = field(default = None)
 

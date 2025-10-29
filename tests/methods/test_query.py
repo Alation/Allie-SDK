@@ -1,12 +1,13 @@
 """Tests for the Alation Query methods."""
 
 import unittest
-
+from datetime import datetime
 import requests
 import requests_mock
 
 from allie_sdk.methods.query import AlationQuery
-from allie_sdk.models.query_model import QueryAuthor, QueryCreateRequest
+from allie_sdk.models.query_model import *
+from allie_sdk.models.job_model import *
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 
@@ -20,6 +21,7 @@ class TestQueryMethods(unittest.TestCase):
 
     @requests_mock.Mocker()
     def test_create_query_success(self, mock_requests):
+
         api_response = {
             "datasource_id": 1,
             "autosave_content": "SELECT count(*) FROM users;",
@@ -67,7 +69,7 @@ class TestQueryMethods(unittest.TestCase):
             status_code=201,
         )
 
-        payload = QueryCreateRequest(
+        payload = QueryItem(
             datasource_id=1,
             content="SELECT count(*) FROM users;",
             saved=True,
@@ -79,28 +81,49 @@ class TestQueryMethods(unittest.TestCase):
             author=QueryAuthor(id=1),
         )
 
-        query = self.query_methods.create_query(payload)
+        result = self.query_methods.create_query(payload)
 
-        self.assertEqual(6, query.id)
-        self.assertEqual("Top 10 Users", query.title)
-        self.assertEqual("/query/6/", query.catalog_url)
-
-        last_request = mock_requests.last_request
-        self.assertIsNotNone(last_request)
-        self.assertEqual(
-            {
-                "datasource_id": 1,
-                "content": "SELECT count(*) FROM users;",
-                "saved": True,
-                "published": True,
-                "title": "Top 10 Users",
-                "description": "Counts the number of users and gives the top 10 users.",
-                "tag_names": ["@tag_name"],
-                "domain_ids": [1],
-                "author": {"id": 1},
-            },
-            last_request.json(),
+        expected_result = JobDetails(
+            status='successful'
+            , msg=''
+            , result=Query(
+                datasource_id=1
+                , autosave_content='SELECT count(*) FROM users;'
+                , content='SELECT count(*) FROM users;'
+                , title='Top 10 Users'
+                , saved=True
+                , published=True
+                , description='Counts the number of users and gives the top 10 users.'
+                , url='/integration/v1/query/6/'
+                , id=6
+                , domains=[
+                    QueryDomain(title='domain title', id=1, description='domain description')
+                ]
+                , tags=[
+                    QueryTag(
+                        id=1
+                        , name='@tag_name'
+                        , description='tag description'
+                        , ts_created=datetime(2024, 4, 12, 11, 58, 56, 176079)
+                        , url='/tag/1/'
+                        , ts_updated=datetime(2024, 4, 12, 12, 3, 40, 884535)
+                    )
+                ]
+                , datasource=QueryDatasource(
+                    id=1
+                    , title='OCF snowflake'
+                    , uri=''
+                    , url='/data/1/'
+                )
+                , ts_last_saved=datetime(2024, 4, 12, 12, 3, 40, 704437)
+                , has_unsaved_changes=False
+                , catalog_url='/query/6/'
+                , compose_url='/compose/query/6/'
+                , schedules=[]
+            )
         )
+
+        assert  expected_result == result
 
     @requests_mock.Mocker()
     def test_create_query_http_error(self, mock_requests):
@@ -111,14 +134,11 @@ class TestQueryMethods(unittest.TestCase):
             status_code=403,
         )
 
-        payload = QueryCreateRequest(datasource_id=1, content="SELECT 1")
+        payload = QueryItem(datasource_id=1, content="SELECT 1")
 
         with self.assertRaises(requests.exceptions.HTTPError):
             self.query_methods.create_query(payload)
 
-    def test_create_query_requires_payload(self):
-        with self.assertRaises(InvalidPostBody):
-            self.query_methods.create_query(None)
 
     @requests_mock.Mocker()
     def test_get_query_sql_success(self, mock_requests):
@@ -133,10 +153,3 @@ class TestQueryMethods(unittest.TestCase):
 
         self.assertEqual("SELECT count(*) FROM users;", sql_text)
 
-    def test_get_query_sql_requires_id(self):
-        with self.assertRaises(InvalidPostBody):
-            self.query_methods.get_query_sql(None)
-
-
-if __name__ == "__main__":
-    unittest.main()

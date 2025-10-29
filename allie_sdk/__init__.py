@@ -104,7 +104,7 @@ from .models import (
     PolicyGroupParams,
     Query,
     QueryAuthor,
-    QueryCreateRequest,
+    QueryItem,
     QueryDatasource,
     QueryDomain,
     QueryTag,

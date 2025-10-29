@@ -90,17 +90,19 @@ class Query(BaseClass):
             self.ts_last_saved = self.convert_timestamp(self.ts_last_saved)
 
         if isinstance(self.domains, list):
-            self.domains = [QueryDomain.from_api_response(domain) for domain in self.domains]
+            if not isinstance(self.domains[0], QueryDomain):
+                self.domains = [QueryDomain.from_api_response(domain) for domain in self.domains]
 
         if isinstance(self.tags, list):
-            self.tags = [QueryTag.from_api_response(tag) for tag in self.tags]
+            if not isinstance(self.tags[0], QueryTag):
+                self.tags = [QueryTag.from_api_response(tag) for tag in self.tags]
 
         if isinstance(self.datasource, dict):
             self.datasource = QueryDatasource.from_api_response(self.datasource)
 
 
 @dataclass(kw_only=True)
-class QueryCreateRequest(BaseClass):
+class QueryItem(BaseClass):
     """Payload used for creating a query."""
 
     datasource_id: int

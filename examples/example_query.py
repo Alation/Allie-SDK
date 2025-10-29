@@ -24,7 +24,7 @@ DATASOURCE_ID = 1
 QUERY_TITLE = "Top 10 Users"
 QUERY_DESCRIPTION = "Counts the number of users and lists the top 10 users."
 QUERY_SQL = "SELECT count(*) FROM users;\nSELECT TOP 10 * FROM users;"
-QUERY_TAGS = ["@tag_name"]
+QUERY_TAGS = ["demo"]
 QUERY_DOMAIN_IDS = [1]
 AUTHOR_EMAIL = "author@example.com"
 # Optionally set to the path of the combined OpenSSL CA bundle that includes Zscaler.
@@ -66,7 +66,7 @@ alation = allie.Alation(
 # CREATE QUERY
 # ================================
 
-query_request = allie.QueryCreateRequest(
+query_request = allie.QueryItem(
     datasource_id=DATASOURCE_ID,
     content=QUERY_SQL,
     title=QUERY_TITLE,
@@ -79,13 +79,13 @@ query_request = allie.QueryCreateRequest(
 
 created_query = alation.query.create_query(query_request)
 
-logging.info("Created query %s (id=%s)", created_query.title, created_query.id)
+logging.info("Created query %s (id=%s)", created_query.result.title, created_query.result.id)
 
 # ================================
 # GET QUERY SQL
 # ================================
 
-query_sql = alation.query.get_query_sql(created_query.id)
+query_sql = alation.query.get_query_sql(created_query.result.id)
 
-logging.info("Downloaded SQL for query id=%s", created_query.id)
+logging.info("Downloaded SQL for query id=%s", created_query.result.id)
 logging.debug("SQL contents:\n%s", query_sql)
