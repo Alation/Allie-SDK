@@ -1,0 +1,91 @@
+"""Example of creating a query and downloading its SQL text.
+
+Prerequisites:
+
+- You adjusted the "config.ini" file with your settings.
+- The datasource ID used below already exists in Alation.
+- If your organisation routes traffic through Zscaler, export the full Zscaler
+  certificate chain from macOS Keychain, append it to the OpenSSL bundle that
+  Python 3.13 is using, and (optionally) point pip at the combined bundle so
+  TLS validation succeeds.
+"""
+
+import configparser
+import logging
+import sys
+
+import allie_sdk as allie
+
+# ================================
+# Set Global Variables
+# ================================
+
+DATASOURCE_ID = 1
+QUERY_TITLE = "Top 10 Users"
+QUERY_DESCRIPTION = "Counts the number of users and lists the top 10 users."
+QUERY_SQL = "SELECT count(*) FROM users;\nSELECT TOP 10 * FROM users;"
+QUERY_TAGS = ["@tag_name"]
+QUERY_DOMAIN_IDS = [1]
+AUTHOR_EMAIL = "author@example.com"
+# Optionally set to the path of the combined OpenSSL CA bundle that includes Zscaler.
+CUSTOM_CA_BUNDLE_PATH = None
+
+# ================================
+# Define Logging Config
+# ================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stdout,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+# ================================
+# Source Global Config
+# ================================
+
+config = configparser.ConfigParser()
+config.read("config.ini")
+
+ALATION_USER_ID = config.get(section="api", option="ALATION_USER_ID")
+ALATION_BASE_URL = config.get(section="api", option="ALATION_BASE_URL")
+ALATION_API_REFRESH_TOKEN = config.get(section="api", option="ALATION_API_REFRESH_TOKEN")
+
+# ================================
+# Create session with your Alation instance
+# ================================
+
+alation = allie.Alation(
+    host=ALATION_BASE_URL,
+    user_id=ALATION_USER_ID,
+    refresh_token=ALATION_API_REFRESH_TOKEN,
+    private_ssl_cert=CUSTOM_CA_BUNDLE_PATH,
+)
+
+# ================================
+# CREATE QUERY
+# ================================
+
+query_request = allie.QueryCreateRequest(
+    datasource_id=DATASOURCE_ID,
+    content=QUERY_SQL,
+    title=QUERY_TITLE,
+    description=QUERY_DESCRIPTION,
+    tag_names=QUERY_TAGS,
+    domain_ids=QUERY_DOMAIN_IDS,
+    author=allie.QueryAuthor(email=AUTHOR_EMAIL),
+    published=True,
+)
+
+created_query = alation.query.create_query(query_request)
+
+logging.info("Created query %s (id=%s)", created_query.title, created_query.id)
+
+# ================================
+# GET QUERY SQL
+# ================================
+
+query_sql = alation.query.get_query_sql(created_query.id)
+
+logging.info("Downloaded SQL for query id=%s", created_query.id)
+logging.debug("SQL contents:\n%s", query_sql)

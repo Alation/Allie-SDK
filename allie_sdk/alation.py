@@ -21,6 +21,7 @@ from .methods import (
     AlationGroup,
     AlationOtype,
     AlationPolicyGroup,
+    AlationQuery,
     AlationRDBMS,
     AlationTrustChecks,
     AlationUser,
@@ -127,6 +128,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.user = AlationUser(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.query = AlationQuery(
             access_token=self.access_token, session=session, host=host
         )
         self.trust_checks = AlationTrustChecks(
