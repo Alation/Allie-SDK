@@ -1,9 +1,10 @@
 """Alation REST API Query Data Models."""
 
 from dataclasses import dataclass, field, asdict
+from typing import Optional
 from datetime import datetime
 
-from ..core.data_structures import BaseClass
+from ..core.data_structures import BaseClass, BaseParams
 from ..core.custom_exceptions import InvalidPostBody
 
 
@@ -207,3 +208,38 @@ class QueryItem(BaseClass):
             payload["author"] = self.author.to_payload()
 
         return payload
+
+
+@dataclass
+class QueryParams(BaseParams):
+    """
+    Data class representing the parameters for a URL query object.
+    """
+
+    # Core Query Parameters
+    id: Optional[int] = None  # The numeric identifier of the query
+    title: Optional[str] = None  # The query title
+    description: Optional[str] = None  # The query description
+    ts_last_saved: Optional[datetime] = None  # The date and time when the query was last saved
+    autosave_content: Optional[str] = None  # Any unsaved content of the query
+    content: Optional[str] = None  # The saved content of the query
+    saved: Optional[bool] = None  # Whether the query has been saved
+    published: Optional[bool] = None  # Whether the query has been published
+
+    # Data Source Parameters
+    datasource_id: Optional[int] = None  # The numeric identifer of the query's associated data source
+    datasource_title: Optional[str] = None  # The title of the query's associated data source
+    datasource_uri: Optional[str] = None  # The URI of the query's associated data source
+
+    # Scheduling Parameters
+    schedule_enabled: Optional[bool] = None  # Whether an associated schedule for the query is enabled
+    schedule_cron_expression: Optional[str] = None  # The cron expression for a query's schedule
+    schedule_ts_last_attempt: Optional[datetime] = None  # When a scheduled execution of a query was last attempted
+    schedule_celery_task_name: Optional[str] = None  # The associated Celery task for the query's scheduled execution
+    schedule_username: Optional[str] = None  # The name of the user who scheduled the query
+    schedule_user_is_active: Optional[bool] = None  # Whether the user who scheduled the query is an active user
+    schedule_db_uri: Optional[str] = None  # The URI to be used when the query is scheduled to execute
+    schedule_db_ts_last_used: Optional[datetime] = None  # Last usage of db credentials for scheduled execution
+
+    # Sorting Parameter
+    order_by: Optional[str] = None  # Order results by field name

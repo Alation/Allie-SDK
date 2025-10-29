@@ -232,3 +232,103 @@ class TestQueryMethods(unittest.TestCase):
         )
         assert expected_result == query
 
+    @requests_mock.Mocker()
+    def test_get_queries_success(self, mock_requests):
+        api_response = [
+
+            {
+                "datasource_id": 1,
+                "autosave_content": "SELECT 1",
+                "content": "SELECT 1",
+                "title": "Test Query",
+                "saved": True,
+                "published": False,
+                "description": "Description",
+                "url": "/integration/v1/query/6/",
+                "id": 6,
+                "domains": [
+                    {
+                        "title": "domain title",
+                        "id": 1,
+                        "description": "domain description",
+                    }
+                ],
+                "tags": [
+                    {
+                        "id": 1,
+                        "name": "@tag_name",
+                        "description": "tag description",
+                        "ts_created": "2024-04-12T11:58:56.176079Z",
+                        "url": "/tag/1/",
+                        "ts_updated": "2024-04-12T12:03:40.884535Z",
+                    }
+                ],
+                "datasource": {
+                    "id": 1,
+                    "title": "OCF snowflake",
+                    "uri": "",
+                    "url": "/data/1/",
+                },
+                "ts_last_saved": "2024-04-12T12:03:40.704437Z",
+                "has_unsaved_changes": False,
+                "catalog_url": "/query/6/",
+                "compose_url": "/compose/query/6/",
+                "schedules": [],
+            }
+        ]
+
+        mock_requests.register_uri(
+            method="GET",
+            url="/integration/v1/query/?datasource_id=1",
+            json=api_response,
+            status_code=200,
+        )
+
+        query = self.query_methods.get_queries(query_params=QueryParams(
+            datasource_id=1
+        ))
+
+        expected_result = [
+            Query(
+                datasource_id=1
+                , autosave_content='SELECT 1'
+                , content='SELECT 1'
+                , title='Test Query'
+                , saved=True
+                , published=False
+                , description='Description'
+                , url='/integration/v1/query/6/'
+                , id=6
+                , domains=[
+                    QueryDomain(
+                        title='domain title'
+                        , id=1
+                        , description='domain description'
+                    )
+                ]
+                , tags=[
+                    QueryTag(
+                        id=1
+                        , name='@tag_name'
+                        , description='tag description'
+                        , ts_created=datetime(2024, 4, 12, 11, 58, 56, 176079)
+                        , url='/tag/1/'
+                        , ts_updated=datetime(2024, 4, 12, 12, 3, 40, 884535)
+                    )
+                ]
+                , datasource=QueryDatasource(
+                    id=1
+                    , title='OCF snowflake'
+                    , uri=''
+                    , url='/data/1/'
+                )
+                , ts_last_saved=datetime(2024, 4, 12, 12, 3, 40, 704437)
+                , has_unsaved_changes=False
+                , catalog_url='/query/6/'
+                , compose_url='/compose/query/6/'
+                , schedules=[]
+            )
+        ]
+
+        assert expected_result == query
+

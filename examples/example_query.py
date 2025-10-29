@@ -11,6 +11,7 @@ import logging
 import sys
 
 import allie_sdk as allie
+from allie_sdk.models import QueryParams
 
 # ================================
 # Set Global Variables
@@ -53,7 +54,6 @@ alation = allie.Alation(
     host=ALATION_BASE_URL,
     user_id=ALATION_USER_ID,
     refresh_token=ALATION_API_REFRESH_TOKEN,
-    private_ssl_cert=CUSTOM_CA_BUNDLE_PATH,
 )
 
 # ================================
@@ -76,7 +76,19 @@ created_query = alation.query.create_query(query_request)
 logging.info("Created query %s (id=%s)", created_query.result.title, created_query.result.id)
 
 # ================================
-# GET QUERY SQL
+# GET QUERIES
+# ================================
+
+queries = alation.query.get_queries(
+    query_params = QueryParams(
+        datasource_id=DATASOURCE_ID
+    )
+)
+
+logging.info(f"I found {len(queries)} queries")
+
+# ================================
+# GET SPECIFIC QUERY BY ID
 # ================================
 
 query = alation.query.get_query(

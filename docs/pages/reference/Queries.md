@@ -104,6 +104,20 @@ Args:
 Returns:
 * `Query`: The created query with catalog metadata.
 
+### get_queries
+
+```
+get_queries(query_params: QueryParams) -> list[Query]
+```
+
+Retrieve the details of queries based on certain parameters.
+
+Args:
+* query_params (`QueryParams`): several filter options
+
+Returns:
+* `list[Query]`: list of Alation Queries.
+
 ### get_query
 
 ```
