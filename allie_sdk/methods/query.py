@@ -56,7 +56,7 @@ class AlationQuery(RequestHandler):
 
         return result
 
-    def get_query_sql(self, query_id: int) -> str:
+    def get_query(self, query_id: int) -> str:
         """Retrieve the saved SQL text for a query."""
 
         if query_id is None:

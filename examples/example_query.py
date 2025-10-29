@@ -85,7 +85,9 @@ logging.info("Created query %s (id=%s)", created_query.result.title, created_que
 # GET QUERY SQL
 # ================================
 
-query_sql = alation.query.get_query_sql(created_query.result.id)
+query = alation.query.get_query(
+    query_id = created_query.result.id
+)
 
 logging.info("Downloaded SQL for query id=%s", created_query.result.id)
-logging.debug("SQL contents:\n%s", query_sql)
+logging.debug("SQL contents:\n%s", query)

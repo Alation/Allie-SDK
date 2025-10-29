@@ -149,7 +149,7 @@ class TestQueryMethods(unittest.TestCase):
             status_code=200,
         )
 
-        sql_text = self.query_methods.get_query_sql(6)
+        sql_text = self.query_methods.get_query(6)
 
         self.assertEqual("SELECT count(*) FROM users;", sql_text)
 

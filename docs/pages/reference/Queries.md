@@ -11,7 +11,7 @@ parent: SDK Reference
 
 ## Models
 
-### QueryCreateRequest
+### QueryItem
 Payload model used when creating a query via `create_query`.
 
 | Name         | Required | Type        | Description |
@@ -99,12 +99,12 @@ create_query(query: QueryCreateRequest) -> Query
 Create a query in Alation on behalf of the authenticated user (or a specific author when executed by an admin).
 
 Args:
-* query (`QueryCreateRequest`): Payload describing the query to create.
+* query (`QueryItem`): Payload describing the query to create.
 
 Returns:
 * `Query`: The created query with catalog metadata.
 
-### get_query_sql
+### get_query
 
 ```
 get_query_sql(query_id: int) -> str
