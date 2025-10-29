@@ -4,10 +4,6 @@ Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
 - The datasource ID used below already exists in Alation.
-- If your organisation routes traffic through Zscaler, export the full Zscaler
-  certificate chain from macOS Keychain, append it to the OpenSSL bundle that
-  Python 3.13 is using, and (optionally) point pip at the combined bundle so
-  TLS validation succeeds.
 """
 
 import configparser
@@ -26,9 +22,7 @@ QUERY_DESCRIPTION = "Counts the number of users and lists the top 10 users."
 QUERY_SQL = "SELECT count(*) FROM users;\nSELECT TOP 10 * FROM users;"
 QUERY_TAGS = ["demo"]
 QUERY_DOMAIN_IDS = [1]
-AUTHOR_EMAIL = "author@example.com"
-# Optionally set to the path of the combined OpenSSL CA bundle that includes Zscaler.
-CUSTOM_CA_BUNDLE_PATH = None
+AUTHOR_EMAIL = "user@example.com"
 
 # ================================
 # Define Logging Config
@@ -86,6 +80,16 @@ logging.info("Created query %s (id=%s)", created_query.result.title, created_que
 # ================================
 
 query = alation.query.get_query(
+    query_id = created_query.result.id
+)
+
+logging.info("Query %s (id=%s)", query.title, query.id)
+
+# ================================
+# GET QUERY SQL
+# ================================
+
+query = alation.query.get_query_sql(
     query_id = created_query.result.id
 )
 

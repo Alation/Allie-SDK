@@ -56,7 +56,27 @@ class AlationQuery(RequestHandler):
 
         return result
 
-    def get_query(self, query_id: int) -> str:
+    def get_query(self, query_id: int) -> Query:
+        """Retrieve the saved SQL text for a query."""
+
+        if query_id is None:
+            raise InvalidPostBody("'query_id' must be provided to fetch query SQL text.")
+
+        query = self.get(
+            url=f"/integration/v1/query/{query_id}/",
+            pagination=False,
+        )
+
+        # if isinstance(sql_text, bytes):
+        #     return sql_text.decode("utf-8")
+
+        if query:
+            return Query.from_api_response(query)
+
+        return None
+
+
+    def get_query_sql(self, query_id: int) -> str:
         """Retrieve the saved SQL text for a query."""
 
         if query_id is None:

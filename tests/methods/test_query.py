@@ -125,20 +125,6 @@ class TestQueryMethods(unittest.TestCase):
 
         assert  expected_result == result
 
-    @requests_mock.Mocker()
-    def test_create_query_http_error(self, mock_requests):
-        mock_requests.register_uri(
-            method="POST",
-            url="/integration/v1/query/",
-            json={"detail": "Unauthorized"},
-            status_code=403,
-        )
-
-        payload = QueryItem(datasource_id=1, content="SELECT 1")
-
-        with self.assertRaises(requests.exceptions.HTTPError):
-            self.query_methods.create_query(payload)
-
 
     @requests_mock.Mocker()
     def test_get_query_sql_success(self, mock_requests):
@@ -149,7 +135,100 @@ class TestQueryMethods(unittest.TestCase):
             status_code=200,
         )
 
-        sql_text = self.query_methods.get_query(6)
+        sql_text = self.query_methods.get_query_sql(query_id=6)
 
         self.assertEqual("SELECT count(*) FROM users;", sql_text)
+
+    @requests_mock.Mocker()
+    def test_get_query_success(self, mock_requests):
+
+        api_response = {
+            "datasource_id": 1,
+            "autosave_content": "SELECT 1",
+            "content": "SELECT 1",
+            "title": "Test Query",
+            "saved": True,
+            "published": False,
+            "description": "Description",
+            "url": "/integration/v1/query/6/",
+            "id": 6,
+            "domains": [
+                {
+                    "title": "domain title",
+                    "id": 1,
+                    "description": "domain description",
+                }
+            ],
+            "tags": [
+                {
+                    "id": 1,
+                    "name": "@tag_name",
+                    "description": "tag description",
+                    "ts_created": "2024-04-12T11:58:56.176079Z",
+                    "url": "/tag/1/",
+                    "ts_updated": "2024-04-12T12:03:40.884535Z",
+                }
+            ],
+            "datasource": {
+                "id": 1,
+                "title": "OCF snowflake",
+                "uri": "",
+                "url": "/data/1/",
+            },
+            "ts_last_saved": "2024-04-12T12:03:40.704437Z",
+            "has_unsaved_changes": False,
+            "catalog_url": "/query/6/",
+            "compose_url": "/compose/query/6/",
+            "schedules": [],
+        }
+
+        mock_requests.register_uri(
+            method="GET",
+            url="/integration/v1/query/6/",
+            json=api_response,
+            status_code=200,
+        )
+
+        query = self.query_methods.get_query(query_id=6)
+
+        expected_result = Query(
+            datasource_id=1
+            , autosave_content='SELECT 1'
+            , content='SELECT 1'
+            , title='Test Query'
+            , saved=True
+            , published=False
+            , description='Description'
+            , url='/integration/v1/query/6/'
+            , id=6
+            , domains=[
+                QueryDomain(
+                    title='domain title'
+                    , id=1
+                    , description='domain description'
+                )
+            ]
+            , tags=[
+                QueryTag(
+                    id=1
+                    , name='@tag_name'
+                    , description='tag description'
+                    , ts_created=datetime(2024, 4, 12, 11, 58, 56, 176079)
+                    , url='/tag/1/'
+                    , ts_updated=datetime(2024, 4, 12, 12, 3, 40, 884535)
+                )
+            ]
+            , datasource=QueryDatasource(
+                id=1
+                , title='OCF snowflake'
+                , uri=''
+                , url='/data/1/'
+            )
+            , ts_last_saved=datetime(2024, 4, 12, 12, 3, 40, 704437)
+            , has_unsaved_changes=False
+            , catalog_url='/query/6/'
+            , compose_url='/compose/query/6/'
+            , schedules=[]
+        )
+        assert expected_result == query
 

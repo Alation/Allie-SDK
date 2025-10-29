@@ -7,6 +7,63 @@ from ..core.data_structures import BaseClass
 from ..core.custom_exceptions import InvalidPostBody
 
 
+# --- Auxiliary Models ---
+
+@dataclass(kw_only=True)
+class User(BaseClass):
+    """Represents a user, typically the scheduler or owner."""
+    username: str
+    is_active: bool
+
+@dataclass(kw_only=True)
+class DBConnection(BaseClass):
+    """Details for a specific database connection."""
+    uri: str
+    username: str
+    ts_modified: str
+    ts_last_used: str
+
+    def __post_init__(self):
+        self.ts_modified = self.convert_timestamp(self.ts_modified)
+        self.ts_last_used = self.convert_timestamp(self.ts_last_used)
+
+@dataclass(kw_only=True)
+class LatestSession(BaseClass):
+    """Details about the latest execution session of a schedule."""
+    id: int
+    client_session_id: str
+    query_id: int
+    ts_start: str
+    sandbox_id: str
+    batch_ids: list[int]
+
+    def __post_init__(self):
+        self.ts_start = self.convert_timestamp(self.ts_start)
+
+@dataclass(kw_only=True)
+class Schedule(BaseClass):
+    """Details for a single scheduled execution of the query."""
+    enabled: bool
+    cron_expression: str
+    ts_last_attempt: str
+    overdue: bool
+    ts_next_run: str
+    celery_queue: str
+    celery_task_name: str
+    user: dict
+    db_connection: dict
+    latest_session: dict
+
+    def __post_init__(self):
+        self.ts_last_attempt = self.convert_timestamp(self.ts_last_attempt)
+        self.ts_next_run = self.convert_timestamp(self.ts_next_run)
+        if isinstance(self.user, dict):
+            self.user = User.from_api_response(self.user)
+        if isinstance(self.db_connection, DBConnection):
+            self.db_connection = DBConnection.from_api_response(self.db_connection)
+        if isinstance(self.latest_session, LatestSession):
+            self.latest_session = LatestSession.from_api_response(self.latest_session)
+
 @dataclass(kw_only=True)
 class QueryAuthor(BaseClass):
     """Author details that can be assigned to a query."""
@@ -83,22 +140,28 @@ class Query(BaseClass):
     has_unsaved_changes: bool = field(default=None)
     catalog_url: str = field(default=None)
     compose_url: str = field(default=None)
-    schedules: list = field(default=None)
+    schedules: list[Schedule] = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.ts_last_saved, str):
             self.ts_last_saved = self.convert_timestamp(self.ts_last_saved)
 
         if isinstance(self.domains, list):
-            if not isinstance(self.domains[0], QueryDomain):
-                self.domains = [QueryDomain.from_api_response(domain) for domain in self.domains]
+            if len(self.domains) > 0:
+                if not isinstance(self.domains[0], QueryDomain):
+                    self.domains = [QueryDomain.from_api_response(domain) for domain in self.domains]
 
         if isinstance(self.tags, list):
-            if not isinstance(self.tags[0], QueryTag):
-                self.tags = [QueryTag.from_api_response(tag) for tag in self.tags]
+            if len(self.tags) > 0:
+                if not isinstance(self.tags[0], QueryTag):
+                    self.tags = [QueryTag.from_api_response(tag) for tag in self.tags]
 
         if isinstance(self.datasource, dict):
             self.datasource = QueryDatasource.from_api_response(self.datasource)
+
+        if isinstance(self.schedules, list):
+            if len(self.schedules) > 0:
+                self.schedules = Schedule.from_api_response(self.schedules)
 
 
 @dataclass(kw_only=True)

@@ -107,6 +107,20 @@ Returns:
 ### get_query
 
 ```
+get_query(query_id: int) -> Query
+```
+
+Retrieve the query details for the supplied query identifier.
+
+Args:
+* query_id (`int`): The catalog ID of the query.
+
+Returns:
+* `Query`: Details of the query.
+
+### get_query_sql
+
+```
 get_query_sql(query_id: int) -> str
 ```
 
