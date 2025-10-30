@@ -102,8 +102,7 @@ class AlationQuery(RequestHandler):
             raise InvalidPostBody("'query_id' must be provided to fetch query SQL text.")
 
         query = self.get(
-            url=f"/integration/v1/query/{query_id}/",
-            query_params = params
+            url=f"/integration/v1/query/{query_id}/"
         )
 
         if query:
