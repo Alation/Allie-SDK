@@ -34,7 +34,7 @@ class AlationDataflow(AsyncHandler):
             return DataflowPayload.from_api_response(data)
         return DataflowPayload()
 
-    def create_or_replace_dataflows(self, payload: DataflowPayload) -> list[JobDetails]:
+    def create_or_replace_dataflows(self, payload: DataflowPayload) -> list[JobDetailsDataflowPost]:
         """Create or replace dataflow objects with lineage paths."""
         if payload is None:
             return []
@@ -45,7 +45,7 @@ class AlationDataflow(AsyncHandler):
             return [JobDetailsDataflowPost.from_api_response(item) for item in async_results]
         return []
 
-    def update_dataflows(self, dataflows: list[DataflowPatchItem]) -> list[JobDetails]:
+    def update_dataflows(self, dataflows: list[DataflowPatchItem]) -> list[JobDetailsDataflowPost]:
         """Update multiple dataflow objects."""
         item: DataflowPatchItem
         validate_rest_payload(dataflows, (DataflowPatchItem,))
