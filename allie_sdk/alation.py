@@ -6,27 +6,28 @@ import requests
 
 from .core.logs import LoggingConfigs
 from .methods import (
-    AlationAuthentication,
-    AlationBusinessPolicy,
-    AlationConnector,
-    AlationCustomField,
-    AlationCustomTemplate,
-    AlationDataDictionary,
-    AlationDataQuality,
-    AlationDatasource,
-    AlationDocument,
-    AlationDocumentHubFolder,
-    AlationDomain,
-    AlationGlossaryTerm,
-    AlationGroup,
-    AlationOtype,
-    AlationPolicyGroup,
-    AlationRDBMS,
-    AlationTrustChecks,
-    AlationUser,
-    AlationVirtualDataSource,
-    AlationVirtualFileSystem,
-    AlationVisualConfig,
+    AlationAuthentication
+    , AlationBusinessPolicy
+    , AlationConnector
+    , AlationCustomField
+    , AlationCustomTemplate
+    , AlationDataDictionary
+    , AlationDataflow
+    , AlationDataQuality
+    , AlationDatasource
+    , AlationDocument
+    , AlationDocumentHubFolder
+    , AlationDomain
+    , AlationGlossaryTerm
+    , AlationGroup
+    , AlationOtype
+    , AlationPolicyGroup
+    , AlationRDBMS
+    , AlationTrustChecks
+    , AlationUser
+    , AlationVirtualFileSystem
+    , AlationVirtualDataSource
+    , AlationVisualConfig
 )
 from .models import JobDetails
 
@@ -94,6 +95,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.custom_template = AlationCustomTemplate(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.dataflow = AlationDataflow(
             access_token=self.access_token, session=session, host=host
         )
         self.data_quality = AlationDataQuality(

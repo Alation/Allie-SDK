@@ -366,3 +366,85 @@ class JobDetailsDocumentHubFolderDelete(JobDetails):
         if isinstance(self.result, dict):
             if all(var in ("deleted_folder_count", "deleted_folder_ids") for var in self.result.keys()):
                 self.result = JobDetailsDocumentHubFolderDeleteResult.from_api_response(self.result)
+
+# --- DATAFLOW POST/PATCH --- #
+@dataclass(kw_only = True)
+class JobDetailsDataflowPost(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, list):
+            result_out = []
+            if len(self.result) > 0:
+                for value in self.result:
+                    if isinstance(value, dict):
+                        if all(var in value.keys() for var in ("response", "mapping")):
+                            result_out.append(JobDetailsDataflowPostResult.from_api_response(value))
+                    else:
+                        # handle anything coming from errors
+                        result_out.append(value)
+                self.result = result_out
+
+@dataclass(kw_only = True)
+class JobDetailsDataflowPostResultMapping(BaseClass):
+    id: int = field(default = None)
+    external_id: str = field(default = None)
+    replaced: str = field(default = None)
+
+@dataclass(kw_only = True)
+class JobDetailsDataflowPostResult(BaseClass):
+    response: str = field(default = None)
+    mapping: list[dict] = field(default_factory = list)
+
+    def __post_init__(self):
+        if isinstance(self.mapping, list):
+            mapping_out = []
+            if len(self.mapping) > 0:
+                for value in self.mapping:
+                    if isinstance(value, dict):
+                        mapping_out.append(JobDetailsDataflowPostResultMapping.from_api_response(value))
+                    else:
+                        mapping_out.append(value)
+
+                self.mapping = mapping_out
+
+
+# --- DATAFLOW DELETE --- #
+@dataclass(kw_only = True)
+class JobDetailsDataflowDelete(JobDetails):
+    def __post_init__(self):
+        # Make sure the nested result gets converted to the proper data class
+        if isinstance(self.result, list):
+            result_out = []
+            if len(self.result) > 0:
+                for value in self.result:
+                    if isinstance(value, dict):
+                        if all(var in value.keys() for var in ("response", "mapping", "failed")):
+                            result_out.append(JobDetailsDataflowDeleteResult.from_api_response(value))
+                    else:
+                        # handle anything coming from errors
+                        result_out.append(value)
+                self.result = result_out
+
+@dataclass(kw_only = True)
+class JobDetailsDataflowDeleteResultMapping(BaseClass):
+    id: int = field(default = None)
+    external_id: str = field(default = None)
+    impacted_dfos: list = field(default_factory = list)
+
+@dataclass(kw_only = True)
+class JobDetailsDataflowDeleteResult(BaseClass):
+    response: str = field(default = None)
+    mapping: list[dict] = field(default_factory = list)
+    failed: list[dict] = field(default_factory = list)
+
+    def __post_init__(self):
+        if isinstance(self.mapping, list):
+            mapping_out = []
+            if len(self.mapping) > 0:
+                for value in self.mapping:
+                    if isinstance(value, dict):
+                        mapping_out.append(JobDetailsDataflowDeleteResultMapping.from_api_response(value))
+                    else:
+                        mapping_out.append(value)
+
+                self.mapping = mapping_out
