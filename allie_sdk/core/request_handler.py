@@ -288,7 +288,14 @@ class RequestHandler(object):
 
         return response_data
 
-    def put(self, url: str, body: any, query_params: dict = None) -> dict | list:
+    def put(
+        self,
+        url: str,
+        body: any,
+        query_params: dict = None,
+        headers: dict = None,
+        files: dict = None,
+    ) -> dict | list:
         """API Put Request.
 
         Args:
@@ -305,10 +312,30 @@ class RequestHandler(object):
         if query_params is None:
             query_params = {}
 
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
+        if headers:
+            headers['Token'] = self.access_token
+        else:
+            headers = self.headers.copy()
 
-        api_response = self.s.put(self.host + url, data=body, params=query_params, headers=self.headers)
+        if files:
+            # Requests will determine the correct boundary and content type when not provided explicitly
+            headers = {
+                key: value for key, value in headers.items() if key.lower() != 'content-type'
+            }
+            request_body = body
+        else:
+            if isinstance(body, dict) or isinstance(body, list):
+                request_body = json.dumps(body, default=str)
+            else:
+                request_body = body
+
+        api_response = self.s.put(
+            self.host + url,
+            data=request_body,
+            params=query_params,
+            headers=headers,
+            files=files,
+        )
 
         try:
             response_data = api_response.json()

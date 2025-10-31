@@ -1,20 +1,17 @@
 """Alation REST API Methods."""
 
 import logging.config
-import os
-import sys
 
 import requests
-import time
 
 from .core.logs import LoggingConfigs
-
 from .methods import (
     AlationAuthentication
     , AlationBusinessPolicy
     , AlationConnector
     , AlationCustomField
     , AlationCustomTemplate
+    , AlationDataDictionary
     , AlationDataflow
     , AlationDataQuality
     , AlationDatasource
@@ -32,15 +29,7 @@ from .methods import (
     , AlationVirtualDataSource
     , AlationVisualConfig
 )
-
 from .models import JobDetails
-
-os.makedirs('logs', exist_ok=True)
-for log_file in os.listdir('logs'):
-    log = os.path.join('./logs', log_file)
-    if os.stat(log).st_mtime < time.time() - 7 * 86400:
-        if os.path.isfile(log):
-            os.remove(log)
 
 logging.config.dictConfig(LoggingConfigs.logging_configs())
 LOGGER = logging.getLogger('allie_sdk_logger')
@@ -112,6 +101,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.data_quality = AlationDataQuality(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.data_dictionary = AlationDataDictionary(
             access_token=self.access_token, session=session, host=host
         )
         self.datasource = AlationDatasource(

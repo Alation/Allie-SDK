@@ -50,6 +50,32 @@ Attributes:
 | oid | list[int] | List of object IDs to be assigned to the domain. |
 | otype | str | otype of the Catalog Objects |
 
+### DomainMembershipRuleRequest
+
+Python object used to filter domain membership rules returned by `view_domain_membership_rules`.
+
+Attributes:
+
+| Name       | Type | Description |
+|------------|------|-------------|
+| domain_ids | list[int] | Domain identifiers whose rules should be returned. |
+| exclude    | bool | Return rules that exclude (`True`) or include (`False`) objects in a domain. |
+| recursive  | bool | Optional. Filter rules that are recursive (`True`) or non-recursive (`False`). |
+
+### DomainMembershipRule
+
+Python object returned by the `view_domain_membership_rules` method.
+
+Attributes:
+
+| Name | Type | Description |
+|------|------|-------------|
+| domain_id | integer | Identifier of the domain where the rule is applied. |
+| exclude | bool | Indicates whether objects are excluded (`True`) or included (`False`). |
+| recursive | bool | Indicates if the rule applies recursively to descendants. |
+| otype | string | Catalog object type that the rule targets. |
+| oid | integer | Identifier of the catalog object affected by the rule. |
+
 ## Methods
 
 ### get_domains
@@ -79,6 +105,23 @@ Args:
 
 Returns:
 - List of Job Details
+
+### view_domain_membership_rules
+
+```
+view_domain_membership_rules(
+    self,
+    rules_request: DomainMembershipRuleRequest
+) -> list[DomainMembershipRule]
+```
+
+Browse the membership rules that are applied to the requested domains.
+
+Args:
+- `rules_request`: Filters describing which rules should be returned.
+
+Returns:
+- List of `DomainMembershipRule` instances representing the matching rules.
 
 ## Examples
 

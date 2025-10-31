@@ -124,6 +124,60 @@ class TestDatasourceModels(unittest.TestCase):
 
         self.assertEqual(input_transformed, output)
 
+    def test_ocf_datasource_post_payload(self):
+        datasource = OCFDatasourcePostItem(
+            connector_id=101,
+            title="New Datasource",
+            uri="mysql://<hostname>:<port>/<db_name>",
+            db_username = "a_user"
+        )
+
+        payload = datasource.generate_post_payload()
+
+        expected = {
+            'connector_id': 101
+            , 'db_username': 'a_user'
+            , 'is_hidden': False
+            , 'title': 'New Datasource'
+            , 'uri': 'mysql://<hostname>:<port>/<db_name>'
+        }
+
+        self.assertDictEqual(payload, expected)
+
+    def test_ocf_datasource_post_requires_fields(self):
+        datasource = OCFDatasourcePostItem(title="Missing connector")
+
+        with self.assertRaises(InvalidPostBody):
+            datasource.generate_post_payload()
+
+    def test_ocf_datasource_update_payload(self):
+        datasource_update = OCFDatasourcePutItem(description="Updated description", private=True)
+
+        payload = datasource_update.generate_put_payload()
+
+        expected = {
+            "description": "Updated description",
+            "private": True,
+        }
+
+        self.assertDictEqual(payload, expected)
+
+    def test_ocf_datasource_params_generate(self):
+        params = OCFDatasourceParams(include_hidden=True, exclude_suspended=True)
+
+        self.assertDictEqual(
+            params.generate_params_dict(),
+            {"include_hidden": True, "exclude_suspended": True},
+        )
+
+    def test_ocf_datasource_get_params_generate(self):
+        params = OCFDatasourceGetParams(exclude_suspended=True)
+
+        self.assertDictEqual(
+            params.generate_params_dict(),
+            {"exclude_suspended": True},
+        )
+
     def test_native_datasource_model(self):
         # Expected input
         input = {
