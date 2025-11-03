@@ -98,6 +98,9 @@ class Alation(object):
         self.custom_template = AlationCustomTemplate(
             access_token=self.access_token, session=session, host=host
         )
+        self.dataflow = AlationDataflow(
+            access_token=self.access_token, session=session, host=host
+        )
         self.data_quality = AlationDataQuality(
             access_token=self.access_token, session=session, host=host
         )
@@ -138,6 +141,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.query = AlationQuery(
             access_token=self.access_token, session=session, host=host
         )
         self.virtual_filesystem = AlationVirtualFileSystem(
