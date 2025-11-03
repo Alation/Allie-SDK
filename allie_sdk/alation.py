@@ -12,6 +12,7 @@ from .methods import (
     AlationCustomField,
     AlationCustomTemplate,
     AlationDataDictionary,
+    AlationDataflow,
     AlationDataQuality,
     AlationDatasource,
     AlationDocument,
@@ -128,9 +129,6 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.user = AlationUser(
-            access_token=self.access_token, session=session, host=host
-        )
-        self.query = AlationQuery(
             access_token=self.access_token, session=session, host=host
         )
         self.trust_checks = AlationTrustChecks(
