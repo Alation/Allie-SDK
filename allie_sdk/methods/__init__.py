@@ -14,6 +14,7 @@ from .glossary_term import AlationGlossaryTerm
 from .group import AlationGroup
 from .otype import AlationOtype
 from .policy_group import AlationPolicyGroup
+from .query import AlationQuery
 from .rdbms import AlationRDBMS
 from .trust_check import AlationTrustChecks
 from .user import AlationUser

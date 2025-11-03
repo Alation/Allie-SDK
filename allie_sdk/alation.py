@@ -6,28 +6,29 @@ import requests
 
 from .core.logs import LoggingConfigs
 from .methods import (
-    AlationAuthentication
-    , AlationBusinessPolicy
-    , AlationConnector
-    , AlationCustomField
-    , AlationCustomTemplate
-    , AlationDataDictionary
-    , AlationDataflow
-    , AlationDataQuality
-    , AlationDatasource
-    , AlationDocument
-    , AlationDocumentHubFolder
-    , AlationDomain
-    , AlationGlossaryTerm
-    , AlationGroup
-    , AlationOtype
-    , AlationPolicyGroup
-    , AlationRDBMS
-    , AlationTrustChecks
-    , AlationUser
-    , AlationVirtualFileSystem
-    , AlationVirtualDataSource
-    , AlationVisualConfig
+    AlationAuthentication,
+    AlationBusinessPolicy,
+    AlationConnector,
+    AlationCustomField,
+    AlationCustomTemplate,
+    AlationDataDictionary,
+    AlationDataflow,
+    AlationDataQuality,
+    AlationDatasource,
+    AlationDocument,
+    AlationDocumentHubFolder,
+    AlationDomain,
+    AlationGlossaryTerm,
+    AlationGroup,
+    AlationOtype,
+    AlationPolicyGroup,
+    AlationQuery,
+    AlationRDBMS,
+    AlationTrustChecks,
+    AlationUser,
+    AlationVirtualDataSource,
+    AlationVirtualFileSystem,
+    AlationVisualConfig,
 )
 from .models import JobDetails
 
@@ -140,6 +141,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.query = AlationQuery(
             access_token=self.access_token, session=session, host=host
         )
         self.virtual_filesystem = AlationVirtualFileSystem(
