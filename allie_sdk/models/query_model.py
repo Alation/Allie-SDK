@@ -42,7 +42,7 @@ class LatestSession(BaseClass):
         self.ts_start = self.convert_timestamp(self.ts_start)
 
 @dataclass(kw_only=True)
-class Schedule(BaseClass):
+class QuerySchedule(BaseClass):
     """Details for a single scheduled execution of the query."""
     enabled: bool
     cron_expression: str
@@ -141,7 +141,7 @@ class Query(BaseClass):
     has_unsaved_changes: bool = field(default=None)
     catalog_url: str = field(default=None)
     compose_url: str = field(default=None)
-    schedules: list[Schedule] = field(default=None)
+    schedules: list[QuerySchedule] = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.ts_last_saved, str):
@@ -162,7 +162,8 @@ class Query(BaseClass):
 
         if isinstance(self.schedules, list):
             if len(self.schedules) > 0:
-                self.schedules = Schedule.from_api_response(self.schedules)
+                if not isinstance(self.schedules[0], QuerySchedule):
+                    self.schedules = [QuerySchedule.from_api_response(schedule) for schedule in self.schedules]
 
 
 @dataclass(kw_only=True)
