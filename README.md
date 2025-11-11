@@ -12,3 +12,31 @@ This is an **open source** project under the [APACHE 2.0 License](https://apache
 
 ## License
 [APACHE 2.0 License](https://apache.org/licenses/LICENSE-2.0)
+
+## FastMCP server example
+
+The repository ships an example Model Context Protocol server built with [FastMCP](https://github.com/jxnl/fastmcp). The server exposes every Allie SDK method as an MCP tool and authenticates incoming clients with an Alation refresh token.
+
+1. Export the refresh token expected by the server and the credentials the tools should use when they instantiate the Allie SDK client:
+
+   ```bash
+   export ALLIE_SDK_EXPECTED_REFRESH_TOKEN="expected-refresh-token"
+   export ALATION_HOST="https://your-alation.example.com"
+   export ALATION_USER_ID="1"
+   export ALATION_VALIDATE_SSL="1"
+   ```
+
+2. Start the server:
+
+   ```bash
+   python examples/fastmcp_server.py
+   ```
+
+3. Connect with the companion client example:
+
+   ```bash
+   export ALLIE_SDK_REFRESH_TOKEN="expected-refresh-token"
+   python examples/fastmcp_client.py
+   ```
+
+The client connects via WebSocket, authenticates with the refresh token and triggers a tool call (``datasource.get_ocf_datasources`` in the example). Adjust the environment variables to match your Alation deployment.

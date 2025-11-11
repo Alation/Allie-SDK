@@ -1,2 +1,4 @@
 requests_mock
 pytest
+fastmcp
+
