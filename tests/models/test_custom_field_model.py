@@ -381,11 +381,13 @@ class TestCustomFieldModels(unittest.TestCase):
     # for PUT method
     def test_custom_field_value_item_string_value_payload(self):
 
-        mock_item = CustomFieldValueItem()
-        mock_item.field_id = 1
-        mock_item.oid = 1
-        mock_item.otype = 'table'
-        mock_item.value = CustomFieldStringValueItem(value='Testing')
+        mock_item = CustomFieldValueItem(
+            field_id = 1
+            , oid = 1
+            , otype = 'table'
+            , value = CustomFieldStringValueItem(value='Testing')
+        )
+
         expected_payload = {
             'field_id': 1
             , 'otype': 'table'

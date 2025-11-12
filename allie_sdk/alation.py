@@ -1,46 +1,37 @@
 """Alation REST API Methods."""
 
 import logging.config
-import os
-import sys
 
 import requests
-import time
 
 from .core.logs import LoggingConfigs
-
 from .methods import (
-    AlationAuthentication
-    , AlationBISource
-    , AlationBusinessPolicy
-    , AlationConnector
-    , AlationCustomField
-    , AlationCustomTemplate
-    , AlationDataQuality
-    , AlationDatasource
-    , AlationDocument
-    , AlationDocumentHubFolder
-    , AlationDomain
-    , AlationGlossaryTerm
-    , AlationGroup
-    , AlationOtype
-    , AlationPolicyGroup
-    , AlationRDBMS
-    , AlationTrustChecks
-    , AlationUser
-    , AlationVirtualFileSystem
-    , AlationVirtualDataSource
-    , AlationVisualConfig
+    AlationAuthentication,
+    AlationBISource,
+    AlationBusinessPolicy,
+    AlationConnector,
+    AlationCustomField,
+    AlationCustomTemplate,
+    AlationDataDictionary,
+    AlationDataflow,
+    AlationDataQuality,
+    AlationDatasource,
+    AlationDocument,
+    AlationDocumentHubFolder,
+    AlationDomain,
+    AlationGlossaryTerm,
+    AlationGroup,
+    AlationOtype,
+    AlationPolicyGroup,
+    AlationQuery,
+    AlationRDBMS,
+    AlationTrustChecks,
+    AlationUser,
+    AlationVirtualDataSource,
+    AlationVirtualFileSystem,
+    AlationVisualConfig,
 )
-
 from .models import JobDetails
-
-os.makedirs('logs', exist_ok=True)
-for log_file in os.listdir('logs'):
-    log = os.path.join('./logs', log_file)
-    if os.stat(log).st_mtime < time.time() - 7 * 86400:
-        if os.path.isfile(log):
-            os.remove(log)
 
 logging.config.dictConfig(LoggingConfigs.logging_configs())
 LOGGER = logging.getLogger('allie_sdk_logger')
@@ -111,7 +102,13 @@ class Alation(object):
         self.custom_template = AlationCustomTemplate(
             access_token=self.access_token, session=session, host=host
         )
+        self.dataflow = AlationDataflow(
+            access_token=self.access_token, session=session, host=host
+        )
         self.data_quality = AlationDataQuality(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.data_dictionary = AlationDataDictionary(
             access_token=self.access_token, session=session, host=host
         )
         self.datasource = AlationDatasource(
@@ -148,6 +145,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.policy_group = AlationPolicyGroup(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.query = AlationQuery(
             access_token=self.access_token, session=session, host=host
         )
         self.virtual_filesystem = AlationVirtualFileSystem(

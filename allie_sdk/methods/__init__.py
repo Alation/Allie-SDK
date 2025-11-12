@@ -4,8 +4,10 @@ from .business_policy import AlationBusinessPolicy
 from .connector import AlationConnector
 from .custom_field import AlationCustomField
 from .custom_template import AlationCustomTemplate
+from .data_dictionary import AlationDataDictionary
 from .data_quality import AlationDataQuality
 from .datasource import AlationDatasource
+from .dataflow import AlationDataflow
 from .document import AlationDocument
 from .document_hub_folder import AlationDocumentHubFolder
 from .domain import AlationDomain
@@ -13,6 +15,7 @@ from .glossary_term import AlationGlossaryTerm
 from .group import AlationGroup
 from .otype import AlationOtype
 from .policy_group import AlationPolicyGroup
+from .query import AlationQuery
 from .rdbms import AlationRDBMS
 from .trust_check import AlationTrustChecks
 from .user import AlationUser

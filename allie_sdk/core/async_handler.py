@@ -28,13 +28,21 @@ class AsyncHandler(RequestHandler):
         self.host = host
         self.session = session
 
-    def async_delete(self, url: str, payload: list, batch_size: int = None) -> list:
+    def async_delete(
+            self,
+            url: str,
+            payload: list,
+            batch_size: int = None,
+            query_params: dict = None,
+    ) -> list:
         """Delete Alation Objects via an Async Job Process.
 
         Args:
             url (str): Delete API Call URL.
             payload (list): REST API Delete Body.
             batch_size (int): REST API Delete Body Size Limit.
+            query_params (dict): DELETE API Call Query Parameters.
+
 
         Returns:
             list: job execution results
@@ -48,7 +56,9 @@ class AsyncHandler(RequestHandler):
         for batch in batches:
             try:
                 LOGGER.debug(batch)
-                async_response = self.delete(url, body=batch)
+                async_response = self.delete(
+                    url, body=batch, query_params=query_params, is_async=True
+                )
                 if async_response:
                     # check if the response includes a job_id and only then fetch job details
                     if any(var in async_response.keys() for var in ("task", "job", "job_id", "job_name")):
@@ -82,12 +92,13 @@ class AsyncHandler(RequestHandler):
             requests.exceptions.HTTPError: If the API returns a non-success status code.
         """
 
+        results: list = []
         # Note: batching is implemented on a higher level since the structure of the payload is not standardised
         try:
             async_response = self.delete(
-                url = url
-                , body=payload
-                , is_async = True
+                url=url,
+                body=payload,
+                is_async=True,
             )
 
             if async_response:
@@ -98,13 +109,15 @@ class AsyncHandler(RequestHandler):
                 else:
                     # add the error details
                     # this needs to be a list here since results above is also a list
-                    results = [ async_response ]
-
-            return results
+                    results = [async_response]
+            else:
+                LOGGER.debug("No async response received from delete request")
         except requests.exceptions.HTTPError as e:
             LOGGER.error(f"HTTP error occurred: {e}", exc_info=True)
             # Raise all HTTP errors for consistent behavior
             raise
+
+        return results
 
     def async_patch(self, url: str, payload: list, batch_size: int = None) -> list:
         """Patch Alation Objects via an Async Job Process.

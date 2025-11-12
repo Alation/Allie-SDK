@@ -41,11 +41,12 @@ class RequestHandler(object):
             self.headers['Token'] = access_token
 
     def delete(
-        self
-        , url: str
-        , body: any = None
-        , is_async: bool = False
-        , query_params: dict = None
+        self,
+        url: str,
+        body: any = None,
+        query_params: dict = None,
+        is_async: bool = False
+
     ) -> dict | list:
         """API Delete Request.
 
@@ -53,6 +54,8 @@ class RequestHandler(object):
             url (str): DELETE API Call URL.
             body (any): DELETE API Body.
             is_async (bool): If True, return raw response for async handling.
+            query_params (dict): DELETE API Call Query Parameters.
+
 
         Returns:
             dict | list: API Response Body.
@@ -66,7 +69,9 @@ class RequestHandler(object):
         if isinstance(body, dict) or isinstance(body, list):
             body = json.dumps(body, default=str)
 
-        api_response = self.s.delete(self.host + url, data=body, headers=self.headers, params=query_params)
+        api_response = self.s.delete(
+            self.host + url, data=body, params=query_params, headers=self.headers
+        )
 
         try:
             response_data = api_response.json()
@@ -106,15 +111,20 @@ class RequestHandler(object):
             mapped_response_data = self._map_request_success_to_job_details(response_data)
             return mapped_response_data
 
-            
-
-    def get(self, url: str, query_params: dict = None, pagination: bool = True) -> any:
+    def get(
+            self,
+            url: str,
+            query_params: dict = None,
+            pagination: bool = True,
+            body: any = None,
+    ) -> any:
         """API Get Request.
 
         Args:
             url (str): GET API Call URL.
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Fetch all API results that meet the Query Parameters.
+            body (any): Optional GET Request Body.
 
         Returns:
             any: API Response Body in JSON.
@@ -128,8 +138,9 @@ class RequestHandler(object):
         if pagination:
             query_params['limit'] = self.page_size
 
-        api_response = self._api_single_get(self.host + url, params=query_params)
-        
+        api_response = self._api_single_get(
+            self.host + url, params=query_params, body=body
+        )
         # Check status and raise error if needed
         if api_response.status_code not in SUCCESS_CODES:
             api_response.raise_for_status()
@@ -277,7 +288,14 @@ class RequestHandler(object):
 
         return response_data
 
-    def put(self, url: str, body: any, query_params: dict = None) -> dict | list:
+    def put(
+        self,
+        url: str,
+        body: any,
+        query_params: dict = None,
+        headers: dict = None,
+        files: dict = None,
+    ) -> dict | list:
         """API Put Request.
 
         Args:
@@ -294,10 +312,30 @@ class RequestHandler(object):
         if query_params is None:
             query_params = {}
 
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
+        if headers:
+            headers['Token'] = self.access_token
+        else:
+            headers = self.headers.copy()
 
-        api_response = self.s.put(self.host + url, data=body, params=query_params, headers=self.headers)
+        if files:
+            # Requests will determine the correct boundary and content type when not provided explicitly
+            headers = {
+                key: value for key, value in headers.items() if key.lower() != 'content-type'
+            }
+            request_body = body
+        else:
+            if isinstance(body, dict) or isinstance(body, list):
+                request_body = json.dumps(body, default=str)
+            else:
+                request_body = body
+
+        api_response = self.s.put(
+            self.host + url,
+            data=request_body,
+            params=query_params,
+            headers=headers,
+            files=files,
+        )
 
         try:
             response_data = api_response.json()
@@ -331,12 +369,15 @@ class RequestHandler(object):
 
         return response_data
 
-    def _api_single_get(self, url: str, params: dict = None) -> requests.Response:
+    def _api_single_get(
+            self, url: str, params: dict = None, body: any = None
+    ) -> requests.Response:
         """Run a Single REST API Get Call. Helper function for paginated results.
 
         Args:
             url (str): GET API Call URL.
             params (dict): GET API Call Query Parameters.
+            body (any): Optional GET Request Body.
 
         Returns:
             requests.Response: API GET Response.
@@ -345,10 +386,16 @@ class RequestHandler(object):
             This is a helper method that doesn't raise exceptions directly.
             The calling method is responsible for checking status codes and raising exceptions.
         """
-        if params:
-            api_response = self.s.get(url, params=params, headers=self.headers)
-        else:
-            api_response = self.s.get(url, headers=self.headers)
+        if body is not None:
+            body = json.dumps(body, default=str)
+
+            # Always call GET; requests can handle None for params/body
+        api_response = self.s.get(
+            url,
+            params=params,
+            headers=self.headers,
+            data=body
+        )
 
         try:
             response_data = api_response.json()

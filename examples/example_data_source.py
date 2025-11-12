@@ -1,5 +1,6 @@
 """
-Example of listing OCF and native Alation data sources.
+Example of listing native Alation data sources.
+Example of creating, listing, updating and deleting OCF Alation data sources.
 
 Prerequisites:
 
@@ -17,6 +18,8 @@ import datetime
 # ================================
 # Set Global Variables
 # ================================
+
+OCF_CONNECTOR_ID = 4
 
 # ================================
 # Define Logging Config
@@ -85,3 +88,68 @@ elif isinstance(native_datasources, list):
 else:
     logging.error("Unexpected result ... I don't know what to do ...")
     sys.exit(1)
+
+
+# ================================
+# Create an OCF data source in Alation
+# ================================
+
+datasource_post_payload = allie.OCFDatasourcePostItem(
+    connector_id = OCF_CONNECTOR_ID
+    , title="New Datasource"
+    , description="Sample mysql datasource setup"
+    , uri="mysql://192.212.11.23:6543/groceries"
+    , db_username = "alation"
+    , db_password = "pwd123"
+    , private=False
+)
+
+datasource_post_response = alation.datasource.create_ocf_datasource(
+    datasource = datasource_post_payload
+)
+
+if datasource_post_response:
+    new_datasource_id = datasource_post_response.id
+else:
+    logging.error("Unable to create new datasource ...")
+    sys.exit(1)
+
+# ================================
+# Get an OCF data source in Alation
+# ================================
+
+datasource_get_response = alation.datasource.get_ocf_datasource_by_id(
+    datasource_id = new_datasource_id
+)
+
+if datasource_get_response:
+    logging.info(f"Successfully retrieved datasource {datasource_get_response.title} ...")
+# ================================
+# Update an OCF data source in Alation
+# ================================
+
+datasource_update_payload = allie.OCFDatasourcePutItem(
+    description="Updated description"
+)
+
+datasource_update_response = alation.datasource.update_ocf_datasource(
+    datasource_id = new_datasource_id
+    , datasource = datasource_update_payload
+)
+
+if datasource_update_response:
+    updated_datasource_id = datasource_update_response.id
+else:
+    logging.error("Unable to update datasource ...")
+    sys.exit(1)
+
+
+# ================================
+# Delete an OCF data source in Alation
+# ================================
+
+delete_datasource_response = alation.datasource.delete_ocf_datasource(
+    datasource_id = new_datasource_id
+)
+
+logging.info(f"Attempt to delete OCF data source was: {delete_datasource_response.status}")
