@@ -12,3 +12,18 @@ This is an **open source** project under the [APACHE 2.0 License](https://apache
 
 ## License
 [APACHE 2.0 License](https://apache.org/licenses/LICENSE-2.0)
+
+## Set up instruction for developers contributing to Allie-SDK
+
+1. Download the repo.
+2. Install `uv` if you haven’t done so already (see also [here](https://github.com/astral-sh/uv)).
+3. Within the project root folder run: `uv sync`. This will create the virtual environment and install all the dependencies.
+
+### Local Builds
+
+You can create a local build like so (execute in the project root folder):
+
+```shell
+uv build
+```
+
