@@ -2,13 +2,45 @@
 """Alation REST API Visual Config Data Models."""
 import logging
 from dataclasses import dataclass, field
+from typing import Literal
 from ..core.data_structures import BaseClass, BaseParams
 from ..core.custom_exceptions import validate_rest_payload, InvalidPostBody
 
 @dataclass(kw_only=True)
 class VisualConfigComponent(BaseClass):
     # Rendered object type for the visual config component.
-    rendered_otype: str = field(default=None)
+    rendered_otype: Literal[
+        "api_resource",
+        "api_resource_field",
+        "api_resource_folder",
+        "attribute",
+        "bi_connection",
+        "bi_connection_column",
+        "bi_datasource",
+        "bi_datasource_column",
+        "bi_dimension",
+        "bi_folder",
+        "bi_measure",
+        "bi_report",
+        "bi_report_column",
+        "bi_server",
+        "business_policy",
+        "data",
+        "dataflow",
+        "directory",
+        "docstore_collection",
+        "docstore_folder",
+        "doc_schema",
+        "domain",
+        "filesystem",
+        "file",
+        "glossary_term",
+        "glossary_v3",
+        "policy",
+        "policy_group",
+        "schema",
+        "table"
+    ]
     # The unique ID of the field to include in this component. If it's a custom field, this property is required.
     rendered_oid: int = field(default=None)
     # If the component_type is PAGE_DEFINED, this field is required and must be set to the page defined type.
@@ -18,11 +50,18 @@ class VisualConfigComponent(BaseClass):
     # BUILT_IN refers to a field that's defined and provided by Alation but whose value is editable.
     # PAGE_DEFINED refers to a read-only field that's associated with a particular object type and whose value is derived from the object itself.
     # USER_DEFINED refers to a custom field that's defined by catalog admins.
-    component_type: str = field(default=None)
+    component_type: Literal[
+        'BUILT_IN',
+        'PAGE_DEFINED',
+        'USER_DEFINED'
+    ]
     # Panel where the component is rendered.
     # MAIN refers to the wide left panel, and
     # SIDEBAR refers to the narrow right panel on a catalog page.
-    panel: str = field(default=None)
+    panel: Literal[
+        'MAIN',
+        'SIDEBAR'
+    ]
 
     def generate_api_payload(self) -> dict:
 
@@ -66,7 +105,10 @@ class VisualGroupedComponent(BaseClass):
     # Panel where the component is rendered.
     # MAIN refers to the wide left panel, and
     # SIDEBAR refers to the narrow right panel on a catalog page.
-    panel:str = field(default = None)
+    panel:str = Literal[
+        'MAIN',
+        'SIDEBAR'
+    ]
     # Specifies if the component is a group. It must always be set to true, as it is intended only for grouped components.
     is_group:bool = field(default = True)
     components:list[VisualConfigComponent] = field(default = None)
@@ -120,7 +162,38 @@ class VisualConfigBase(BaseClass):
     # Title of the template for this visual config.
     title:str = field(default = None)
     # Object type that the visual config is associated with.
-    layout_otype:str = field(default = None)
+    layout_otype:str = Literal[
+        "api_resource",
+        "api_resource_field",
+        "api_resource_folder",
+        "attribute",
+        "bi_connection",
+        "bi_connection_column",
+        "bi_datasource",
+        "bi_datasource_column",
+        "bi_dimension",
+        "bi_folder",
+        "bi_measure",
+        "bi_report",
+        "bi_report_column",
+        "bi_server",
+        "business_policy",
+        "data",
+        "dataflow",
+        "directory",
+        "docstore_collection",
+        "docstore_folder",
+        "doc_schema",
+        "domain",
+        "filesystem",
+        "file",
+        "glossary_term",
+        "glossary_v3",
+        "policy",
+        "policy_group",
+        "schema",
+        "table"
+    ]
     component_list_in_config:list[VisualConfigComponent | VisualGroupedComponent] = field(default = None)
 
     def __post_init__(self):
