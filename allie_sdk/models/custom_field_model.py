@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from dateutil.parser import parse
-
+from typing import Literal
 from ..core.custom_exceptions import InvalidPostBody
 from ..core.data_structures import BaseClass, BaseParams
 
@@ -11,11 +11,28 @@ from ..core.data_structures import BaseClass, BaseParams
 @dataclass(kw_only = True)
 class CustomField(BaseClass):
     allow_multiple: bool = field(default=None)
-    allowed_otypes: list = field(default=None)
+    allowed_otypes: Literal[
+        "article",
+        "attribute",
+        "business_policy"
+        "data",
+        "glossary_term",
+        "glossary_v3",
+        "groupprofile",
+        "schema",
+        "table",
+        "user",
+    ]
     backref_name: str = field(default=None)
     backref_tooltip_text: str = field(default=None)
     builtin_name: str = field(default=None)
-    field_type: str = field(default=None)
+    field_type: Literal[
+        "DATE"
+        "MULTI_PICKER",
+        "OBJECT_SET",
+        "PICKER",
+        "RICH_TEXT"
+    ]
     id: int = field(default=None)
     name_plural: str = field(default=None)
     name_singular: str = field(default=None)
