@@ -1,4 +1,5 @@
 from .authentication import AlationAuthentication
+from .bi_source import AlationBISource
 from .business_policy import AlationBusinessPolicy
 from .connector import AlationConnector
 from .custom_field import AlationCustomField
