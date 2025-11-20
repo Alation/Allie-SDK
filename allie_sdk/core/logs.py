@@ -101,7 +101,7 @@ class LoggingConfigs(object):
                 },
                 "console": {"format": "%(message)s"},
                 "json": {
-                    "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                    "class": "pythonjsonlogger.json.JsonFormatter",
                     "format": "%(asctime)s %(name)s %(levelname)s %(message)s",
                 },
             },
@@ -113,5 +113,4 @@ class LoggingConfigs(object):
                 }
             },
         )
-
         return logging_config
