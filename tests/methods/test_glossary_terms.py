@@ -1,7 +1,5 @@
 """Test the Alation REST API Custom Field Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.glossary_term import *
 
 MOCK_GLOSSARY_TERM = AlationGlossaryTerm(
@@ -9,10 +7,10 @@ MOCK_GLOSSARY_TERM = AlationGlossaryTerm(
 )
 
 
-class TestGlossaryTerm(unittest.TestCase):
+class TestGlossaryTerm:
 
-    @requests_mock.Mocker()
-    def test_success_get_glossary_terms(self, m):
+    
+    def test_success_get_glossary_terms(self, requests_mock):
 
         mock_params = GlossaryTermParams()
         mock_params.search = "Test"
@@ -34,26 +32,26 @@ class TestGlossaryTerm(unittest.TestCase):
             }
         ]
         mock_terms = [GlossaryTerm.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/v2/term/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v2/term/', json=success_response)
         terms = MOCK_GLOSSARY_TERM.get_glossary_terms(mock_params)
 
-        self.assertEqual(mock_terms, terms)
+        assert mock_terms == terms
 
-    @requests_mock.Mocker()
-    def test_failed_get_glossary_terms(self, m):
+
+    def test_failed_get_glossary_terms(self, requests_mock):
 
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v2/term/', json=failed_response, status_code=403)
-        
+        requests_mock.register_uri('GET', '/integration/v2/term/', json=failed_response, status_code=403)
+
         # The method should now raise an HTTPError for non-200 status codes
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             MOCK_GLOSSARY_TERM.get_glossary_terms()
 
-    @requests_mock.Mocker()
-    def test_success_post_glossary_terms(self, m):
+
+    def test_success_post_glossary_terms(self, requests_mock):
 
         mock_term_1 = GlossaryTermItem()
         mock_term_1.title = 'Testing'
@@ -80,16 +78,16 @@ class TestGlossaryTerm(unittest.TestCase):
             }
         }
 
-        m.register_uri('POST', '/integration/v2/term/', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        requests_mock.register_uri('POST', '/integration/v2/term/', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
 
         async_result = MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
         input_transformed = [JobDetailsDocumentPost(**job_response)]
-        # self.assertTrue(async_result)
-        self.assertEqual(input_transformed, async_result)
+        # assert async_result
+        assert input_transformed == async_result
 
-    @requests_mock.Mocker()
-    def test_failed_post_glossary_terms(self, m):
+
+    def test_failed_post_glossary_terms(self, requests_mock):
 
         mock_term_1 = GlossaryTermItem()
         mock_term_1.title = 'Testing'
@@ -115,14 +113,14 @@ class TestGlossaryTerm(unittest.TestCase):
                 }
             ]
         }
-        m.register_uri('POST', '/integration/v2/term/', json=failed_response, status_code=400)
-        
+        requests_mock.register_uri('POST', '/integration/v2/term/', json=failed_response, status_code=400)
+
         # Should raise HTTPError with 400 status
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             MOCK_GLOSSARY_TERM.post_glossary_terms(mock_term_list)
 
-    @requests_mock.Mocker()
-    def test_success_put_glossary_terms(self, m):
+
+    def test_success_put_glossary_terms(self, requests_mock):
 
         mock_term_1 = GlossaryTermItem()
         mock_term_1.id = 1
@@ -146,16 +144,16 @@ class TestGlossaryTerm(unittest.TestCase):
             }
         }
 
-        m.register_uri('PUT', '/integration/v2/term/', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        requests_mock.register_uri('PUT', '/integration/v2/term/', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
         async_result = MOCK_GLOSSARY_TERM.put_glossary_terms(mock_term_list)
 
         input_transformed = [JobDetailsDocumentPut(**job_response)]
-        # self.assertTrue(async_result)
-        self.assertEqual(input_transformed, async_result)
+        # assert async_result
+        assert input_transformed == async_result
 
-    @requests_mock.Mocker()
-    def test_failed_put_glossary_terms(self, m):
+
+    def test_failed_put_glossary_terms(self, requests_mock):
 
         mock_term_1 = GlossaryTermItem()
         mock_term_1.id = 1
@@ -180,14 +178,14 @@ class TestGlossaryTerm(unittest.TestCase):
                 }
             ]
         }
-        m.register_uri('PUT', '/integration/v2/term/', json=failed_response, status_code=400)
-        
+        requests_mock.register_uri('PUT', '/integration/v2/term/', json=failed_response, status_code=400)
+
         # Should raise HTTPError with 400 status
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             MOCK_GLOSSARY_TERM.put_glossary_terms(mock_term_list)
 
-    @requests_mock.Mocker()
-    def test_success_delete_glossary_terms(self, m):
+
+    def test_success_delete_glossary_terms(self, requests_mock):
 
         mock_term_1 = GlossaryTerm()
         mock_term_1.id = 1
@@ -200,7 +198,7 @@ class TestGlossaryTerm(unittest.TestCase):
             "deleted_term_count": 1
         }
 
-        m.register_uri('DELETE', '/integration/v2/term/', json=success_response)
+        requests_mock.register_uri('DELETE', '/integration/v2/term/', json=success_response)
         delete_result = MOCK_GLOSSARY_TERM.delete_glossary_terms(mock_term_list)
 
         expected_result = JobDetailsTermDelete(
@@ -212,10 +210,10 @@ class TestGlossaryTerm(unittest.TestCase):
             )
         )
 
-        self.assertEqual(expected_result, delete_result)
+        assert expected_result == delete_result
 
-    @requests_mock.Mocker()
-    def test_failed_delete_glossary_terms(self, m):
+
+    def test_failed_delete_glossary_terms(self, requests_mock):
 
         mock_term_1 = GlossaryTerm()
         mock_term_1.id = 1
@@ -233,7 +231,7 @@ class TestGlossaryTerm(unittest.TestCase):
             "code": "400000"
         }
 
-        m.register_uri('DELETE', '/integration/v2/term/', json=failed_response, status_code=400)
+        requests_mock.register_uri('DELETE', '/integration/v2/term/', json=failed_response, status_code=400)
         async_response = MOCK_GLOSSARY_TERM.delete_glossary_terms(mock_term_list)
 
         expected_response = JobDetailsTermDelete(
@@ -246,8 +244,6 @@ class TestGlossaryTerm(unittest.TestCase):
             }
         )
 
-        self.assertEqual(expected_response, async_response)
+        assert expected_response == async_response
 
 
-if __name__ == '__main__':
-    unittest.main()

@@ -1,7 +1,5 @@
 """Test the Alation REST API Trust Check Flag Methods"""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.trust_check import *
 
 MOCK_TRUST_CHECK = AlationTrustChecks(
@@ -9,10 +7,10 @@ MOCK_TRUST_CHECK = AlationTrustChecks(
 )
 
 
-class TestTrustChecks(unittest.TestCase):
+class TestTrustChecks:
 
-    @requests_mock.Mocker()
-    def test_success_get_trust_checks(self, m):
+    
+    def test_success_get_trust_checks(self, requests_mock):
 
         mock_params = TrustCheckFlagParams()
         mock_params.otype = 'table'
@@ -36,26 +34,26 @@ class TestTrustChecks(unittest.TestCase):
             }
         ]
         success_flags = [TrustCheckFlag.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/flag/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/flag/', json=success_response)
         flags = MOCK_TRUST_CHECK.get_trust_checks(mock_params)
 
-        self.assertEqual(success_flags, flags)
+        assert success_flags == flags
 
-    @requests_mock.Mocker()
-    def test_failed_get_trust_checks(self, m):
+    
+    def test_failed_get_trust_checks(self, requests_mock):
 
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/flag/', json=failed_response, status_code=403)
+        requests_mock.register_uri('GET', '/integration/flag/', json=failed_response, status_code=403)
         
         # The method should now raise an HTTPError for non-200 status codes
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             MOCK_TRUST_CHECK.get_trust_checks()
 
-    @requests_mock.Mocker()
-    def test_success_post_trust_check(self, m):
+    
+    def test_success_post_trust_check(self, requests_mock):
 
         mock_item = TrustCheckFlagItem()
         mock_item.flag_type = 'ENDORSEMENT'
@@ -79,7 +77,7 @@ class TestTrustChecks(unittest.TestCase):
             }
         }
         # success_flag = TrustCheckFlag.from_api_response(success_response)
-        m.register_uri('POST', '/integration/flag/', json=success_response)
+        requests_mock.register_uri('POST', '/integration/flag/', json=success_response)
         flag = MOCK_TRUST_CHECK.post_trust_check(mock_item)
 
         expected_response = JobDetails(
@@ -109,10 +107,10 @@ class TestTrustChecks(unittest.TestCase):
             )
         )
 
-        self.assertEqual(expected_response, flag)
+        assert expected_response == flag
 
-    @requests_mock.Mocker()
-    def test_failed_post_trust_check(self, m):
+    
+    def test_failed_post_trust_check(self, requests_mock):
 
         mock_item = TrustCheckFlagItem()
         mock_item.flag_type = 'ENDORSEMENT'
@@ -124,7 +122,7 @@ class TestTrustChecks(unittest.TestCase):
                 "Invalid otype"
             ]
         }
-        m.register_uri('POST', '/integration/flag/', json=failed_response, status_code=400)
+        requests_mock.register_uri('POST', '/integration/flag/', json=failed_response, status_code=400)
         flag = MOCK_TRUST_CHECK.post_trust_check(mock_item)
 
         expected_result = JobDetails(
@@ -133,10 +131,10 @@ class TestTrustChecks(unittest.TestCase):
             , result={'subject': ['Invalid otype']}
         )
 
-        self.assertEqual(expected_result, flag)
+        assert expected_result == flag
 
-    @requests_mock.Mocker()
-    def test_success_put_trust_check(self, m):
+    
+    def test_success_put_trust_check(self, requests_mock):
 
         mock_item = TrustCheckFlag()
         mock_item.flag_type = 'WARNING'
@@ -160,7 +158,7 @@ class TestTrustChecks(unittest.TestCase):
             }
         }
 
-        m.register_uri('PUT', '/integration/flag/1/', json=success_response)
+        requests_mock.register_uri('PUT', '/integration/flag/1/', json=success_response)
         flag = MOCK_TRUST_CHECK.put_trust_check(mock_item)
 
         expected_response = JobDetails(
@@ -194,10 +192,10 @@ class TestTrustChecks(unittest.TestCase):
             )
         )
 
-        self.assertEqual(expected_response, flag)
+        assert expected_response == flag
 
-    @requests_mock.Mocker()
-    def test_failed_put_trust_check(self, m):
+    
+    def test_failed_put_trust_check(self, requests_mock):
 
         mock_item = TrustCheckFlag()
         mock_item.flag_type = 'WARNING'
@@ -207,7 +205,7 @@ class TestTrustChecks(unittest.TestCase):
         failed_response = {
             "detail": "Not found."
         }
-        m.register_uri('PUT', '/integration/flag/1/', json=failed_response, status_code=404)
+        requests_mock.register_uri('PUT', '/integration/flag/1/', json=failed_response, status_code=404)
         flag = MOCK_TRUST_CHECK.put_trust_check(mock_item)
 
         expected_response = JobDetails(
@@ -216,14 +214,14 @@ class TestTrustChecks(unittest.TestCase):
             , result={'detail': 'Not found.'}
         )
 
-        self.assertEqual(expected_response, flag)
+        assert expected_response == flag
 
-    @requests_mock.Mocker()
-    def test_success_delete_trust_check(self, m):
+    
+    def test_success_delete_trust_check(self, requests_mock):
 
         mock_item = TrustCheckFlag()
         mock_item.id = 1
-        m.register_uri('DELETE', '/integration/flag/1/',  status_code=204)
+        requests_mock.register_uri('DELETE', '/integration/flag/1/',  status_code=204)
         delete_result = MOCK_TRUST_CHECK.delete_trust_check(mock_item)
 
         expected_response = JobDetails(
@@ -232,10 +230,10 @@ class TestTrustChecks(unittest.TestCase):
             , result=''
         )
 
-        self.assertEqual(expected_response, delete_result)
+        assert expected_response == delete_result
 
-    @requests_mock.Mocker()
-    def test_failed_delete_trust_check(self, m):
+    
+    def test_failed_delete_trust_check(self, requests_mock):
 
         mock_item = TrustCheckFlag()
         mock_item.id = 1
@@ -243,7 +241,7 @@ class TestTrustChecks(unittest.TestCase):
         failed_response = {
             "detail": "Not found."
         }
-        m.register_uri('DELETE', '/integration/flag/1/', json=failed_response, status_code=404)
+        requests_mock.register_uri('DELETE', '/integration/flag/1/', json=failed_response, status_code=404)
         flag = MOCK_TRUST_CHECK.delete_trust_check(mock_item)
 
         expected_response = JobDetails(
@@ -252,8 +250,6 @@ class TestTrustChecks(unittest.TestCase):
             , result={'detail': 'Not found.'}
         )
 
-        self.assertEqual(expected_response, flag)
+        assert expected_response == flag
 
 
-if __name__ == '__main__':
-    unittest.main()

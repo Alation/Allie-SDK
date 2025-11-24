@@ -1,20 +1,18 @@
 """Test the Alation REST API Data Quality Methods"""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.data_quality import *
 
-class TestDataQuality(unittest.TestCase):
+class TestDataQuality:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_dq = AlationDataQuality(
             access_token='test', 
             session=requests.session(), 
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
-    def test_success_get_data_quality_fields(self, m):
+    
+    def test_success_get_data_quality_fields(self, requests_mock):
         mock_params = DataQualityFieldParams()
         mock_params.key.add('1.DQ.Test')
         success_response = [
@@ -27,30 +25,30 @@ class TestDataQuality(unittest.TestCase):
             }
         ]
         success_dq_fields = [DataQualityField.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/v1/data_quality/fields/?key=1.DQ.Test',
+        requests_mock.register_uri('GET', '/integration/v1/data_quality/fields/?key=1.DQ.Test',
                        json=success_response)
         dq_fields = self.mock_dq.get_data_quality_fields(mock_params)
 
-        self.assertEqual(success_dq_fields, dq_fields)
+        assert success_dq_fields == dq_fields
 
-    @requests_mock.Mocker()
-    def test_failed_get_data_quality_fields(self, m):
+    
+    def test_failed_get_data_quality_fields(self, requests_mock):
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v1/data_quality/fields/', json=failed_response,
+        requests_mock.register_uri('GET', '/integration/v1/data_quality/fields/', json=failed_response,
                       status_code=403)
         
         # Now we expect an HTTPError to be raised
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_dq.get_data_quality_fields()
         
         # Verify the error response contains expected information
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
-    def test_success_post_data_quality_field(self, m):
+    
+    def test_success_post_data_quality_field(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         # What does the response look like for the DQ POST request?
         async_response = {
@@ -81,8 +79,8 @@ class TestDataQuality(unittest.TestCase):
         }
 
         # Override the result of the API calls
-        m.register_uri('POST', '/integration/v1/data_quality/', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        requests_mock.register_uri('POST', '/integration/v1/data_quality/', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
 
         # --- TEST THE FUNCTION --- #
         async_result = self.mock_dq.post_data_quality_fields(
@@ -125,16 +123,16 @@ class TestDataQuality(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(async_result, function_expected_result)
+        assert async_result == function_expected_result
 
-    @requests_mock.Mocker()
-    def test_failed_post_data_quality_fields(self, m):
+    
+    def test_failed_post_data_quality_fields(self, requests_mock):
         failed_response = {
             "Entry": 1,
             "Message": "field_key is required"
         }
 
-        m.register_uri(
+        requests_mock.register_uri(
             'POST',
             '/integration/v1/data_quality/',
             json=failed_response,
@@ -142,7 +140,7 @@ class TestDataQuality(unittest.TestCase):
         )
 
         # Now we expect an HTTPError to be raised
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_dq.post_data_quality_fields(
                 [
                     DataQualityFieldItem(
@@ -155,10 +153,10 @@ class TestDataQuality(unittest.TestCase):
             )
         
         # Verify the error response contains expected information
-        self.assertEqual(context.exception.response.status_code, 400)
+        assert context.value.response.status_code == 400
 
-    @requests_mock.Mocker()
-    def test_success_delete_data_quality_fields(self, m):
+    
+    def test_success_delete_data_quality_fields(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         # What does the response look like for the DQ DELETE request?
         async_response = {
@@ -183,8 +181,8 @@ class TestDataQuality(unittest.TestCase):
         }
 
         # Override the result of the API calls
-        m.register_uri('DELETE', '/integration/v1/data_quality/', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        requests_mock.register_uri('DELETE', '/integration/v1/data_quality/', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
 
         # --- TEST THE FUNCTION --- #
         async_result = self.mock_dq.delete_data_quality_fields(
@@ -224,10 +222,10 @@ class TestDataQuality(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(async_result, function_expected_result)
+        assert async_result == function_expected_result
 
-    @requests_mock.Mocker()
-    def test_failed_delete_data_quality_fields(self, m):
+    
+    def test_failed_delete_data_quality_fields(self, requests_mock):
         dq_field = DataQualityField()
         dq_field.key = '1.Test.DataQuality'
         dq_field_list = [dq_field]
@@ -237,7 +235,7 @@ class TestDataQuality(unittest.TestCase):
             "Message": "A \"values\" or \"fields\" property must be specified"
         }
 
-        m.register_uri(
+        requests_mock.register_uri(
             'DELETE',
             '/integration/v1/data_quality/',
             json=failed_response,
@@ -245,14 +243,14 @@ class TestDataQuality(unittest.TestCase):
         )
         
         # Now we expect an HTTPError to be raised
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_dq.delete_data_quality_fields(dq_field_list)
         
         # Verify the error response contains expected information
-        self.assertEqual(context.exception.response.status_code, 400)
+        assert context.value.response.status_code == 400
 
-    @requests_mock.Mocker()
-    def test_success_get_data_quality_values(self, m):
+    
+    def test_success_get_data_quality_values(self, requests_mock):
         mock_params = DataQualityValueParams()
         mock_params.field_key.add("1.DQ.Test")
         success_response = [
@@ -276,30 +274,30 @@ class TestDataQuality(unittest.TestCase):
             }
         ]
         success_dq_values = [DataQualityValue.from_api_response(item) for item in success_response]
-        m.register_uri('GET', '/integration/v1/data_quality/values/',
+        requests_mock.register_uri('GET', '/integration/v1/data_quality/values/',
                        json=success_response)
         dq_values = self.mock_dq.get_data_quality_values(mock_params)
 
-        self.assertEqual(success_dq_values, dq_values)
+        assert success_dq_values == dq_values
 
-    @requests_mock.Mocker()
-    def test_failed_get_data_quality_values(self, m):
+    
+    def test_failed_get_data_quality_values(self, requests_mock):
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v1/data_quality/values/', json=failed_response,
+        requests_mock.register_uri('GET', '/integration/v1/data_quality/values/', json=failed_response,
                       status_code=403)
         
         # Now we expect an HTTPError to be raised
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_dq.get_data_quality_values()
         
         # Verify the error response contains expected information
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
-    def test_success_post_data_quality_values(self, m):
+    
+    def test_success_post_data_quality_values(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         # What does the response look like for the DQ POST request?
         async_response = {
@@ -336,8 +334,8 @@ class TestDataQuality(unittest.TestCase):
         }
 
         # Override the result of the API calls
-        m.register_uri('POST', '/integration/v1/data_quality/', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/', json=job_response)
+        requests_mock.register_uri('POST', '/integration/v1/data_quality/', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/', json=job_response)
 
         # --- TEST THE FUNCTION --- #
         async_result = self.mock_dq.post_data_quality_values(
@@ -384,10 +382,10 @@ class TestDataQuality(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(async_result, function_expected_result)
+        assert async_result == function_expected_result
 
-    @requests_mock.Mocker()
-    def test_failed_post_data_quality_values(self, m):
+    
+    def test_failed_post_data_quality_values(self, requests_mock):
         dq_value = DataQualityValueItem()
         dq_value.field_key = '1.DQ.Test'
         dq_value.object_key = '1.Test.Table'
@@ -400,7 +398,7 @@ class TestDataQuality(unittest.TestCase):
             "Entry": 1,
             "Message": "field_key is required"
         }
-        m.register_uri(
+        requests_mock.register_uri(
             'POST',
             '/integration/v1/data_quality/',
             json=failed_response,
@@ -408,14 +406,14 @@ class TestDataQuality(unittest.TestCase):
         )
         
         # Now we expect an HTTPError to be raised
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_dq.post_data_quality_values(dq_value_list)
         
         # Verify the error response contains expected information
-        self.assertEqual(context.exception.response.status_code, 400)
+        assert context.value.response.status_code == 400
 
-    @requests_mock.Mocker()
-    def test_success_delete_data_quality_values(self, m):
+    
+    def test_success_delete_data_quality_values(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         # What does the response look like for the DQ DELETE request?
         async_response = {
@@ -453,8 +451,8 @@ class TestDataQuality(unittest.TestCase):
         }
 
         # Override the result of the API calls
-        m.register_uri('DELETE', '/integration/v1/data_quality/', json=async_response)
-        m.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
+        requests_mock.register_uri('DELETE', '/integration/v1/data_quality/', json=async_response)
+        requests_mock.register_uri('GET', '/api/v1/bulk_metadata/job/?id=1', json=job_response)
 
         # --- TEST THE FUNCTION --- #
         async_result = self.mock_dq.delete_data_quality_values(
@@ -498,10 +496,10 @@ class TestDataQuality(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(async_result, function_expected_result)
+        assert async_result == function_expected_result
 
-    @requests_mock.Mocker()
-    def test_failed_async_delete_process(self, m):
+    
+    def test_failed_async_delete_process(self, requests_mock):
         dq_value = DataQualityValue()
         dq_value.field_key = '1.DQ.Test'
         dq_value.object_key = '1.Test.Table'
@@ -511,7 +509,7 @@ class TestDataQuality(unittest.TestCase):
             "Entry": 1,
             "Message": "field_key is required"
         }
-        m.register_uri(
+        requests_mock.register_uri(
             'DELETE',
             '/integration/v1/data_quality/',
             json=failed_response,
@@ -519,12 +517,10 @@ class TestDataQuality(unittest.TestCase):
         )
 
         # Now we expect an HTTPError to be raised
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_dq.delete_data_quality_values(dq_value_list)
         
         # Verify the error response contains expected information
-        self.assertEqual(context.exception.response.status_code, 400)
+        assert context.value.response.status_code == 400
 
 
-if __name__ == '__main__':
-    unittest.main()

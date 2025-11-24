@@ -1,11 +1,8 @@
 """Test the Alation REST API Connector Models."""
-
-import unittest
+import pytest
 from allie_sdk.methods.connector import *
 
-
-class TestUserModels(unittest.TestCase):
-
+class TestConnectorModels:
     def test_v2_connector_model(self):
 
         connector_response = {
@@ -25,7 +22,5 @@ class TestUserModels(unittest.TestCase):
             connector_category="RDBMS"
         )
 
-        self.assertEqual(connector, connector_model)
+        assert connector == connector_model
 
-if __name__ == '__main__':
-    unittest.main()

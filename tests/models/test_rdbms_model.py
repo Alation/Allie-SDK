@@ -1,11 +1,10 @@
 """Test the Alation REST API Relational Integration Models"""
-
-import unittest
+import pytest
 from allie_sdk.models.rdbms_model import *
 from allie_sdk.models.custom_field_model import *
 
 
-class TestRDBMSModels(unittest.TestCase):
+class TestRDBMSModels:
 
     def test_schema(self):
 
@@ -47,7 +46,7 @@ class TestRDBMSModels(unittest.TestCase):
                 "field_name": "Steward"}]
         )
 
-        self.assertEqual(schema, mock_schema)
+        assert schema == mock_schema
 
     def test_schema_item_payload(self):
 
@@ -70,7 +69,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(mock_schema.generate_api_post_payload(), expected_payload)
+        assert mock_schema.generate_api_post_payload() == expected_payload
 
     def test_schema_payload_exception_missing_key(self):
 
@@ -84,7 +83,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_schema.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_schema.generate_api_post_payload())
 
     def test_table(self):
 
@@ -139,7 +138,7 @@ class TestRDBMSModels(unittest.TestCase):
             table_comment="Schema for Integration Testing"
         )
 
-        self.assertEqual(table, mock_table)
+        assert table == mock_table
 
     def test_table_item_payload(self):
 
@@ -168,7 +167,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(mock_table.generate_api_post_payload(), expected_payload)
+        assert mock_table.generate_api_post_payload() == expected_payload
 
     def test_table_payload_exception_missing_key(self):
 
@@ -186,7 +185,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_table.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_table.generate_api_post_payload())
 
     def test_table_patch_item_payload(self):
 
@@ -226,7 +225,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(mock_table.generate_api_patch_payload(), expected_payload)
+        assert mock_table.generate_api_patch_payload() == expected_payload
 
     def test_table_patch_item_exception_missing_id(self):
 
@@ -234,7 +233,7 @@ class TestRDBMSModels(unittest.TestCase):
             title='Updated Title'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_table.generate_api_patch_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_table.generate_api_patch_payload())
 
     def test_column(self):
 
@@ -291,7 +290,7 @@ class TestRDBMSModels(unittest.TestCase):
             position=7
         )
 
-        self.assertEqual(column, mock_column)
+        assert column == mock_column
 
     def test_column_index_parsing(self):
 
@@ -306,7 +305,7 @@ class TestRDBMSModels(unittest.TestCase):
             referencedColumnId="1.Test.Table"
         )
 
-        self.assertEqual(mock_column.index, expected_index)
+        assert mock_column.index == expected_index
 
     def test_column_item_payload(self):
 
@@ -340,7 +339,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(mock_column.generate_api_post_payload(), expected_payload)
+        assert mock_column.generate_api_post_payload() == expected_payload
 
     def test_column_item_exception_missing_key(self):
 
@@ -362,7 +361,7 @@ class TestRDBMSModels(unittest.TestCase):
             position=7
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_column.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_column.generate_api_post_payload())
 
     def test_column_item_exception_missing_column_type(self):
 
@@ -384,7 +383,7 @@ class TestRDBMSModels(unittest.TestCase):
             position=7
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_column.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_column.generate_api_post_payload())
 
     def test_column_patch_item_payload(self):
         mock_column = ColumnPatchItem(
@@ -424,7 +423,7 @@ class TestRDBMSModels(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(mock_column.generate_api_patch_payload(), expected_payload)
+        assert mock_column.generate_api_patch_payload() == expected_payload
 
     def test_column_patch_item_exception_missing_id(self):
         mock_column = ColumnPatchItem(
@@ -432,7 +431,7 @@ class TestRDBMSModels(unittest.TestCase):
             description="<p>This is the customer name</p>"
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_column.generate_api_patch_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_column.generate_api_patch_payload())
 
     def test_base_rdbms_custom_field_parsing(self):
 
@@ -455,8 +454,6 @@ class TestRDBMSModels(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(mock_base.custom_fields, expected_custom_fields)
+        assert mock_base.custom_fields == expected_custom_fields
 
 
-if __name__ == '__main__':
-    unittest.main()

@@ -1,20 +1,18 @@
 """Test the Alation REST API Policy Group Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.policy_group import *
 
 
-class TestPolicyGroup(unittest.TestCase):
+class TestPolicyGroup:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationPolicyGroup(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_policy_groups(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -55,4 +53,4 @@ class TestPolicyGroup(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         policy_groups = self.mock_user.get_policy_groups()
 
-        self.assertEqual(success_policy_groups, policy_groups)
+        assert success_policy_groups == policy_groups

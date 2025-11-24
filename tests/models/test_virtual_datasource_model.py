@@ -1,10 +1,9 @@
 """Test the Alation REST API Virtual Data Source Models."""
-
-import unittest
+import pytest
 from allie_sdk.models.virtual_datasource_model import *
 
 
-class TestVirtualDataSourceModels(unittest.TestCase):
+class TestVirtualDataSourceModels:
 
     def test_virtual_data_source_model_schema(self):
 
@@ -19,7 +18,7 @@ class TestVirtualDataSourceModels(unittest.TestCase):
             key="99.SchemaName", description="Test Schema model",
             title="Test Schema model"
         )
-        self.assertEqual(schema, schema_model)
+        assert schema == schema_model
 
 
     def test_virtual_data_source_model_table(self):
@@ -65,7 +64,7 @@ class TestVirtualDataSourceModels(unittest.TestCase):
             table_comment="This Table is created by ETL"
         )
 
-        self.assertEqual(table, table_model)
+        assert table == table_model
 
     def test_virtual_data_source_model_view(self):
         view_response = {
@@ -105,7 +104,7 @@ class TestVirtualDataSourceModels(unittest.TestCase):
                                            table_comment="This Table is created by ETL"
                                            )
 
-        self.assertEqual(view, view_model)
+        assert view == view_model
 
     def test_virtual_data_source_model_column(self):
         column_response = {
@@ -124,7 +123,7 @@ class TestVirtualDataSourceModels(unittest.TestCase):
                                                title="Test Column model", column_type="varchar(20)", position=1,
                                                column_comment="ColumnName for table TableName", nullable="false")
 
-        self.assertEqual(column, column_model)
+        assert column == column_model
 
     def test_virtual_data_source_model_index_primary(self):
         index_response = {
@@ -153,7 +152,7 @@ class TestVirtualDataSourceModels(unittest.TestCase):
                                              foreign_key_column_names=[]
         )
 
-        self.assertEqual(index, index_model)
+        assert index == index_model
 
     def test_virtual_data_source_model_index_secondary(self):
         index_response = {
@@ -182,8 +181,6 @@ class TestVirtualDataSourceModels(unittest.TestCase):
                                              foreign_key_column_names=["column1"]
         )
 
-        self.assertEqual(index, index_model)
+        assert index == index_model
 
 
-if __name__ == '__main__':
-    unittest.main()

@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.methods.document_hub_folder import *
 
 
-class TestDocumentModels(unittest.TestCase):
+class TestDocumentModels:
 
     def test_document_hub_folder_model(self):
         
@@ -48,7 +48,7 @@ class TestDocumentModels(unittest.TestCase):
         )
         
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
     
     def test_document_hub_folder_post_item_model(self):
         
@@ -92,7 +92,7 @@ class TestDocumentModels(unittest.TestCase):
         }
         
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
     
     def test_document_hub_folder_put_item_model(self):
         
@@ -138,4 +138,4 @@ class TestDocumentModels(unittest.TestCase):
         }
         
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

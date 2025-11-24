@@ -27,3 +27,21 @@ You can create a local build like so (execute in the project root folder):
 uv build
 ```
 
+### Testing
+
+We are using `pytest` and not `unittest`. 
+Make sure that the **IDE** you are working with is also configured to use `pytest` for running the tests.
+
+To run the tests:
+
+```shell
+uv run pytest
+# or with more detailed output
+uv run pytest -v
+```
+
+#### Consideration when writing test
+
+- Use `pytest` not `unittest`.
+- Don't import `request_mock` and do not use decorators (since Pytest already takes care of this for you).
+- Bundle tests in test classes.
