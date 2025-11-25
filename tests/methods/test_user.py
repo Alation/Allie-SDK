@@ -1,8 +1,6 @@
 """Test the Alation REST API User Methods."""
-
-import requests_mock
+import pytest
 import os
-import unittest
 
 from requests import HTTPError
 
@@ -13,10 +11,10 @@ MOCK_USER = AlationUser(
 )
 
 
-class TestUser(unittest.TestCase):
+class TestUser:
 
-    @requests_mock.Mocker()
-    def test_success_get_users_v1(self, m):
+    
+    def test_success_get_users_v1(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = False
         success_response = [
@@ -43,41 +41,41 @@ class TestUser(unittest.TestCase):
             }
         ]
         success_users = [User.from_api_response(user) for user in success_response]
-        m.register_uri('GET', '/integration/v1/user/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v1/user/', json=success_response)
         users = MOCK_USER.get_users()
 
-        self.assertEqual(success_users, users)
+        assert success_users == users
         
-    @requests_mock.Mocker()
-    def test_empty_get_users_v1(self, m):
+    
+    def test_empty_get_users_v1(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = False
         empty_response = []
-        m.register_uri('GET', '/integration/v1/user/', json=empty_response)
+        requests_mock.register_uri('GET', '/integration/v1/user/', json=empty_response)
         users = MOCK_USER.get_users()
 
-        self.assertEqual([], users)
+        assert [] == users
 
-    @requests_mock.Mocker()
-    def test_success_get_generate_dup_users_accts_csv(self, m):
+    
+    def test_success_get_generate_dup_users_accts_csv(self, requests_mock):
 
         # MOCK_USER.use_v2_endpoint = False
         success_response = "SN,Username,email,Action,Group\r\n1," \
                            "APIUser1,apiuser@alation.com,RETAIN/SUSPEND,1\r\n" \
                            "2,APIUSER1,apiuser1@alation.com,RETAIN/SUSPEND,1\r\n"
 
-        m.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
         users = MOCK_USER.get_generate_dup_users_accts_csv()
 
-        self.assertEqual(success_response, users)
-    @requests_mock.Mocker()
+        assert success_response == users
+    
 
-    def test_success_get_generate_dup_users_accts_csv_no_duplicates(self, m):
+    def test_success_get_generate_dup_users_accts_csv_no_duplicates(self, requests_mock):
 
         # MOCK_USER.use_v2_endpoint = False
         success_response = {"Success": "No duplicate user accounts with mixed case usernames."}
 
-        m.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v1/generate_dup_users_accts_csv_file/', json=success_response)
         users = MOCK_USER.get_generate_dup_users_accts_csv()
 
         expected_response = JobDetails(
@@ -86,10 +84,10 @@ class TestUser(unittest.TestCase):
             , result=''
         )
 
-        self.assertEqual(expected_response, users)
+        assert expected_response == users
 
-    @requests_mock.Mocker()
-    def test_success_post_remove_dup_users_accts(self, m):
+    
+    def test_success_post_remove_dup_users_accts(self, requests_mock):
         # MOCK_USER.use_v2_endpoint = False
 
         csv_content = "SN,Username,email,Action,Group\r\n" \
@@ -101,7 +99,7 @@ class TestUser(unittest.TestCase):
 
         success_response = {"Success": "Total number of users got updated with temp username and suspended: 1"}
 
-        m.register_uri('POST', '/integration/v1/remove_dup_users_accts/', json=success_response)
+        requests_mock.register_uri('POST', '/integration/v1/remove_dup_users_accts/', json=success_response)
         users = MOCK_USER.post_remove_dup_users_accts("/tmp/temp.csv")
         os.remove("/tmp/temp.csv")
 
@@ -111,24 +109,24 @@ class TestUser(unittest.TestCase):
             , result=''
         )
 
-        self.assertEqual(expected_response, users)
+        assert expected_response == users
 
-    @requests_mock.Mocker()
-    def test_failed_get_users_v1(self, m):
+    
+    def test_failed_get_users_v1(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = False
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v1/user/', json=failed_response, status_code=403)
+        requests_mock.register_uri('GET', '/integration/v1/user/', json=failed_response, status_code=403)
 
-        with self.assertRaises(HTTPError) as context:
+        with pytest.raises(HTTPError) as context:
             users = MOCK_USER.get_users()
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
-    def test_success_get_a_user_v1(self, m):
+    
+    def test_success_get_a_user_v1(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = False
         success_response = {
@@ -139,27 +137,27 @@ class TestUser(unittest.TestCase):
             "url": "/user/1/"
         }
         success_user = User.from_api_response(success_response)
-        m.register_uri('GET', '/integration/v1/user/1/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v1/user/1/', json=success_response)
         user = MOCK_USER.get_a_user(1)
 
-        self.assertEqual(success_user, user)
+        assert success_user == user
 
-    @requests_mock.Mocker()
-    def test_failed_get_a_user_v1(self, m):
+    
+    def test_failed_get_a_user_v1(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = False
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v1/user/1/', json=failed_response, status_code=403)
-        with self.assertRaises(HTTPError) as context:
+        requests_mock.register_uri('GET', '/integration/v1/user/1/', json=failed_response, status_code=403)
+        with pytest.raises(HTTPError) as context:
             user = MOCK_USER.get_a_user(1)
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
 
-    @requests_mock.Mocker()
-    def test_success_get_users_v2(self, m):
+    
+    def test_success_get_users_v2(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = True
         success_response = [
@@ -192,26 +190,26 @@ class TestUser(unittest.TestCase):
             }
         ]
         success_users = [User.from_api_response(user) for user in success_response]
-        m.register_uri('GET', '/integration/v2/user/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v2/user/', json=success_response)
         users = MOCK_USER.get_users()
 
-        self.assertEqual(success_users, users)
+        assert success_users == users
 
-    @requests_mock.Mocker()
-    def test_failed_get_users_v2(self, m):
+    
+    def test_failed_get_users_v2(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = True
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v2/user/', json=failed_response, status_code=403)
-        with self.assertRaises(HTTPError) as context:
+        requests_mock.register_uri('GET', '/integration/v2/user/', json=failed_response, status_code=403)
+        with pytest.raises(HTTPError) as context:
             users = MOCK_USER.get_users()
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
-    def test_success_get_a_user_v2(self, m):
+    
+    def test_success_get_a_user_v2(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = True
         success_response = {
@@ -224,26 +222,26 @@ class TestUser(unittest.TestCase):
             "ts_created": "2022-06-15T17:01:37.741810Z"
         }
         success_user = User.from_api_response(success_response)
-        m.register_uri('GET', '/integration/v2/user/1/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v2/user/1/', json=success_response)
         user = MOCK_USER.get_a_user(1)
 
-        self.assertEqual(success_user, user)
+        assert success_user == user
 
-    @requests_mock.Mocker()
-    def test_failed_get_a_user_v1(self, m):
+    
+    def test_failed_get_a_user_v1(self, requests_mock):
 
         MOCK_USER.use_v2_endpoint = True
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v2/user/1/', json=failed_response, status_code=403)
-        with self.assertRaises(HTTPError) as context:
+        requests_mock.register_uri('GET', '/integration/v2/user/1/', json=failed_response, status_code=403)
+        with pytest.raises(HTTPError) as context:
             users = MOCK_USER.get_a_user(1)
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
-    def test_success_get_authenticated_user(self, m):
+    
+    def test_success_get_authenticated_user(self, requests_mock):
 
         success_response = {
             "email": "test-user-1@alation.com",
@@ -255,23 +253,21 @@ class TestUser(unittest.TestCase):
             "username": "test-user-1@alation.com",
         }
         success_details = User.from_api_response(success_response)
-        m.register_uri('GET', '/integration/v1/userinfo/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v1/userinfo/', json=success_response)
         details = MOCK_USER.get_authenticated_user()
 
-        self.assertEqual(success_details, details)
+        assert success_details == details
 
-    @requests_mock.Mocker()
-    def test_failed_get_authenticated_user(self, m):
+    
+    def test_failed_get_authenticated_user(self, requests_mock):
 
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v1/userinfo/', json=failed_response, status_code=403)
-        with self.assertRaises(HTTPError) as context:
+        requests_mock.register_uri('GET', '/integration/v1/userinfo/', json=failed_response, status_code=403)
+        with pytest.raises(HTTPError) as context:
             users = MOCK_USER.get_authenticated_user()
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
 
-if __name__ == '__main__':
-    unittest.main()

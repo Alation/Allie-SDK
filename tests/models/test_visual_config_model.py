@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.models.visual_config_model import *
 
 
-class TestVisualConfigModels(unittest.TestCase):
+class TestVisualConfigModels:
 
     def test_visual_config_model(self):
         # Expected input
@@ -167,7 +167,7 @@ class TestVisualConfigModels(unittest.TestCase):
             , id=20
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_visual_config_item_model(self):
         # Expected input
@@ -331,4 +331,4 @@ class TestVisualConfigModels(unittest.TestCase):
             "layout_otype": "glossary_v3"
         }
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

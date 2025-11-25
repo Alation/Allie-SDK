@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.models.dataflow_model import *
 
 
-class TestDataflowModels(unittest.TestCase):
+class TestDataflowModels:
 
     def test_dataflow_model(self):
         input_dict = {
@@ -25,7 +25,7 @@ class TestDataflowModels(unittest.TestCase):
             group_name="Snowflake-1"
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_dataflow_payload_post(self):
         payload_obj = DataflowPayload(
@@ -66,7 +66,7 @@ class TestDataflowModels(unittest.TestCase):
             ],
         }
 
-        self.assertEqual(payload_obj.generate_api_post_payload(), expected)
+        assert payload_obj.generate_api_post_payload() == expected
 
     def test_dataflow_patch_item(self):
         item = DataflowPatchItem(
@@ -85,4 +85,4 @@ class TestDataflowModels(unittest.TestCase):
             "group_name": "Group",
         }
 
-        self.assertEqual(item.generate_api_patch_payload(), expected)
+        assert item.generate_api_patch_payload() == expected

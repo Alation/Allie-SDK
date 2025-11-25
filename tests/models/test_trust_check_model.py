@@ -1,10 +1,9 @@
 """Test the Alation REST API Trust Check Models"""
-
-import unittest
+import pytest
 from allie_sdk.models.trust_check_model import *
 
 
-class TestTrustCheckModels(unittest.TestCase):
+class TestTrustCheckModels:
 
     def test_trust_check_flag(self):
 
@@ -37,7 +36,7 @@ class TestTrustCheckModels(unittest.TestCase):
             user={"id": 18, "url": "/user/18/", "display_name": "Test User"}
         )
 
-        self.assertEqual(flag, mock_flag)
+        assert flag == mock_flag
 
     def test_trust_check_subject_parsing(self):
 
@@ -66,7 +65,7 @@ class TestTrustCheckModels(unittest.TestCase):
             url="/attribute/1609/"
         )
 
-        self.assertEqual(flag.subject, mock_flag_subject)
+        assert flag.subject == mock_flag_subject
 
     def test_trust_check_user_parsing(self):
 
@@ -95,7 +94,7 @@ class TestTrustCheckModels(unittest.TestCase):
             display_name="Test User"
         )
 
-        self.assertEqual(flag.user, mock_flag_user)
+        assert flag.user == mock_flag_user
 
     def test_trust_check_flag_put_payload(self):
 
@@ -105,7 +104,7 @@ class TestTrustCheckModels(unittest.TestCase):
         )
         expected_payload = {'flag_reason': 'Testing the Put Payload'}
 
-        self.assertEqual(mock_flag.generate_api_put_body(), expected_payload)
+        assert mock_flag.generate_api_put_body() == expected_payload
 
     def test_trust_check_flag_put_exception_invalid_flag_type(self):
 
@@ -114,7 +113,7 @@ class TestTrustCheckModels(unittest.TestCase):
             flag_reason='Testing the Put Payload'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_flag.generate_api_put_body())
+        pytest.raises(InvalidPostBody, lambda: mock_flag.generate_api_put_body())
 
     def test_trust_check_flag_item_payload(self):
 
@@ -131,7 +130,7 @@ class TestTrustCheckModels(unittest.TestCase):
             'subject': {'id': 1, 'otype': 'table'}
         }
 
-        self.assertEqual(mock_flag.generate_api_post_payload(), expected_payload)
+        assert mock_flag.generate_api_post_payload() == expected_payload
 
     def test_trust_check_flag_payload_endorsement_with_reason(self):
 
@@ -145,7 +144,7 @@ class TestTrustCheckModels(unittest.TestCase):
         )
         expected_payload = {'flag_type': 'ENDORSEMENT', 'subject': {'id': 1, 'otype': 'table'}}
 
-        self.assertEqual(mock_flag.generate_api_post_payload(), expected_payload)
+        assert mock_flag.generate_api_post_payload() == expected_payload
 
     def test_trust_check_flag_item_exception_invalid_flag_type(self):
 
@@ -158,7 +157,7 @@ class TestTrustCheckModels(unittest.TestCase):
             )
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_flag.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_flag.generate_api_post_payload())
 
     def test_trust_check_flag_item_exception_missing_subject_otype(self):
 
@@ -170,7 +169,7 @@ class TestTrustCheckModels(unittest.TestCase):
             )
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_flag.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_flag.generate_api_post_payload())
 
     def test_trust_check_flag_item_exception_missing_subject_id(self):
 
@@ -182,9 +181,7 @@ class TestTrustCheckModels(unittest.TestCase):
             )
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_flag.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_flag.generate_api_post_payload())
 
 
 
-if __name__ == '__main__':
-    unittest.main()

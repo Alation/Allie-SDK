@@ -1,11 +1,9 @@
-import unittest
+import pytest
 from allie_sdk.methods.business_policy import *
 
-
-class TestBusinessPolicyModels(unittest.TestCase):
-
+class TestBusinessPolicyModels:
     def test_business_policy_model(self):
-        
+
         # Expected input
         input = dict(
             id=1
@@ -58,8 +56,8 @@ class TestBusinessPolicyModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
-    
+        assert input_transformed == output
+
     def test_business_policy_post_item_model(self):
 
         # Expected Input
@@ -114,8 +112,8 @@ class TestBusinessPolicyModels(unittest.TestCase):
                 ]
             }
 
-        self.assertEqual(input_transformed, output)
-    
+        assert input_transformed == output
+
     def test_business_policy_put_item(self):
 
         # Expected input
@@ -176,4 +174,4 @@ class TestBusinessPolicyModels(unittest.TestCase):
                 }
             }
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

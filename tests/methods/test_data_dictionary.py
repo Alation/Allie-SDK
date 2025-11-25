@@ -1,6 +1,4 @@
-import unittest
 import requests
-import requests_mock
 import pytest
 
 from allie_sdk.methods.data_dictionary import AlationDataDictionary, SUPPORTED_OBJECT_TYPES
@@ -9,16 +7,16 @@ from allie_sdk.models.job_model import *
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 
-class TestDataDictionary(unittest.TestCase):
+class TestDataDictionary:
 
-    def setUp(self):
+    def setup_method(self):
         self.client = AlationDataDictionary(
             access_token='token',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_upload_data_dictionary_success(self, requests_mock):
 
         # ENDPOINT: Upload a data dictionary
@@ -144,7 +142,7 @@ class TestDataDictionary(unittest.TestCase):
 
         assert expected_result == result
 
-    @requests_mock.Mocker()
+    
     def test_get_data_dictionary_task_details(self, requests_mock):
         task_payload = {
             "id": "1e7a8e8f-fe46-4da4-8393-fce89be3ebcb",
@@ -173,7 +171,7 @@ class TestDataDictionary(unittest.TestCase):
         assert result.state == 'PROCESSING'
         assert result.progress.total_batches == 1
 
-    @requests_mock.Mocker()
+    
     def test_get_data_dictionary_task_errors(self, requests_mock):
         errors_payload = [
             {

@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.methods.datasource import *
 
 
-class TestDatasourceModels(unittest.TestCase):
+class TestDatasourceModels:
 
     def test_ocf_datasource_model(self):
         # Expected input
@@ -122,7 +122,7 @@ class TestDatasourceModels(unittest.TestCase):
             supports_default_schema_extraction = True
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_ocf_datasource_post_payload(self):
         datasource = OCFDatasourcePostItem(
@@ -142,12 +142,12 @@ class TestDatasourceModels(unittest.TestCase):
             , 'uri': 'mysql://<hostname>:<port>/<db_name>'
         }
 
-        self.assertDictEqual(payload, expected)
+        assert payload == expected
 
     def test_ocf_datasource_post_requires_fields(self):
         datasource = OCFDatasourcePostItem(title="Missing connector")
 
-        with self.assertRaises(InvalidPostBody):
+        with pytest.raises(InvalidPostBody):
             datasource.generate_post_payload()
 
     def test_ocf_datasource_update_payload(self):
@@ -160,23 +160,21 @@ class TestDatasourceModels(unittest.TestCase):
             "private": True,
         }
 
-        self.assertDictEqual(payload, expected)
+        assert payload == expected
 
     def test_ocf_datasource_params_generate(self):
         params = OCFDatasourceParams(include_hidden=True, exclude_suspended=True)
+        actual = params.generate_params_dict()
+        expected = {"include_hidden": True, "exclude_suspended": True}
 
-        self.assertDictEqual(
-            params.generate_params_dict(),
-            {"include_hidden": True, "exclude_suspended": True},
-        )
+        assert actual == expected
 
     def test_ocf_datasource_get_params_generate(self):
         params = OCFDatasourceGetParams(exclude_suspended=True)
+        actual = params.generate_params_dict()
+        expected = {"exclude_suspended": True}
 
-        self.assertDictEqual(
-            params.generate_params_dict(),
-            {"exclude_suspended": True},
-        )
+        assert actual == expected
 
     def test_native_datasource_model(self):
         # Expected input
@@ -344,4 +342,4 @@ class TestDatasourceModels(unittest.TestCase):
             supports_default_schema_extraction =  True
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.methods.group import *
 
 
-class TestGroupModels(unittest.TestCase):
+class TestGroupModels:
 
     def test_group_model(self):
         
@@ -28,4 +28,4 @@ class TestGroupModels(unittest.TestCase):
         )
         
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

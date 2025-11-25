@@ -1,10 +1,9 @@
 """Test the Alation REST API Virtual File System Models."""
-
-import unittest
+import pytest
 from allie_sdk.models.virtual_filesystem_model import *
 
 
-class TestVirtualFileSystemeModels(unittest.TestCase):
+class TestVirtualFileSystemeModels:
 
     def test_virtual_file_system_model_item(self):
 
@@ -35,8 +34,5 @@ class TestVirtualFileSystemeModels(unittest.TestCase):
             storage_type=0
         )
 
-        self.assertEqual(vfs, vfs_model)
+        assert vfs == vfs_model
 
-
-if __name__ == '__main__':
-    unittest.main()
