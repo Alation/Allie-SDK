@@ -7,6 +7,7 @@ import requests
 from .core.logs import LoggingConfigs
 from .methods import (
     AlationAuthentication,
+    AlationBISource,
     AlationBusinessPolicy,
     AlationConnector,
     AlationCustomField,
@@ -89,6 +90,9 @@ class Alation(object):
             )
 
         # Initialize Remaining Alation API Methods
+        self.bi_source = AlationBISource(
+            access_token=self.access_token, session=session, host=host
+        )
         self.connector = AlationConnector(
             access_token=self.access_token, session=session, host=host
         )
