@@ -1,20 +1,20 @@
+import pytest
 """Test the Alation REST API Dataflow Methods."""
 
 import requests_mock
-import unittest
 from allie_sdk.methods.dataflow import *
 
 
-class TestDataflow(unittest.TestCase):
+class TestDataflow:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_df = AlationDataflow(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_dataflows(self, requests_mock):
         api_response = {
             "dataflow_objects": [
@@ -46,9 +46,9 @@ class TestDataflow(unittest.TestCase):
         )
 
         result = self.mock_df.get_dataflows([1], DataflowParams(keyField='id'))
-        self.assertEqual(result, expected)
+        assert result == expected
 
-    @requests_mock.Mocker()
+    
     def test_create_or_replace_dataflows(self, requests_mock):
         post_response = {"job_id": 100}
         job_response = {
@@ -73,9 +73,9 @@ class TestDataflow(unittest.TestCase):
         )
         result = self.mock_df.create_or_replace_dataflows(payload)
         expected = [JobDetailsDataflowPost.from_api_response(job_response)]
-        self.assertEqual(result, expected)
+        assert result == expected
 
-    @requests_mock.Mocker()
+    
     def test_update_dataflows(self, requests_mock):
         patch_response = {"job_id": 101}
         job_response = {
@@ -98,9 +98,9 @@ class TestDataflow(unittest.TestCase):
         items = [DataflowPatchItem(id=1, title="New")]
         result = self.mock_df.update_dataflows(items)
         expected = [JobDetailsDataflowPost.from_api_response(job_response)]
-        self.assertEqual(result, expected)
+        assert result == expected
 
-    @requests_mock.Mocker()
+    
     def test_delete_dataflows(self, requests_mock):
         delete_response = {"job_id": 102}
         job_response = {
@@ -122,4 +122,4 @@ class TestDataflow(unittest.TestCase):
         )
         result = self.mock_df.delete_dataflows([1], DataflowParams(keyField='id'))
         expected = [JobDetailsDataflowDelete.from_api_response(job_response)]
-        self.assertEqual(result, expected)
+        assert result == expected

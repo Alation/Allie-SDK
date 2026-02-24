@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.methods.domain import *
 
 
-class TestDomainModels(unittest.TestCase):
+class TestDomainModels:
 
     def test_domain_model(self):
         # Expected input
@@ -24,7 +24,7 @@ class TestDomainModels(unittest.TestCase):
             parent_id = 2
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_domain_membership_model(self):
         # Expected input
@@ -44,7 +44,7 @@ class TestDomainModels(unittest.TestCase):
             , "otype": "glossary_v3"
         }
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_domain_membership_rule_request_payload(self):
         request = DomainMembershipRuleRequest(
@@ -53,14 +53,13 @@ class TestDomainModels(unittest.TestCase):
             recursive=False,
         )
 
-        self.assertEqual(
-            request.generate_api_post_payload(),
-            {
+        expected = {
                 "domain_id": [1, 2],
                 "exclude": True,
                 "recursive": False,
-            },
-        )
+            }
+
+        assert request.generate_api_post_payload() == expected
 
     def test_domain_membership_rule_from_response(self):
         rule = DomainMembershipRule.from_api_response(
@@ -73,13 +72,10 @@ class TestDomainModels(unittest.TestCase):
             }
         )
 
-        self.assertEqual(
-            rule,
-            DomainMembershipRule(
+        assert rule == DomainMembershipRule(
                 domain_id=1,
                 exclude=False,
                 recursive=True,
                 otype="table",
                 oid=42,
-            ),
-        )
+            )

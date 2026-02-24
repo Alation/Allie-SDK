@@ -1,21 +1,19 @@
 """Test the Alation REST API Domain Methods."""
-
-import requests_mock
-import unittest
+import pytest
 import allie_sdk as allie
 from allie_sdk.methods.domain import *
 
 
-class TestDomain(unittest.TestCase):
+class TestDomain:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationDomain(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_domains(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -48,9 +46,9 @@ class TestDomain(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         domains = self.mock_user.get_domains()
 
-        self.assertEqual(success_domains, domains)
+        assert success_domains == domains
 
-    @requests_mock.Mocker()
+    
     def test_assign_objects_to_domain(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -80,9 +78,9 @@ class TestDomain(unittest.TestCase):
                 result=None
             )
         ]
-        self.assertEqual(function_expected_result, create_domain_membership_result)
+        assert function_expected_result == create_domain_membership_result
 
-    @requests_mock.Mocker()
+    
     def test_view_domain_membership_rules(self, requests_mock):
         api_response = [
             {
@@ -118,4 +116,4 @@ class TestDomain(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(expected_rules, rules)
+        assert expected_rules == rules

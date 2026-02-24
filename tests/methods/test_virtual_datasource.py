@@ -1,7 +1,5 @@
 """Test the Alation REST API Virtual Data Source Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.virtual_datasource import *
 
 MOCK_VIRTUAL_DATA_SOURCE = AlationVirtualDataSource(
@@ -9,10 +7,10 @@ MOCK_VIRTUAL_DATA_SOURCE = AlationVirtualDataSource(
 )
 
 
-class TestVirtualDataSource(unittest.TestCase):
+class TestVirtualDataSource:
 
-    @requests_mock.Mocker()
-    def test_success_post_virtual_datasource_no_query_params(self, m):
+    
+    def test_success_post_virtual_datasource_no_query_params(self, requests_mock):
 
         vds_id = 99
         mock_vds_1 = VirtualDataSourceSchema()
@@ -63,14 +61,14 @@ class TestVirtualDataSource(unittest.TestCase):
             )
         ]
 
-        m.register_uri('POST', f'/api/v1/bulk_metadata/extraction/{vds_id}', json=async_response)
-        m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
+        requests_mock.register_uri('POST', f'/api/v1/bulk_metadata/extraction/{vds_id}', json=async_response)
+        requests_mock.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=mock_vds_list)
 
         assert expected_job_response == async_result
 
-    @requests_mock.Mocker()
-    def test_failed_post_virtual_datasource_no_query_params(self, m):
+    
+    def test_failed_post_virtual_datasource_no_query_params(self, requests_mock):
 
         vds_id = 99
         mock_vds_1 = VirtualDataSourceSchema()
@@ -116,14 +114,14 @@ class TestVirtualDataSource(unittest.TestCase):
             )
         ]
 
-        m.register_uri('POST', f'/api/v1/bulk_metadata/extraction/{vds_id}', json=async_response)
-        m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
+        requests_mock.register_uri('POST', f'/api/v1/bulk_metadata/extraction/{vds_id}', json=async_response)
+        requests_mock.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=mock_vds_list)
 
         assert expected_job_response == async_result
 
-    @requests_mock.Mocker()
-    def test_success_post_virtual_datasource_with_query_params(self, m):
+    
+    def test_success_post_virtual_datasource_with_query_params(self, requests_mock):
         vds_id = 99
         mock_vds_1 = VirtualDataSourceSchema()
         mock_vds_1.key = "99.TestSchema"
@@ -177,17 +175,17 @@ class TestVirtualDataSource(unittest.TestCase):
             )
         ]
 
-        m.register_uri('POST', '/api/v1/bulk_metadata/extraction/99?set_title_descs=true&remove_not_seen=false',
+        requests_mock.register_uri('POST', '/api/v1/bulk_metadata/extraction/99?set_title_descs=true&remove_not_seen=false',
                        json=async_response)
-        m.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
+        requests_mock.register_uri('GET','/api/v1/bulk_metadata/job/?name=MetadataExtraction2336_Virtual_9999', json=job_response)
         async_result = MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id,
                                                               vds_objects=mock_vds_list,
                                                               query_params=mock_params)
 
         assert expected_job_response == async_result
 
-    @requests_mock.Mocker()
-    def test_failed_post_virtual_datasource_invalid_data_source_id(self, m):
+    
+    def test_failed_post_virtual_datasource_invalid_data_source_id(self, requests_mock):
 
         vds_id = 0
 
@@ -207,7 +205,7 @@ class TestVirtualDataSource(unittest.TestCase):
 
         async_response = {'error': 'Cannot find Datasource'}
 
-        m.register_uri(
+        requests_mock.register_uri(
             method = 'POST'
             , url = f'/api/v1/bulk_metadata/extraction/{vds_id}'
             , json = async_response
@@ -215,8 +213,6 @@ class TestVirtualDataSource(unittest.TestCase):
         )
 
         # Should raise HTTPError with 400 status
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             MOCK_VIRTUAL_DATA_SOURCE.post_metadata(ds_id=vds_id, vds_objects=vds_objects)
 
-if __name__ == '__main__':
-    unittest.main()

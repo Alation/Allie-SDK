@@ -1,12 +1,12 @@
+import pytest
 """Test the Alation REST API Glossary Term Models"""
 
-import unittest
 from allie_sdk.core.custom_exceptions import InvalidPostBody, UnsupportedPostBody
 from allie_sdk.models.custom_field_model import *
 from allie_sdk.models.glossary_term_model import GlossaryTerm, GlossaryTermItem
 
 
-class TestGlossaryTermModels(unittest.TestCase):
+class TestGlossaryTermModels:
 
     def test_basic_glossary_term(self):
 
@@ -44,7 +44,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(term, mock_term)
+        assert term == mock_term
 
     def test_deleted_glossary_term(self):
 
@@ -73,7 +73,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             ts_deleted="2022-10-31T23:40:57.642496Z"
         )
 
-        self.assertEqual(term, term_model)
+        assert term == term_model
 
     def test_glossary_term_custom_field_parsing(self):
 
@@ -97,7 +97,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(mock_term.custom_fields, expected_parsed_fields)
+        assert mock_term.custom_fields == expected_parsed_fields
 
     def test_glossary_term_put_payload(self):
 
@@ -118,7 +118,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             "custom_fields": [{"field_id": 1, "value": "Yes"}]
         }
 
-        self.assertEqual(mock_item.generate_api_put_payload(), expected_payload)
+        assert mock_item.generate_api_put_payload() == expected_payload
 
     def test_glossary_term_post_payload(self):
 
@@ -137,7 +137,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             "custom_fields": [{"field_id": 1, "value": "Yes"}]
         }
 
-        self.assertEqual(mock_item.generate_api_post_payload(), expected_payload)
+        assert mock_item.generate_api_post_payload() == expected_payload
 
     def test_glossary_term_put_exception_missing_id(self):
 
@@ -148,7 +148,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             glossary_ids=[1]
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_item.generate_api_put_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_item.generate_api_put_payload())
 
     def test_glossary_term_post_exception_missing_title(self):
 
@@ -158,7 +158,7 @@ class TestGlossaryTermModels(unittest.TestCase):
             glossary_ids=[1]
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_item.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_item.generate_api_post_payload())
 
     def test_glossary_term_post_custom_fields_exception(self):
 
@@ -170,8 +170,6 @@ class TestGlossaryTermModels(unittest.TestCase):
             custom_fields=[CustomFieldStringValueItem(value="Yes")]
         )
 
-        self.assertRaises(UnsupportedPostBody, lambda: mock_item.generate_api_post_payload())
+        pytest.raises(UnsupportedPostBody, lambda: mock_item.generate_api_post_payload())
 
 
-if __name__ == '__main__':
-    unittest.main()

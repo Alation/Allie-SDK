@@ -1,20 +1,18 @@
 """Test the Alation REST API Document Hub Folder Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.document_hub_folder import *
 
 
-class TestDocumentHubFolder(unittest.TestCase):
+class TestDocumentHubFolder:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationDocumentHubFolder(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_document_hub_folders(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -58,9 +56,9 @@ class TestDocumentHubFolder(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         document_hub_folders = self.mock_user.get_document_hub_folders()
 
-        self.assertEqual(success_document_hub_folders, document_hub_folders)
+        assert success_document_hub_folders == document_hub_folders
 
-    @requests_mock.Mocker()
+    
     def test_create_document_hub_folders(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -155,9 +153,9 @@ class TestDocumentHubFolder(unittest.TestCase):
                 )
             )
         ]
-        self.assertEqual(function_expected_result, create_document_hub_folders_result)
+        assert function_expected_result == create_document_hub_folders_result
 
-    @requests_mock.Mocker()
+    
     def test_create_document_hub_folders_fail(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         
@@ -178,7 +176,7 @@ class TestDocumentHubFolder(unittest.TestCase):
         
         # --- TEST THE FUNCTION --- #
         # Test with a folder that will trigger the API error - should raise an HTTPError
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             self.mock_user.create_document_hub_folders(
                 [
                     DocumentHubFolderPostItem(
@@ -190,7 +188,7 @@ class TestDocumentHubFolder(unittest.TestCase):
                 ]
             )
 
-    @requests_mock.Mocker()
+    
     def test_update_document_hub_folders(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -288,9 +286,9 @@ class TestDocumentHubFolder(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(function_expected_result, update_document_hub_folders_result)
+        assert function_expected_result == update_document_hub_folders_result
 
-    @requests_mock.Mocker()
+    
     def test_update_document_hub_folders_fail(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         
@@ -311,7 +309,7 @@ class TestDocumentHubFolder(unittest.TestCase):
         
         # --- TEST THE FUNCTION --- #
         # Update a folder that will trigger an error on the server - should raise an HTTPError
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             self.mock_user.update_document_hub_folders(
                 [
                     DocumentHubFolderPutItem(
@@ -323,7 +321,7 @@ class TestDocumentHubFolder(unittest.TestCase):
                 ]
             )
 
-    @requests_mock.Mocker()
+    
     def test_delete_document_hub_folders(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -365,4 +363,4 @@ class TestDocumentHubFolder(unittest.TestCase):
                 ]
             )
         )
-        self.assertEqual(function_expected_result, delete_document_hub_folder_result)
+        assert function_expected_result == delete_document_hub_folder_result

@@ -1,13 +1,10 @@
 """Tests for the Query data models."""
-
-import unittest
-from datetime import datetime
-
+import pytest
 from allie_sdk.models.query_model import *
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 
-class TestQueryModel(unittest.TestCase):
+class TestQueryModel:
     def test_query_from_api_response_maps_nested_objects(self):
         api_response = {
             "datasource_id": 1,
@@ -128,10 +125,10 @@ class TestQueryModel(unittest.TestCase):
 
         payload = create_request.generate_api_post_payload()
 
-        self.assertNotIn("title", payload)
-        self.assertNotIn("description", payload)
-        self.assertNotIn("tag_names", payload)
-        self.assertNotIn("domain_ids", payload)
+        assert not "title" in payload
+        assert not "description" in payload
+        assert not "tag_names" in payload
+        assert not "domain_ids" in payload
 
     def test_query_create_request_requires_identifiers(self):
         create_request = QueryItem(
@@ -140,13 +137,13 @@ class TestQueryModel(unittest.TestCase):
             author=QueryAuthor(),
         )
 
-        with self.assertRaises(InvalidPostBody):
+        with pytest.raises(InvalidPostBody):
             create_request.generate_api_post_payload()
 
     def test_query_create_request_requires_fields(self):
-        with self.assertRaises(InvalidPostBody):
+        with pytest.raises(InvalidPostBody):
             QueryItem(datasource_id=None, content="SELECT 1").generate_api_post_payload()
 
-        with self.assertRaises(InvalidPostBody):
+        with pytest.raises(InvalidPostBody):
             QueryItem(datasource_id=1, content=None).generate_api_post_payload()
 

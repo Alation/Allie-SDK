@@ -1,20 +1,14 @@
 """Test the Alation REST API Connector Methods."""
-
-import requests_mock
-import unittest
-
+import pytest
 from requests import HTTPError
-
 from allie_sdk.methods.connector import *
 
 MOCK_CONNECTOR = AlationConnector(
     access_token='test', session=requests.session(), host='https://test.com'
 )
 
-class TestConnector(unittest.TestCase):
-
-    @requests_mock.Mocker()
-    def test_success_get_connectors_v2(self, m):
+class TestConnector:
+    def test_success_get_connectors_v2(self, requests_mock):
 
         MOCK_CONNECTOR.use_v2_endpoint = True
         success_response = [
@@ -34,25 +28,24 @@ class TestConnector(unittest.TestCase):
             }
         ]
         success_connectors = [Connector.from_api_response(connector) for connector in success_response]
-        m.register_uri('GET', '/integration/v2/connectors/', json=success_response)
+        requests_mock.register_uri('GET', '/integration/v2/connectors/', json=success_response)
         connectors = MOCK_CONNECTOR.get_connectors()
 
-        self.assertEqual(success_connectors, connectors)
+        assert success_connectors == connectors
 
-    @requests_mock.Mocker()
-    def test_failed_get_connectors_v2(self, m):
+    def test_failed_get_connectors_v2(self, requests_mock):
 
         MOCK_CONNECTOR.use_v2_endpoint = True
         failed_response = {
             "detail": "Authentication credentials were not provided.",
             "code": "403000"
         }
-        m.register_uri('GET', '/integration/v2/connectors/', json=failed_response, status_code=403)
+        requests_mock.register_uri('GET', '/integration/v2/connectors/', json=failed_response, status_code=403)
 
-        with self.assertRaises(HTTPError) as context:
-            connectors = MOCK_CONNECTOR.get_connectors()
+        with pytest.raises(HTTPError) as context:
+            MOCK_CONNECTOR.get_connectors()
 
-        self.assertEqual(context.exception.response.status_code, 403)
+        status_code = context.value.response.status_code
 
-if __name__ == '__main__':
-    unittest.main()
+        assert status_code == 403
+

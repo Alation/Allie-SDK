@@ -1,20 +1,18 @@
 """Test the Alation REST API Group Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.group import *
 
 
-class TestGroup(unittest.TestCase):
+class TestGroup:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationGroup(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_groups(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -49,4 +47,4 @@ class TestGroup(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         groups = self.mock_user.get_groups()
 
-        self.assertEqual(success_groups, groups)
+        assert success_groups == groups

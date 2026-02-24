@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.methods.job import *
 
 
-class TestGroupModels(unittest.TestCase):
+class TestGroupModels:
 
     def test_job_model_for_document_delete(self):
 
@@ -33,7 +33,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     # check if we can map the job result output for a document creation to our data class
     def test_job_model_for_document_post(self):
@@ -67,7 +67,7 @@ class TestGroupModels(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_document_put(self):
         # Expected input
@@ -99,7 +99,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     # the job resonse for terms is exactly the same as for documents
     def test_job_model_for_term_post(self):
@@ -133,7 +133,7 @@ class TestGroupModels(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_term_put(self):
         # Expected input
@@ -165,7 +165,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
     def test_job_model_for_business_policy_post(self):
         # Expected input
         input = {
@@ -190,7 +190,7 @@ class TestGroupModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_business_policy_put(self):
         # Expected input
@@ -216,7 +216,7 @@ class TestGroupModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     # CUSTOM FIELDS
 
@@ -264,7 +264,7 @@ class TestGroupModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     # Custom Field Value PUT
 
@@ -298,7 +298,7 @@ class TestGroupModels(unittest.TestCase):
                 ]
             )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_rdbms_schema_post(self):
         # Expected input
@@ -336,7 +336,7 @@ class TestGroupModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
     def test_job_model_for_rdbms_table_post(self):
         # Expected input
         input = {
@@ -373,7 +373,7 @@ class TestGroupModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
     
     def test_job_model_for_rdbms_column_post(self):
         # Expected input
@@ -411,7 +411,7 @@ class TestGroupModels(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_virtual_datasource_post(self):
         # Expected input
@@ -436,7 +436,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_data_quality_fields_post(self):
 
@@ -505,7 +505,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_data_quality_values_post(self):
 
@@ -561,7 +561,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_document_hub_folder_post(self):
 
@@ -606,7 +606,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_document_hub_folder_put(self):
 
@@ -651,7 +651,7 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output
 
     def test_job_model_for_document_hub_folder_delete(self):
 
@@ -682,4 +682,4 @@ class TestGroupModels(unittest.TestCase):
             )
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

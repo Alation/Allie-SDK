@@ -1,7 +1,5 @@
 """Test the Alation REST API Virtual Data Source Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.virtual_filesystem import *
 
 MOCK_VIRTUAL_DATA_SOURCE = AlationVirtualFileSystem(
@@ -9,10 +7,10 @@ MOCK_VIRTUAL_DATA_SOURCE = AlationVirtualFileSystem(
 )
 
 
-class TestVirtualFileSystem(unittest.TestCase):
+class TestVirtualFileSystem:
 
-    @requests_mock.Mocker()
-    def test_success_post_virtual_filesystem(self, m):
+    
+    def test_success_post_virtual_filesystem(self, requests_mock):
         vfs_id = 42
         mock_vfs_1 = VirtualFileSystemItem(path="/", name="var", is_directory=True, size_in_bytes=988,
                                            ts_last_modified="2024-06-20T18:26:54.663432Z",
@@ -44,13 +42,13 @@ class TestVirtualFileSystem(unittest.TestCase):
             )
         ]
 
-        m.register_uri(
+        requests_mock.register_uri(
             method='POST'
             , url=f'/api/v1/bulk_metadata/file_upload/{vfs_id}/'
             , json=async_response
             , status_code=200
         )
-        m.register_uri(
+        requests_mock.register_uri(
             method='GET'
             , url='/api/v1/bulk_metadata/job/?id=14391'
             , json=job_response
@@ -60,8 +58,8 @@ class TestVirtualFileSystem(unittest.TestCase):
 
         assert expected_job_response == async_result
 
-    @requests_mock.Mocker()
-    def test_fail_post_virtual_filesystem(self, m):
+    
+    def test_fail_post_virtual_filesystem(self, requests_mock):
         """
         MAKE IT FAIL:
 
@@ -100,7 +98,7 @@ class TestVirtualFileSystem(unittest.TestCase):
 
         async_response = {'error': 'Cannot find FileSystem id: 0'}
 
-        m.register_uri(
+        requests_mock.register_uri(
             method = 'POST'
             , url = f'/api/v1/bulk_metadata/file_upload/{vfs_id}/'
             , json = async_response
@@ -108,8 +106,5 @@ class TestVirtualFileSystem(unittest.TestCase):
         )
         
         # Should raise HTTPError with 400 status
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             MOCK_VIRTUAL_DATA_SOURCE.post_metadata(fs_id=vfs_id, vfs_objects=mock_vfs_list)
-
-if __name__ == '__main__':
-    unittest.main()

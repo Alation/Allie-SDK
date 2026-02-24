@@ -1,9 +1,7 @@
 """Tests for the Alation Query methods."""
-
-import unittest
+import pytest
 from datetime import datetime
 import requests
-import requests_mock
 
 from allie_sdk.methods.query import AlationQuery
 from allie_sdk.models.query_model import *
@@ -11,16 +9,16 @@ from allie_sdk.models.job_model import *
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 
-class TestQueryMethods(unittest.TestCase):
-    def setUp(self):
+class TestQueryMethods:
+    def setup_method(self):
         self.query_methods = AlationQuery(
             access_token="test",
             session=requests.session(),
             host="https://test.com",
         )
 
-    @requests_mock.Mocker()
-    def test_create_query_success(self, mock_requests):
+    
+    def test_create_query_success(self, requests_mock):
 
         api_response = {
             "datasource_id": 1,
@@ -62,7 +60,7 @@ class TestQueryMethods(unittest.TestCase):
             "schedules": [],
         }
 
-        mock_requests.register_uri(
+        requests_mock.register_uri(
             method="POST",
             url="/integration/v1/query/",
             json=api_response,
@@ -126,9 +124,9 @@ class TestQueryMethods(unittest.TestCase):
         assert  expected_result == result
 
 
-    @requests_mock.Mocker()
-    def test_get_query_sql_success(self, mock_requests):
-        mock_requests.register_uri(
+    
+    def test_get_query_sql_success(self, requests_mock):
+        requests_mock.register_uri(
             method="GET",
             url="/integration/v1/query/6/sql/",
             text="SELECT count(*) FROM users;",
@@ -137,10 +135,10 @@ class TestQueryMethods(unittest.TestCase):
 
         sql_text = self.query_methods.get_query_sql(query_id=6)
 
-        self.assertEqual("SELECT count(*) FROM users;", sql_text)
+        assert "SELECT count(*) FROM users;" == sql_text
 
-    @requests_mock.Mocker()
-    def test_get_query_success(self, mock_requests):
+    
+    def test_get_query_success(self, requests_mock):
 
         api_response = {
             "datasource_id": 1,
@@ -182,7 +180,7 @@ class TestQueryMethods(unittest.TestCase):
             "schedules": [],
         }
 
-        mock_requests.register_uri(
+        requests_mock.register_uri(
             method="GET",
             url="/integration/v1/query/6/",
             json=api_response,
@@ -232,8 +230,8 @@ class TestQueryMethods(unittest.TestCase):
         )
         assert expected_result == query
 
-    @requests_mock.Mocker()
-    def test_get_queries_success(self, mock_requests):
+    
+    def test_get_queries_success(self, requests_mock):
         api_response = [
 
             {
@@ -277,7 +275,7 @@ class TestQueryMethods(unittest.TestCase):
             }
         ]
 
-        mock_requests.register_uri(
+        requests_mock.register_uri(
             method="GET",
             url="/integration/v1/query/?datasource_id=1",
             json=api_response,

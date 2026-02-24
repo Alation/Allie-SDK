@@ -1,10 +1,9 @@
 """Test the Alation REST API Data Quality Models"""
-
-import unittest
+import pytest
 from allie_sdk.models.data_quality_model import *
 
 
-class TestDataQualityModels(unittest.TestCase):
+class TestDataQualityModels:
 
     def test_data_quality_field(self):
 
@@ -25,7 +24,7 @@ class TestDataQualityModels(unittest.TestCase):
             ts_created='2022-06-01T18:26:54.663432Z'
         )
 
-        self.assertEqual(dq_field, mock_dq_field)
+        assert dq_field == mock_dq_field
 
     def test_data_quality_field_item_payload(self):
 
@@ -38,7 +37,7 @@ class TestDataQualityModels(unittest.TestCase):
             "field_key": "1.dq.test", "name": "Testing the DQ Field", "type": "BOOLEAN"
         }
 
-        self.assertEqual(mock_dq_field.generate_api_post_payload(), expected_payload)
+        assert mock_dq_field.generate_api_post_payload() == expected_payload
 
     def test_data_quality_field_item_exception_missing_key(self):
 
@@ -48,7 +47,7 @@ class TestDataQualityModels(unittest.TestCase):
             description="This is a test!"
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
 
     def test_data_quality_field_item_exception_missing_name(self):
 
@@ -58,7 +57,7 @@ class TestDataQualityModels(unittest.TestCase):
             description="This is a test!"
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
 
     def test_data_quality_field_item_exception_missing_type(self):
 
@@ -68,7 +67,7 @@ class TestDataQualityModels(unittest.TestCase):
             description="This is a test!"
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
 
     def test_data_quality_field_item_exception_invalid_type(self):
 
@@ -79,7 +78,7 @@ class TestDataQualityModels(unittest.TestCase):
             type="VARCHAR"
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_field.generate_api_post_payload())
 
     def test_data_quality_value(self):
 
@@ -122,7 +121,7 @@ class TestDataQualityModels(unittest.TestCase):
             field_description="Rows Fail: 12, Pass: 523, Ignore: 0"
         )
 
-        self.assertEqual(dq_value, mock_dq_value)
+        assert dq_value == mock_dq_value
 
     def test_data_quality_value_delete_payload(self):
 
@@ -132,7 +131,7 @@ class TestDataQualityModels(unittest.TestCase):
         )
         expected_payload = {'field_key': '1.dq.test', 'object_key': '1.table.test'}
 
-        self.assertEqual(mock_dq_value.generate_api_delete_payload(), expected_payload)
+        assert mock_dq_value.generate_api_delete_payload() == expected_payload
 
     def test_data_quality_value_delete_exception_missing_field_key(self):
 
@@ -140,7 +139,7 @@ class TestDataQualityModels(unittest.TestCase):
             object_key='1.table.test'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_delete_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_delete_payload())
 
     def test_data_quality_value_delete_exception_missing_object_key(self):
 
@@ -148,7 +147,7 @@ class TestDataQualityModels(unittest.TestCase):
             field_key='1.dq.test',
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_delete_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_delete_payload())
 
     def test_data_quality_value_item_payload(self):
 
@@ -165,7 +164,7 @@ class TestDataQualityModels(unittest.TestCase):
             'status': 'GOOD', 'value': 'The test passes', 'url': 'https://test.com'
         }
 
-        self.assertEqual(mock_dq_value.generate_api_post_payload(), expected_payload)
+        assert mock_dq_value.generate_api_post_payload() == expected_payload
 
     def test_data_quality_value_exception_missing_field_key(self):
 
@@ -177,7 +176,7 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
     def test_data_quality_value_exception_missing_object_key(self):
 
@@ -189,7 +188,7 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
     def test_data_quality_value_exception_missing_object_type(self):
 
@@ -201,7 +200,7 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
     def test_data_quality_value_exception_missing_status(self):
 
@@ -213,7 +212,7 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
     def test_data_quality_value_exception_missing_value(self):
 
@@ -225,7 +224,7 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
     def test_data_quality_value_exception_invalid_object_type(self):
 
@@ -238,7 +237,7 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
     def test_data_quality_value_exception_invalid_status(self):
 
@@ -251,8 +250,6 @@ class TestDataQualityModels(unittest.TestCase):
             url='https://test.com'
         )
 
-        self.assertRaises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
+        pytest.raises(InvalidPostBody, lambda: mock_dq_value.generate_api_post_payload())
 
 
-if __name__ == '__main__':
-    unittest.main()

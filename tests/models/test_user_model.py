@@ -1,10 +1,9 @@
 """Test the Alation REST API User Models."""
-
-import unittest
+import pytest
 from allie_sdk.methods.user import *
 
 
-class TestUserModels(unittest.TestCase):
+class TestUserModels:
 
     def test_v1_user_model(self):
 
@@ -22,7 +21,7 @@ class TestUserModels(unittest.TestCase):
             id=2, profile_id=2, url="/user/2/"
         )
 
-        self.assertEqual(user, user_model)
+        assert user == user_model
 
     def test_v2_user_model(self):
 
@@ -43,7 +42,7 @@ class TestUserModels(unittest.TestCase):
             ts_created="2022-06-15T17:01:37.741810Z"
         )
 
-        self.assertEqual(user, user_model)
+        assert user == user_model
 
     def test_user_details_model(self):
 
@@ -64,8 +63,6 @@ class TestUserModels(unittest.TestCase):
             username="test-user@alation.com"
         )
 
-        self.assertEqual(user_details, details_model)
+        assert user_details == details_model
 
 
-if __name__ == '__main__':
-    unittest.main()

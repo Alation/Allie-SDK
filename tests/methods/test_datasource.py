@@ -1,23 +1,21 @@
 """Test the Alation REST API Datasource Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from requests import HTTPError
 
 import allie_sdk
 from allie_sdk.methods.datasource import *
 
 
-class TestDatasource(unittest.TestCase):
+class TestDatasource:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationDatasource(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_ocf_datasources(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -93,9 +91,9 @@ class TestDatasource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         datasources = self.mock_user.get_ocf_datasources()
 
-        self.assertEqual(success_datasources, datasources)
+        assert success_datasources == datasources
         
-    @requests_mock.Mocker()
+    
     def test_empty_get_ocf_datasources(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         empty_response = []
@@ -111,9 +109,9 @@ class TestDatasource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         datasources = self.mock_user.get_ocf_datasources()
 
-        self.assertEqual([], datasources)
+        assert [] == datasources
         
-    @requests_mock.Mocker()
+    
     def test_failed_get_ocf_datasources(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         error_response = {
@@ -130,12 +128,12 @@ class TestDatasource(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        with self.assertRaises(HTTPError) as context:
+        with pytest.raises(HTTPError) as context:
             self.mock_user.get_ocf_datasources()
             
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
+    
     def test_get_native_datasources(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -235,9 +233,9 @@ class TestDatasource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         datasources = self.mock_user.get_native_datasources()
 
-        self.assertEqual(success_datasources, datasources)
+        assert success_datasources == datasources
         
-    @requests_mock.Mocker()
+    
     def test_empty_get_native_datasources(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         empty_response = []
@@ -253,9 +251,9 @@ class TestDatasource(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         datasources = self.mock_user.get_native_datasources()
 
-        self.assertEqual([], datasources)
+        assert [] == datasources
         
-    @requests_mock.Mocker()
+    
     def test_failed_get_native_datasources(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         error_response = {
@@ -272,12 +270,12 @@ class TestDatasource(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        with self.assertRaises(HTTPError) as context:
+        with pytest.raises(HTTPError) as context:
             self.mock_user.get_native_datasources()
 
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
+    
     def test_create_ocf_datasource(self, requests_mock):
         datasource_post = OCFDatasourcePostItem(
             connector_id=101,
@@ -308,12 +306,9 @@ class TestDatasource(unittest.TestCase):
 
         datasource = self.mock_user.create_ocf_datasource(datasource_post)
 
-        self.assertEqual(
-            OCFDatasource.from_api_response(datasource_api_response),
-            datasource,
-        )
+        assert OCFDatasource.from_api_response(datasource_api_response) == datasource
 
-    @requests_mock.Mocker()
+    
     def test_get_ocf_datasource_by_id(self, requests_mock):
         datasource_api_response = {
             "uri": "mysql://<hostname>:<port>/<db_name>",
@@ -337,12 +332,9 @@ class TestDatasource(unittest.TestCase):
 
         datasource = self.mock_user.get_ocf_datasource_by_id(1, query_params=params)
 
-        self.assertEqual(
-            OCFDatasource.from_api_response(datasource_api_response),
-            datasource,
-        )
+        assert OCFDatasource.from_api_response(datasource_api_response) == datasource
 
-    @requests_mock.Mocker()
+    
     def test_update_ocf_datasource(self, requests_mock):
         datasource_update = OCFDatasourcePutItem(description="Updated description")
 
@@ -366,12 +358,9 @@ class TestDatasource(unittest.TestCase):
 
         datasource = self.mock_user.update_ocf_datasource(1, datasource_update)
 
-        self.assertEqual(
-            OCFDatasource.from_api_response(datasource_api_response),
-            datasource,
-        )
+        assert OCFDatasource.from_api_response(datasource_api_response) == datasource
 
-    @requests_mock.Mocker()
+    
     def test_delete_ocf_datasource(self, requests_mock):
         requests_mock.register_uri(
             method='DELETE',
@@ -387,5 +376,5 @@ class TestDatasource(unittest.TestCase):
             , result = {}
         )
 
-        self.assertEqual(expected_response, response)
+        assert expected_response == response
 

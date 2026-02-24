@@ -1,8 +1,8 @@
-import unittest
+import pytest
 from allie_sdk.methods.policy_group import *
 
 
-class TestPolicyGroupsModels(unittest.TestCase):
+class TestPolicyGroupsModels:
 
     def test_basic_policy_group_model(self):
 
@@ -33,4 +33,4 @@ class TestPolicyGroupsModels(unittest.TestCase):
             , policies_count = 0
         )
 
-        self.assertEqual(input_transformed, output)
+        assert input_transformed == output

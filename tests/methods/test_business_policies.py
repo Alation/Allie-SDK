@@ -1,21 +1,18 @@
 """Test the Alation REST API Business Policy Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from requests import HTTPError
 from allie_sdk.methods.business_policy import *
 
 
-class TestBusinessPolicy(unittest.TestCase):
+class TestBusinessPolicy:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationBusinessPolicy(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
     def test_get_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -67,9 +64,8 @@ class TestBusinessPolicy(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         business_policies = self.mock_user.get_business_policies()
 
-        self.assertEqual(success_business_policies, business_policies)
-        
-    @requests_mock.Mocker()
+        assert success_business_policies == business_policies
+
     def test_empty_get_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         empty_response = []
@@ -85,9 +81,8 @@ class TestBusinessPolicy(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         business_policies = self.mock_user.get_business_policies()
 
-        self.assertEqual([], business_policies)
-        
-    @requests_mock.Mocker()
+        assert [] == business_policies
+
     def test_failed_get_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         error_response = {
@@ -104,12 +99,11 @@ class TestBusinessPolicy(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        with self.assertRaises(HTTPError) as context:
+        with pytest.raises(HTTPError) as context:
             self.mock_user.get_business_policies()
             
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
     def test_create_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -208,9 +202,8 @@ class TestBusinessPolicy(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(function_expected_result, bulk_create_business_policies_result)
-        
-    @requests_mock.Mocker()
+        assert function_expected_result == bulk_create_business_policies_result
+
     def test_failed_create_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         error_response = {
@@ -227,7 +220,7 @@ class TestBusinessPolicy(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        with self.assertRaises(HTTPError) as context:
+        with pytest.raises(HTTPError) as context:
             self.mock_user.create_business_policies(
                 [
                     BusinessPolicyPostItem(
@@ -249,9 +242,8 @@ class TestBusinessPolicy(unittest.TestCase):
                 ]
             )
             
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
     def test_update_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -332,9 +324,8 @@ class TestBusinessPolicy(unittest.TestCase):
                 ]
             )
         ]
-        self.assertEqual(function_expected_result, bulk_update_business_policies_result)
+        assert function_expected_result == bulk_update_business_policies_result
 
-    @requests_mock.Mocker()
     def test_delete_business_policies(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -367,4 +358,4 @@ class TestBusinessPolicy(unittest.TestCase):
             msg='',
             result=''
         )
-        self.assertEqual(function_expected_result, delete_business_policy_result)
+        assert function_expected_result == delete_business_policy_result

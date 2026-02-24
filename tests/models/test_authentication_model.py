@@ -1,11 +1,9 @@
 """Test the Alation REST API Authentication Methods."""
 
-import unittest
+import pytest
 from allie_sdk.methods.authentication import *
 
-
-class TestAuthenticationModels(unittest.TestCase):
-
+class TestAuthenticationModels:
     def test_refresh_token_model(self):
 
         refresh_response = {
@@ -26,7 +24,7 @@ class TestAuthenticationModels(unittest.TestCase):
             name="Test Refresh Token", refresh_token="test_refresh_token"
         )
 
-        self.assertEqual(refresh_token, refresh_model)
+        assert refresh_token == refresh_model
 
     def test_access_access_token_model(self):
 
@@ -45,8 +43,4 @@ class TestAuthenticationModels(unittest.TestCase):
             token_status="ACTIVE", api_access_token="test_access_token"
         )
 
-        self.assertEqual(access_token, access_model)
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert access_token == access_model

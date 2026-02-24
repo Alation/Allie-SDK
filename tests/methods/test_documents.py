@@ -1,20 +1,18 @@
 """Test the Alation REST API Document Methods."""
-
-import requests_mock
-import unittest
+import pytest
 from allie_sdk.methods.document import *
 
 
-class TestDocument(unittest.TestCase):
+class TestDocument:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationDocument(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -66,9 +64,9 @@ class TestDocument(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         documents = self.mock_user.get_documents()
 
-        self.assertEqual(success_documents, documents)
+        assert success_documents == documents
         
-    @requests_mock.Mocker()
+    
     def test_empty_get_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         empty_response = []
@@ -84,9 +82,9 @@ class TestDocument(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         documents = self.mock_user.get_documents()
 
-        self.assertEqual([], documents)
+        assert [] == documents
         
-    @requests_mock.Mocker()
+    
     def test_failed_get_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         error_response = {
@@ -103,12 +101,12 @@ class TestDocument(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_user.get_documents()
             
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403
 
-    @requests_mock.Mocker()
+    
     def test_create_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -203,9 +201,9 @@ class TestDocument(unittest.TestCase):
                 )
             )
         ]
-        self.assertEqual(function_expected_result, create_documents_result)
+        assert function_expected_result == create_documents_result
 
-    @requests_mock.Mocker()
+    
     def test_create_documents_fail(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         
@@ -226,7 +224,7 @@ class TestDocument(unittest.TestCase):
         
         # --- TEST THE FUNCTION --- #
         # Test with a document that will trigger the API error - should raise an HTTPError
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             self.mock_user.create_documents(
                 [
                     DocumentPostItem(
@@ -241,7 +239,7 @@ class TestDocument(unittest.TestCase):
                 ]
             )
 
-    @requests_mock.Mocker()
+    
     def test_update_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -339,9 +337,9 @@ class TestDocument(unittest.TestCase):
             )
         ]
 
-        self.assertEqual(function_expected_result, update_documents_result)
+        assert function_expected_result == update_documents_result
 
-    @requests_mock.Mocker()
+    
     def test_update_documents_fail(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         
@@ -362,7 +360,7 @@ class TestDocument(unittest.TestCase):
         
         # --- TEST THE FUNCTION --- #
         # Update a document that will trigger an error on the server - should raise an HTTPError
-        with self.assertRaises(requests.exceptions.HTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             self.mock_user.update_documents(
                 [
                     DocumentPutItem(
@@ -377,7 +375,7 @@ class TestDocument(unittest.TestCase):
                 ]
             )
 
-    @requests_mock.Mocker()
+    
     def test_delete_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -419,9 +417,9 @@ class TestDocument(unittest.TestCase):
                 ]
             )
         )
-        self.assertEqual(function_expected_result, delete_document_result)
+        assert function_expected_result == delete_document_result
         
-    @requests_mock.Mocker()
+    
     def test_failed_delete_documents(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
         error_response = {
@@ -438,7 +436,7 @@ class TestDocument(unittest.TestCase):
         )
 
         # --- TEST THE FUNCTION --- #
-        with self.assertRaises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(requests.exceptions.HTTPError) as context:
             self.mock_user.delete_documents([Document(id=1), Document(id=2)])
             
-        self.assertEqual(context.exception.response.status_code, 403)
+        assert context.value.response.status_code == 403

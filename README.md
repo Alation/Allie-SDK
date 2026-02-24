@@ -12,3 +12,36 @@ This is an **open source** project under the [APACHE 2.0 License](https://apache
 
 ## License
 [APACHE 2.0 License](https://apache.org/licenses/LICENSE-2.0)
+
+## Set up instruction for developers contributing to Allie-SDK
+
+1. Download the repo.
+2. Install `uv` if you haven’t done so already (see also [here](https://github.com/astral-sh/uv)).
+3. Within the project root folder run: `uv sync`. This will create the virtual environment and install all the dependencies.
+
+### Local Builds
+
+You can create a local build like so (execute in the project root folder):
+
+```shell
+uv build
+```
+
+### Testing
+
+We are using `pytest` and not `unittest`. 
+Make sure that the **IDE** you are working with is also configured to use `pytest` for running the tests.
+
+To run the tests:
+
+```shell
+uv run pytest
+# or with more detailed output
+uv run pytest -v
+```
+
+#### Consideration when writing test
+
+- Use `pytest` not `unittest`.
+- Don't import `request_mock` and do not use decorators (since Pytest already takes care of this for you).
+- Bundle tests in test classes.

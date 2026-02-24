@@ -1,22 +1,19 @@
 """Test the Alation REST API Visual Config Methods."""
-
-import requests_mock
-import unittest
-
+import pytest
 import allie_sdk as allie
 from allie_sdk.methods.visual_config import *
 
 
-class TestVisualConfig(unittest.TestCase):
+class TestVisualConfig:
 
-    def setUp(self):
+    def setup_method(self):
         self.mock_user = AlationVisualConfig(
             access_token='test',
             session=requests.session(),
             host='https://test.com'
         )
 
-    @requests_mock.Mocker()
+    
     def test_get_visual_configs(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -69,9 +66,9 @@ class TestVisualConfig(unittest.TestCase):
         # --- TEST THE FUNCTION --- #
         actual_response = self.mock_user.get_visual_configs()
 
-        self.assertEqual(success_response, actual_response)
+        assert success_response == actual_response
 
-    @requests_mock.Mocker()
+    
     def test_get_visual_configs_by_otype(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -141,9 +138,9 @@ class TestVisualConfig(unittest.TestCase):
             otype=otype
         )
 
-        self.assertEqual(success_response, actual_response)
+        assert success_response == actual_response
 
-    @requests_mock.Mocker()
+    
     def test_get_a_visual_config(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -197,9 +194,9 @@ class TestVisualConfig(unittest.TestCase):
             visual_config_id=VISUAL_CONFIG_ID
         )
 
-        self.assertEqual(success_response, actual_response)
+        assert success_response == actual_response
 
-    @requests_mock.Mocker()
+    
     def test_create_visual_config(self, requests_mock):
 
         # What does the response look like for the document request?
@@ -322,9 +319,9 @@ class TestVisualConfig(unittest.TestCase):
         )
 
 
-        self.assertEqual(success_response, actual_response)
+        assert success_response == actual_response
 
-    @requests_mock.Mocker()
+    
     def test_update_visual_config(self, requests_mock):
         # --- PREPARE THE TEST SETUP --- #
 
@@ -432,9 +429,9 @@ class TestVisualConfig(unittest.TestCase):
             , visual_config_id = 50
         )
 
-        self.assertEqual(success_response, actual_response)
+        assert success_response == actual_response
 
-    @requests_mock.Mocker()
+    
     def test_delete_visual_config_error(self, requests_mock):
 
         # What does the response look like for the document request?
@@ -463,5 +460,5 @@ class TestVisualConfig(unittest.TestCase):
             visual_config_id=50
         )
 
-        self.assertEqual(success_response, actual_response)
+        assert success_response == actual_response
 
