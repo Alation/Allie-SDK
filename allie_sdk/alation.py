@@ -25,6 +25,7 @@ from .methods import (
     AlationPolicyGroup,
     AlationQuery,
     AlationRDBMS,
+    AlationTag,
     AlationTrustChecks,
     AlationUser,
     AlationVirtualDataSource,
@@ -136,6 +137,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.user = AlationUser(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.tag = AlationTag(
             access_token=self.access_token, session=session, host=host
         )
         self.trust_checks = AlationTrustChecks(
