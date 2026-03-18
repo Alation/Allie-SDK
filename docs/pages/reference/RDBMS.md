@@ -216,6 +216,51 @@ Attributes:
 | position |  FALSE    | str         | Position of the column in the table. Defaults to 0 if not passed in the request. | 
 | index |  FALSE    | ColumnIndex         | Define the index that the column is associated with. It is of type ColumnIndex | 
 
+### ChildColumn
+Individual list item returned in the response of the function `get_child_columns` that represents a child column in Alation.
+
+Attributes:
+
+| Name         | Type                  | Description                                                  |
+|--------------|-----------------------|--------------------------------------------------------------|
+| id           | int                   | Identifier of the child column. |
+| key          | str                   | Period delimited API key of the child column. |
+| path         | str                   | Path of the child column relative to its parent column. |
+| title        | str                   | Title of the child column. |
+| description  | str                   | Description of the child column. |
+| children     | list[ChildColumn]     | Nested child columns for the current child column. |
+
+### ChildColumnItem
+Python object used to update a child column and passed in the parameter `child_columns` in the function `patch_child_columns`.
+
+Attributes:
+
+| Name         | Required | Type                  | Description                                                  |
+|--------------|:--------:|-----------------------|--------------------------------------------------------------|
+| key          | TRUE     | str                   | Period delimited API key of the child column to update. |
+| title        | FALSE    | str                   | Updated title of the child column. |
+| description  | FALSE    | str                   | Updated description of the child column. |
+
+### RootColumnChildrenPatchItem
+Python object used to update child columns for a root column and passed in the parameter `root_columns` in the function `patch_root_child_columns`.
+
+Attributes:
+
+| Name         | Required | Type                  | Description                                                  |
+|--------------|:--------:|-----------------------|--------------------------------------------------------------|
+| id           | TRUE     | int                   | Identifier of the root column. |
+| children     | TRUE     | list[ChildColumnItem] | Child columns to update under the root column. |
+
+### ChildColumnParams
+Optional model item used to filter the response of the returned data from the function `get_child_columns`.
+
+Attributes:
+
+| Name         | Type                  | Description                                                  |
+|--------------|-----------------------|--------------------------------------------------------------|
+| ids          | set                   | Filter by child column IDs. |
+| paths        | set                   | Filter by child column paths. |
+
 ### ColumnParams
 Optional Model item used to filter the response of the returned data from the get function `get_columns`.
 
@@ -377,6 +422,21 @@ Args:
 Returns:
 * list of job details
 
+### get_child_columns
+
+```python
+get_child_columns(column_id: int, query_params: ChildColumnParams = None) -> list[ChildColumn]
+```
+
+Fetch child columns for a specific column.
+
+Args:
+* `column_id` (int): ID of the parent column.
+* `query_params` (ChildColumnParams): Optional child column filters.
+
+Returns:
+* `list[ChildColumn]`: Child columns for the provided column.
+
 ### patch_columns
 
 ```python
@@ -395,9 +455,43 @@ Returns:
 Raises:
    - `requests.HTTPError`: If the API returns a non-success status code.
 
+### patch_root_child_columns
+
+```python
+patch_root_child_columns(root_columns: list[RootColumnChildrenPatchItem]) -> list[allie_sdk.models.job_model.JobDetailsRdbms]
+```
+
+Patch child columns in bulk for different root columns.
+
+Args:
+   - `root_columns` (list[RootColumnChildrenPatchItem]): Root columns and their child columns to update.
+
+Returns:
+   - `list[JobDetailsRdbms]`: result of the job
+
+Raises:
+   - `requests.HTTPError`: If the API returns a non-success status code.
+
+### patch_child_columns
+
+```python
+patch_child_columns(column_id: int, child_columns: list[ChildColumnItem]) -> list[allie_sdk.models.job_model.JobDetailsRdbms]
+```
+
+Patch child columns for a specific sub-column.
+
+Args:
+   - `column_id` (int): ID of the parent sub-column.
+   - `child_columns` (list[ChildColumnItem]): Child columns to update.
+
+Returns:
+   - `list[JobDetailsRdbms]`: result of the job
+
+Raises:
+   - `requests.HTTPError`: If the API returns a non-success status code.
+
 ## Examples
 
 See `/examples/example_rdbms.py`.
-
 
 

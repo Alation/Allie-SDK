@@ -258,6 +258,65 @@ class Column(BaseRDBMS):
 
 
 @dataclass
+class ChildColumn(BaseClass):
+    id: int = field(default=None)
+    key: str = field(default=None)
+    path: str = field(default=None)
+    title: str = field(default=None)
+    description: str = field(default=None)
+    children: list = field(default_factory=list)
+
+    def __post_init__(self):
+        if isinstance(self.children, list):
+            self.children = [
+                ChildColumn.from_api_response(item) if isinstance(item, dict) else item
+                for item in self.children
+            ]
+
+
+@dataclass
+class ChildColumnItem:
+    key: str = field(default=None)
+    title: str = field(default=None)
+    description: str = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.key is None:
+            raise InvalidPostBody("'key' is a required field for Child Column PATCH payload body")
+
+        payload = {"key": self.key}
+        if self.title:
+            payload["title"] = self.title
+        if self.description:
+            payload["description"] = self.description
+
+        return payload
+
+
+@dataclass
+class RootColumnChildrenPatchItem:
+    id: int = field(default=None)
+    children: list = field(default_factory=list)
+
+    def generate_api_patch_payload(self):
+        if self.id is None:
+            raise InvalidPostBody("'id' is a required field for Root Child Column PATCH payload body")
+
+        validate_rest_payload(self.children, (ChildColumnItem,))
+
+        return {
+            "id": self.id,
+            "children": [item.generate_api_patch_payload() for item in self.children],
+        }
+
+
+@dataclass
+class ChildColumnParams(BaseParams):
+    ids: set = field(default_factory=set)
+    paths: set = field(default_factory=set)
+
+
+@dataclass
 class ColumnItem(BaseRDBMSItem):
     column_type: str = field(default=None)
     column_comment: str = field(default=None)

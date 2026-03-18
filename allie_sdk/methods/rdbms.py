@@ -9,7 +9,8 @@ from ..models.rdbms_model import (
 
     Schema, SchemaItem, SchemaParams, SchemaPatchItem,
     Table, TableItem, TablePatchItem, TableParams,
-    Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams
+    Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams,
+    ChildColumn, ChildColumnItem, ChildColumnParams, RootColumnChildrenPatchItem
 )
 from ..models.job_model import *
 
@@ -183,6 +184,87 @@ class AlationRDBMS(AsyncHandler):
         except requests.exceptions.HTTPError:
             # Re-raise the error
             raise
+
+    def get_child_columns(self, column_id: int, query_params: ChildColumnParams = None) -> list[ChildColumn]:
+        """Fetch child columns for a specific column.
+
+        Args:
+            column_id (int): ID of the parent column.
+            query_params (ChildColumnParams): Optional child column filters.
+
+        Returns:
+            list[ChildColumn]: Child columns for the provided column.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        try:
+            validate_query_params(query_params, ChildColumnParams)
+            params = query_params.generate_params_dict() if query_params else None
+            LOGGER.debug(f"Fetching child columns for column_id={column_id} with params={params}")
+            child_columns = self.get(
+                url = f"/integration/v2/column/{column_id}/children/",
+                query_params = params,
+                pagination = False
+            )
+
+            if child_columns:
+                return [ChildColumn.from_api_response(column) for column in child_columns]
+            return []
+        except requests.exceptions.HTTPError:
+            raise
+
+    def patch_child_columns(
+        self,
+        column_id: int,
+        child_columns: list[ChildColumnItem]
+    ) -> list[JobDetailsRdbms]:
+        """Patch child columns for a specific sub-column.
+
+        Args:
+            column_id (int): ID of the parent sub-column.
+            child_columns (list[ChildColumnItem]): Child columns to update.
+
+        Returns:
+            list[JobDetailsRdbms]: Result of the job.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        item: ChildColumnItem
+        validate_rest_payload(child_columns, (ChildColumnItem,))
+        payload = [item.generate_api_patch_payload() for item in child_columns]
+        LOGGER.debug(f"Patching child columns for column_id={column_id} with payload size={len(payload)}")
+        async_results = self.async_patch(f"/integration/v2/column/{column_id}/children/", payload)
+
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
+        return []
+
+    def patch_root_child_columns(
+        self,
+        root_columns: list[RootColumnChildrenPatchItem]
+    ) -> list[JobDetailsRdbms]:
+        """Patch child columns in bulk for different root columns.
+
+        Args:
+            root_columns (list[RootColumnChildrenPatchItem]): Root columns and their child columns.
+
+        Returns:
+            list[JobDetailsRdbms]: Result of the job.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        item: RootColumnChildrenPatchItem
+        validate_rest_payload(root_columns, (RootColumnChildrenPatchItem,))
+        payload = [item.generate_api_patch_payload() for item in root_columns]
+        LOGGER.debug(f"Patching child columns in bulk for {len(payload)} root columns")
+        async_results = self.async_patch("/integration/v2/column/children/", payload)
+
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
+        return []
 
     def patch_columns(self, ds_id: int, columns: list[ColumnPatchItem]) -> list[JobDetailsRdbms]:
         """Patch (Update) Alation Column Objects.

@@ -307,6 +307,115 @@ class TestRDBMSModels:
 
         assert mock_column.index == expected_index
 
+    def test_child_column(self):
+        child_column_response = {
+            "id": 2001,
+            "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+            "path": "ADDRESS.STREET",
+            "title": "Street",
+            "description": "Street child column",
+            "children": [
+                {
+                    "id": 2002,
+                    "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET.NAME",
+                    "path": "ADDRESS.STREET.NAME",
+                    "title": "Street Name",
+                    "description": "Nested child column",
+                    "children": []
+                }
+            ]
+        }
+
+        child_column = ChildColumn.from_api_response(child_column_response)
+
+        expected_child_column = ChildColumn(
+            id=2001,
+            key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+            path="ADDRESS.STREET",
+            title="Street",
+            description="Street child column",
+            children=[
+                ChildColumn(
+                    id=2002,
+                    key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET.NAME",
+                    path="ADDRESS.STREET.NAME",
+                    title="Street Name",
+                    description="Nested child column",
+                    children=[]
+                )
+            ]
+        )
+
+        assert child_column == expected_child_column
+
+    def test_child_column_item_payload(self):
+        mock_child_column = ChildColumnItem(
+            key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+            title="Street",
+            description="Street child column",
+        )
+
+        expected_payload = {
+            "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+            "title": "Street",
+            "description": "Street child column",
+        }
+
+        assert mock_child_column.generate_api_patch_payload() == expected_payload
+
+    def test_child_column_item_exception_missing_key(self):
+        mock_child_column = ChildColumnItem(
+            title="Street",
+            description="Street child column",
+        )
+
+        pytest.raises(InvalidPostBody, lambda: mock_child_column.generate_api_patch_payload())
+
+    def test_root_child_columns_patch_item_payload(self):
+        mock_root_child_columns = RootColumnChildrenPatchItem(
+            id=101,
+            children=[
+                ChildColumnItem(
+                    key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+                    title="Street",
+                    description="Street child column",
+                ),
+                ChildColumnItem(
+                    key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.CITY",
+                    title="City",
+                ),
+            ]
+        )
+
+        expected_payload = {
+            "id": 101,
+            "children": [
+                {
+                    "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+                    "title": "Street",
+                    "description": "Street child column",
+                },
+                {
+                    "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.CITY",
+                    "title": "City",
+                }
+            ]
+        }
+
+        assert mock_root_child_columns.generate_api_patch_payload() == expected_payload
+
+    def test_root_child_columns_patch_item_exception_missing_id(self):
+        mock_root_child_columns = RootColumnChildrenPatchItem(
+            children=[
+                ChildColumnItem(
+                    key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+                    title="Street",
+                )
+            ]
+        )
+
+        pytest.raises(InvalidPostBody, lambda: mock_root_child_columns.generate_api_patch_payload())
+
     def test_column_item_payload(self):
 
         mock_column = ColumnItem(
@@ -455,5 +564,4 @@ class TestRDBMSModels:
         ]
 
         assert mock_base.custom_fields == expected_custom_fields
-
 

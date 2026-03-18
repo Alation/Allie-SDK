@@ -508,6 +508,46 @@ class TestRDBMS:
         with pytest.raises(requests.exceptions.HTTPError):
             self.mock_user.get_columns()
 
+    def test_success_get_child_columns(self, requests_mock):
+
+        mock_params = ChildColumnParams()
+        mock_params.ids.add(2001)
+        success_response = [
+            {
+                "id": 2001,
+                "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+                "path": "ADDRESS.STREET",
+                "title": "Street",
+                "description": "Street child column",
+                "children": []
+            }
+        ]
+        success_child_columns = [ChildColumn.from_api_response(item) for item in success_response]
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/column/1613/children/?ids=2001",
+            json=success_response
+        )
+        child_columns = self.mock_user.get_child_columns(column_id=1613, query_params=mock_params)
+
+        assert success_child_columns == child_columns
+
+    def test_failed_get_child_columns(self, requests_mock):
+
+        failed_response = {
+            "detail": "Invalid query parameters: [ids]",
+            "code": "400006"
+        }
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/column/1613/children/",
+            json=failed_response,
+            status_code=400
+        )
+
+        with pytest.raises(requests.exceptions.HTTPError):
+            self.mock_user.get_child_columns(column_id=1613)
+
     
     def test_success_post_columns(self, requests_mock):
 
@@ -623,6 +663,111 @@ class TestRDBMS:
         # Verify the error response contains expected information
         assert context.value.response.status_code == 400
 
+    def test_success_patch_root_child_columns(self, requests_mock):
+
+        root_columns = [
+            RootColumnChildrenPatchItem(
+                id=1613,
+                children=[
+                    ChildColumnItem(
+                        key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+                        title="Street",
+                        description="Street child column"
+                    )
+                ]
+            )
+        ]
+
+        async_response = {
+            "job_id": 27811
+        }
+
+        requests_mock.register_uri(
+            method="PATCH",
+            url="/integration/v2/column/children/",
+            json=async_response,
+            status_code=202
+        )
+
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 2.000000 seconds at 2023-11-30 16:25:00.000000+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 child column groups.",
+                    "mapping": [
+                        {"id": 1613, "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        requests_mock.register_uri(
+            method="GET",
+            url="/api/v1/bulk_metadata/job/?id=27811",
+            json=job_api_response
+        )
+
+        async_result = self.mock_user.patch_root_child_columns(root_columns=root_columns)
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful",
+                msg="Job finished in 2.000000 seconds at 2023-11-30 16:25:00.000000+00:00",
+                result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 child column groups.",
+                        mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=1613,
+                                key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS"
+                            )
+                        ],
+                        errors=[]
+                    )
+                ]
+            )
+        ]
+
+        assert expected_result == async_result
+
+    def test_failed_patch_root_child_columns(self, requests_mock):
+        root_columns = [
+            RootColumnChildrenPatchItem(
+                id=1613,
+                children=[
+                    ChildColumnItem(
+                        key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET",
+                        title="Street",
+                    )
+                ]
+            )
+        ]
+
+        failed_response = {
+            "detail": "Incorrect input data. Please fix the errors and post the data.",
+            "errors": [
+                {
+                    "children": [
+                        "400068: Invalid child column payload"
+                    ]
+                }
+            ],
+            "code": "400010"
+        }
+        requests_mock.register_uri(
+            "PATCH",
+            "/integration/v2/column/children/",
+            json=failed_response,
+            status_code=400
+        )
+
+        with pytest.raises(requests.exceptions.HTTPError) as context:
+            self.mock_user.patch_root_child_columns(root_columns=root_columns)
+
+        assert context.value.response.status_code == 400
+
     
     def test_success_patch_column(self, requests_mock):
 
@@ -732,4 +877,99 @@ class TestRDBMS:
 
         assert context.value.response.status_code == 400
 
+    def test_success_patch_child_columns(self, requests_mock):
+
+        child_columns = [
+            ChildColumnItem(
+                key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET.NAME",
+                title="Street Name",
+                description="Nested child column"
+            )
+        ]
+
+        async_response = {
+            "job_id": 27812
+        }
+
+        requests_mock.register_uri(
+            method="PATCH",
+            url="/integration/v2/column/1613/children/",
+            json=async_response,
+            status_code=202
+        )
+
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 1.000000 seconds at 2023-11-30 16:26:00.000000+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 child columns.",
+                    "mapping": [
+                        {"id": 2002, "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET.NAME"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        requests_mock.register_uri(
+            method="GET",
+            url="/api/v1/bulk_metadata/job/?id=27812",
+            json=job_api_response
+        )
+
+        async_result = self.mock_user.patch_child_columns(column_id=1613, child_columns=child_columns)
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful",
+                msg="Job finished in 1.000000 seconds at 2023-11-30 16:26:00.000000+00:00",
+                result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 child columns.",
+                        mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=2002,
+                                key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET.NAME"
+                            )
+                        ],
+                        errors=[]
+                    )
+                ]
+            )
+        ]
+
+        assert expected_result == async_result
+
+    def test_failed_patch_child_columns(self, requests_mock):
+        child_columns = [
+            ChildColumnItem(
+                key="6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.ADDRESS.STREET.NAME",
+                title="Street Name",
+            )
+        ]
+
+        failed_response = {
+            "detail": "Incorrect input data. Please fix the errors and post the data.",
+            "errors": [
+                {
+                    "children": [
+                        "400068: Invalid child column payload"
+                    ]
+                }
+            ],
+            "code": "400010"
+        }
+
+        requests_mock.register_uri(
+            "PATCH",
+            "/integration/v2/column/1613/children/",
+            json=failed_response,
+            status_code=400
+        )
+
+        with pytest.raises(requests.exceptions.HTTPError) as context:
+            self.mock_user.patch_child_columns(column_id=1613, child_columns=child_columns)
+
+        assert context.value.response.status_code == 400
 
