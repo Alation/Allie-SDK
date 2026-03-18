@@ -34,7 +34,7 @@ class TestTagModels:
     def test_tagged_object_model(self):
         subject_response = {
             "ts_tagged": "2024-07-11T18:48:10.377294Z",
-            "object": {
+            "subject": {
                 "url": "/data/2/",
                 "otype": "data",
                 "id": 2
@@ -45,7 +45,7 @@ class TestTagModels:
 
         expected = TaggedObject(
             ts_tagged="2024-07-11T18:48:10.377294Z",
-            object={
+            subject={
                 "url": "/data/2/",
                 "otype": "data",
                 "id": 2
