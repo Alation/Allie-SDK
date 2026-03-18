@@ -43,6 +43,10 @@ class BaseRDBMSParams(BaseParams):
     id: set = field(default_factory=set)
     name: set = field(default_factory=set)
     ds_id: set = field(default_factory=set)
+    order_by: str = field(default=None)
+    custom_fields: list = field(default=None)
+    values: str = field(default=None)
+    fields: str = field(default=None)
     id__gt: set = field(default_factory=set)
     id__gte: set = field(default_factory=set)
     id__lt: set = field(default_factory=set)
@@ -54,6 +58,7 @@ class BaseRDBMSParams(BaseParams):
     ds_id__gte: set = field(default_factory=set)
     ds_id__lt: set = field(default_factory=set)
     ds_id__lte: set = field(default_factory=set)
+    exclude_deleted_ref: bool = field(default=None)
 
 @dataclass
 class Schema(BaseRDBMS):

@@ -49,6 +49,10 @@ Attributes:
 | id   | set   | filter by id of the object  |
 | name | set   | filter by object name |
 | ds_id | set   | Unique identifier of the data source |
+| order_by | str   | Ordering of objects by `id` and `name` |
+| custom_fields | list   | Filter objects by custom fields. Supports filtering by a single custom field payload. |
+| values | str   | Comma-separated list of response fields to include |
+| fields | str   | Comma-separated list of response fields to include |
 | id__gt | set   | filter by id greater than a value |
 | id__gte | set   | filter by id greater than or equal to a value |
 | id__lt | set   | filter by id lesser than a value |
@@ -60,6 +64,7 @@ Attributes:
 | ds_id__gte | set   | filter by data source id greater than or equal to a value |
 | ds_id__lt | set   | filter by data source id lesser than a value |
 | ds_id__lte | set   | filter by data source id lesser than or equal to a value |
+| exclude_deleted_ref | bool   | Exclude deleted object references from the response when set to `True` |
 
 ### Schema
 Individual list item returned in the response of the function `get_schemas` that represents a schema in Alation.
@@ -174,6 +179,8 @@ Attributes:
 | schema_name__endswith | set   | filter by schema name ending with the given string |
 | schema_name__iendswith | set   | filter by schema name ending with the given string, case insensitive match |
 
+Also inherits attributes from `BaseRDBMSParams`
+
 ### ColumnIndex
 Model of the index that the column is associated with.
 
@@ -219,10 +226,7 @@ Attributes:
 ### ColumnParams
 Optional Model item used to filter the response of the returned data from the get function `get_columns`.
 
-
 Attributes:
-
-    table_name__endswith: set = field(default_factory=set)
 
 | Name  | Type  | Description                                                                                                                |
 |-------|-------|----------------------------------------------------------------------------------------------------------------------------|
@@ -248,6 +252,8 @@ Attributes:
 | schema_id__gte | set   | filter by schema id greater than or equal to a value |
 | schema_id__lt | set   | filter by schema id lesser than a value |
 | schema_id__lte | set   | filter by schema id lesser than or equal to a value |
+
+Also inherits attributes from `BaseRDBMSParams`
 
 ## Methods
 
@@ -398,6 +404,3 @@ Raises:
 ## Examples
 
 See `/examples/example_rdbms.py`.
-
-
-
