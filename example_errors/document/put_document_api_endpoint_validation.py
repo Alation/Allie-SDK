@@ -114,14 +114,14 @@ if updated_doc_result[0].status == "failed":
 """
 expected response:
 
-[JobDetailsDocumentPut(status='failed', msg=None, result={'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}], 'document_hub_id': 2}}]})]
+[JobDetailsDocumentPut(status='failed', msg=None, result={'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}]}}]})]
 
 expected log message:
 
 ERROR MESSAGE: Error submitting the PUT Request to: //integration/v2/document/
-ERROR: {'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}], 'document_hub_id': 2}}]}
+ERROR: {'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}]}}]}
 2024-12-23 16:56:15,469 - ERROR - ERROR MESSAGE: Error submitting the PUT Request to: //integration/v2/document/
-ERROR: {'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}], 'document_hub_id': 2}}]}
-The request failed: {'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}], 'document_hub_id': 2}}]}
+ERROR: {'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}]}}]}
+The request failed: {'job_id': None, 'invalid_documents': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'document': {'id': 6, 'description': 'This is another description for KPI 1', 'custom_fields': [{'field_id': 10009, 'value': ['reddddddd']}]}}]}
 
 """

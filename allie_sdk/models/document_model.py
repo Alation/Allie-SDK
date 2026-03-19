@@ -121,8 +121,6 @@ class DocumentPutItem(DocumentBase):
             payload['nav_link_folder_ids'] = sorted(self.nav_link_folder_ids)
         if self.parent_document_id:
             payload['parent_document_id'] = self.parent_document_id
-        if self.document_hub_id:
-            payload['document_hub_id'] = self.document_hub_id
         if self.custom_fields:
             payload['custom_fields'] = self._create_fields_payload()
 
