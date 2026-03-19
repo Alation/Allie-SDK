@@ -57,6 +57,7 @@ class TestDocumentModels:
             title = "My Doc Hub Folder 1"
             , description = "This is the description for Doc Hub Folder 1"
             , document_hub_id = 2
+            , template_id = 43
             , custom_fields = [
                 CustomFieldValueItem(
                     field_id = 44
@@ -78,6 +79,7 @@ class TestDocumentModels:
             "title": "My Doc Hub Folder 1"
             , "description": "This is the description for Doc Hub Folder 1"
             , "document_hub_id": 2
+            , "template_id": 43
             , "custom_fields": [
                 {
                     "field_id": 44
@@ -102,6 +104,7 @@ class TestDocumentModels:
             , title = "My Doc Hub Folder 1"
             , description = "This is the description for Doc Hub Folder 1"
             , document_hub_id = 2
+            , template_id = 43
             , custom_fields = [
                 CustomFieldValueItem(
                     field_id = 44
@@ -124,6 +127,7 @@ class TestDocumentModels:
             , "title": "My Doc Hub Folder 1"
             , "description": "This is the description for Doc Hub Folder 1"
             , "document_hub_id": 2
+            , "template_id": 43
             , "custom_fields": [
                 {
                     "field_id": 44

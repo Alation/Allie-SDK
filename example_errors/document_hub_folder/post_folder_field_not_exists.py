@@ -19,6 +19,7 @@ import datetime
 # ================================
 
 DOCUMENT_HUB_ID = 2
+FOLDER_TEMPLATE_ID = 43
 
 # ================================
 # Define Logging Config
@@ -67,6 +68,7 @@ create_folder_result = alation.document_hub_folder.create_document_hub_folders(
             title = 'Test Document Hub Folder'
             , description = 'Test Document Hub Folder'
             , document_hub_id = DOCUMENT_HUB_ID
+            , template_id = FOLDER_TEMPLATE_ID
             , custom_fields = [
                 allie.CustomFieldValueItem(
                     field_id = 999999999999999 # <= this id should not exist
