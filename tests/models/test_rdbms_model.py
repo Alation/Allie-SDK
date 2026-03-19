@@ -85,6 +85,24 @@ class TestRDBMSModels:
 
         pytest.raises(InvalidPostBody, lambda: mock_schema.generate_api_post_payload())
 
+    def test_base_rdbms_params_generate_common_query_params(self):
+
+        mock_params = BaseRDBMSParams(
+            order_by="name",
+            custom_fields=[{"field_id": 8, "value": [{"otype": "user", "oid": 1}]}],
+            values="id,name",
+            fields="id,name,description",
+            exclude_deleted_ref=True
+        )
+
+        assert mock_params.generate_params_dict() == {
+            "order_by": "name",
+            "custom_fields": [{"field_id": 8, "value": [{"otype": "user", "oid": 1}]}],
+            "values": "id,name",
+            "fields": "id,name,description",
+            "exclude_deleted_ref": True
+        }
+
     def test_table(self):
 
         table_response = {
@@ -455,5 +473,3 @@ class TestRDBMSModels:
         ]
 
         assert mock_base.custom_fields == expected_custom_fields
-
-

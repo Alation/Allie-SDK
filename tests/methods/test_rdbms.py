@@ -47,6 +47,37 @@ class TestRDBMS:
 
         assert success_schemas == schemas
 
+    def test_success_get_schemas_with_common_query_params(self, requests_mock):
+
+        mock_params = SchemaParams(
+            order_by="name",
+            fields="id,name",
+            exclude_deleted_ref=True
+        )
+        success_response = [
+            {
+                "id": 5,
+                "name": "SUPERSTORE.PUBLIC",
+                "title": "Superstore EDW",
+                "description": "Test Description",
+                "ds_id": 6,
+                "key": "6.SUPERSTORE.PUBLIC",
+                "url": "/schema/5/",
+                "custom_fields": [],
+                "db_comment": None
+            }
+        ]
+        success_schemas = [Schema.from_api_response(item) for item in success_response]
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/schema/?order_by=name&fields=id%2Cname&exclude_deleted_ref=True",
+            json=success_response
+        )
+
+        schemas = self.mock_user.get_schemas(mock_params)
+
+        assert success_schemas == schemas
+
     
     def test_failed_get_schemas(self, requests_mock):
 
@@ -255,6 +286,44 @@ class TestRDBMS:
         ]
         success_tables = [Table.from_api_response(item) for item in success_response]
         requests_mock.register_uri('GET', '/integration/v2/table/?id=93', json=success_response)
+        tables = self.mock_user.get_tables(mock_params)
+
+        assert success_tables == tables
+
+    def test_success_get_tables_with_common_query_params(self, requests_mock):
+
+        mock_params = TableParams(
+            order_by="id",
+            values="id,name",
+            exclude_deleted_ref=True
+        )
+        success_response = [
+            {
+                "id": 93,
+                "name": "SALES_TARGETS",
+                "title": "Sales Targets",
+                "description": "Test Description",
+                "ds_id": 6,
+                "key": "6.SUPERSTORE.PUBLIC.SALES_TARGETS",
+                "url": "/table/93/",
+                "custom_fields": [],
+                "table_type": "TABLE",
+                "schema_id": 5,
+                "schema_name": "SUPERSTORE.PUBLIC",
+                "base_table_key": None,
+                "sql": None,
+                "partition_columns": [],
+                "partition_definition": None,
+                "table_comment": "Superstore Sales Target Data"
+            }
+        ]
+        success_tables = [Table.from_api_response(item) for item in success_response]
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/table/?order_by=id&values=id%2Cname&exclude_deleted_ref=True",
+            json=success_response
+        )
+
         tables = self.mock_user.get_tables(mock_params)
 
         assert success_tables == tables
@@ -495,6 +564,45 @@ class TestRDBMS:
 
         assert success_columns == columns
 
+    def test_success_get_columns_with_common_query_params(self, requests_mock):
+
+        mock_params = ColumnParams(
+            order_by="name",
+            fields="id,name,table_id",
+            exclude_deleted_ref=True
+        )
+        success_response = [
+            {
+                "id": 1613,
+                "name": "CUSTOMER_NAME",
+                "title": "Customer Name",
+                "description": "<p>This is the customer name</p>",
+                "ds_id": 6,
+                "key": "6.SUPERSTORE.PUBLIC.SUPERSTORE_REPORTING.CUSTOMER_NAME",
+                "url": "/attribute/1613/",
+                "custom_fields": [],
+                "column_type": "VARCHAR(100)",
+                "column_comment": None,
+                "index": {"isPrimaryKey": False, "isForeignKey": False,
+                          "referencedColumnId": None, "isOtherIndex": False},
+                "nullable": True,
+                "schema_id": 5,
+                "table_id": 91,
+                "table_name": "superstore.public.superstore_reporting",
+                "position": 7
+            }
+        ]
+        success_columns = [Column.from_api_response(item) for item in success_response]
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/column/?order_by=name&fields=id%2Cname%2Ctable_id&exclude_deleted_ref=True",
+            json=success_response
+        )
+
+        columns = self.mock_user.get_columns(mock_params)
+
+        assert success_columns == columns
+
     
     def test_failed_get_columns(self, requests_mock):
 
@@ -731,5 +839,3 @@ class TestRDBMS:
             self.mock_user.patch_columns(ds_id=1, columns=mock_column_list)
 
         assert context.value.response.status_code == 400
-
-
