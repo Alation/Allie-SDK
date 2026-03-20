@@ -46,6 +46,10 @@ Additional fields:
 
 - id (int)
 - template_id (int)
+- parent_folder_id (int)
+- child_documents_count (int)
+- child_folders_count (int)
+- nav_links_count (int)
 - deleted (bool)
 - ts_deleted (str)
 - ts_created (str)
@@ -72,6 +76,7 @@ Based on model `DocumentHubFolderBase`.
 Additional fields:
 
 - id (int)
+- parent_folder_id (int)
 
 For a detailed description of these fields see [official Alation documentation](https://developer.alation.com/dev/reference/updatefolders).
 
@@ -134,6 +139,7 @@ Returns:
 Notes:
 - `id` is required.
 - `template_id` is supported in the payload.
+- `parent_folder_id` is supported in the payload.
 - If you submit `custom_fields`, include the matching `template_id` used by the folder template.
 
 For a detailed description see [official Alation documentation](https://developer.alation.com/dev/reference/updatefolders).

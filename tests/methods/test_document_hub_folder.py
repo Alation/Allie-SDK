@@ -29,6 +29,10 @@ class TestDocumentHubFolder:
                 "description": "Relevant data and articles for Sales Analytics",
                 "template_id": 47,
                 "document_hub_id": 1,
+                "parent_folder_id": 99,
+                "child_documents_count": 12,
+                "child_folders_count": 3,
+                "nav_links_count": 4,
                 "custom_fields": [
                     {
                     "field_id": 0,
@@ -277,6 +281,7 @@ class TestDocumentHubFolder:
                     description="This is the description for Doc Hub Folder 1",
                     document_hub_id=2,
                     template_id=43,
+                    parent_folder_id=100,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -295,6 +300,7 @@ class TestDocumentHubFolder:
                     description="This is the description for Doc Hub Folder 2",
                     document_hub_id=2,
                     template_id=43,
+                    parent_folder_id=100,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -338,6 +344,7 @@ class TestDocumentHubFolder:
                 "description": "This is the description for Doc Hub Folder 1",
                 "document_hub_id": 2,
                 "template_id": 43,
+                "parent_folder_id": 100,
                 "custom_fields": [
                     {
                         "field_id": 1323,
@@ -356,6 +363,7 @@ class TestDocumentHubFolder:
                 "description": "This is the description for Doc Hub Folder 2",
                 "document_hub_id": 2,
                 "template_id": 43,
+                "parent_folder_id": 100,
                 "custom_fields": [
                     {
                         "field_id": 1323,
