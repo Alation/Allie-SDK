@@ -10,6 +10,7 @@ class DocumentHubFolderBase(BaseClass):
     title:str = field(default = None)
     description:str = field(default = None)
     document_hub_id:int = field(default = None)
+    parent_folder_id: int = field(default=None)
     template_id:int = field(default = None)
     custom_fields:list[CustomFieldValueItem] = field(default = None)
 
@@ -74,6 +75,8 @@ class DocumentHubFolderPostItem(DocumentHubFolderBase):
             payload['document_hub_id'] = self.document_hub_id
         if self.template_id:
             payload['template_id'] = self.template_id
+        if self.parent_folder_id:
+            payload['parent_folder_id'] = self.parent_folder_id
         if self.custom_fields:
             payload['custom_fields'] = self._create_fields_payload()
 
@@ -82,7 +85,6 @@ class DocumentHubFolderPostItem(DocumentHubFolderBase):
 @dataclass(kw_only = True)
 class DocumentHubFolderPutItem(DocumentHubFolderBase):
     id:int = field(default = None)
-    parent_folder_id:int = field(default = None)
 
     # PREPARE PAYLOAD
     # make sure payload includes only fields with values
