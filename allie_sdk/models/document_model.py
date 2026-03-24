@@ -18,6 +18,7 @@ class DocumentBase(BaseClass):
     document_hub_id:int = field(default = None)
     custom_fields:list[CustomFieldValueItem] = field(default = None)
 
+
 @dataclass(kw_only = True)
 class Document(DocumentBase):
     id:int = field(default = None)
@@ -27,6 +28,9 @@ class Document(DocumentBase):
     ts_created:str = field(default = None)
     ts_updated:str = field(default = None)
     # otype:str = field(default = None) => was removed Apr 2024
+    child_documents_count: int = field(default=None)
+    child_folders_count:int = field(default=None)
+    nav_links_count:int = field(default=None)
 
     def __post_init__(self):
         # convert to proper timestamps
@@ -121,8 +125,6 @@ class DocumentPutItem(DocumentBase):
             payload['nav_link_folder_ids'] = sorted(self.nav_link_folder_ids)
         if self.parent_document_id:
             payload['parent_document_id'] = self.parent_document_id
-        if self.document_hub_id:
-            payload['document_hub_id'] = self.document_hub_id
         if self.custom_fields:
             payload['custom_fields'] = self._create_fields_payload()
 

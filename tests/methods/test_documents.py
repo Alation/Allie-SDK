@@ -287,7 +287,6 @@ class TestDocument:
                     template_id=12,
                     parent_folder_id=1,
                     nav_link_folder_ids=[6],
-                    document_hub_id=2,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -307,7 +306,6 @@ class TestDocument:
                     template_id=12,
                     parent_folder_id=1,
                     nav_link_folder_ids=[6],
-                    document_hub_id=2,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -322,6 +320,9 @@ class TestDocument:
                 )
             ]
         )
+
+        request_payload = requests_mock.request_history[0].json()
+        assert "document_hub_id" not in request_payload[0]
 
         function_expected_result = [
             JobDetailsDocumentPut(
@@ -369,8 +370,7 @@ class TestDocument:
                         description="This is a description for a document that doesn't exist",
                         template_id=12,
                         parent_folder_id=1,
-                        nav_link_folder_ids=[6],
-                        document_hub_id=2
+                        nav_link_folder_ids=[6]
                     )
                 ]
             )
