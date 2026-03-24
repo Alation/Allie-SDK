@@ -1,5 +1,6 @@
 """Test the Alation REST API Document Hub Folder Methods."""
 import pytest
+import json
 from allie_sdk.methods.document_hub_folder import *
 
 
@@ -28,6 +29,10 @@ class TestDocumentHubFolder:
                 "description": "Relevant data and articles for Sales Analytics",
                 "template_id": 47,
                 "document_hub_id": 1,
+                "parent_folder_id": 99,
+                "child_documents_count": 12,
+                "child_folders_count": 3,
+                "nav_links_count": 4,
                 "custom_fields": [
                     {
                     "field_id": 0,
@@ -103,6 +108,7 @@ class TestDocumentHubFolder:
                     title="My Doc Hub Folder 1",
                     description="This is the description for Doc Hub Folder 1",
                     document_hub_id=2,
+                    template_id=43,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -119,6 +125,7 @@ class TestDocumentHubFolder:
                     title="My Doc Hub Folder 2",
                     description="This is the description for Doc Hub Folder 2",
                     document_hub_id=2,
+                    template_id=43,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -153,6 +160,44 @@ class TestDocumentHubFolder:
                 )
             )
         ]
+
+        actual_payload = json.loads(requests_mock.request_history[0].text)
+        assert actual_payload == [
+            {
+                "title": "My Doc Hub Folder 1",
+                "description": "This is the description for Doc Hub Folder 1",
+                "document_hub_id": 2,
+                "template_id": 43,
+                "custom_fields": [
+                    {
+                        "field_id": 1323,
+                        "value": [
+                            {
+                                "otype": "glossary_term",
+                                "oid": 159
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "title": "My Doc Hub Folder 2",
+                "description": "This is the description for Doc Hub Folder 2",
+                "document_hub_id": 2,
+                "template_id": 43,
+                "custom_fields": [
+                    {
+                        "field_id": 1323,
+                        "value": [
+                            {
+                                "otype": "glossary_term",
+                                "oid": 160
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
         assert function_expected_result == create_document_hub_folders_result
 
     
@@ -183,7 +228,8 @@ class TestDocumentHubFolder:
                         # Include required fields to pass local validation
                         title="Test folder with validation error",
                         description="This folder will trigger a 400 error on the API",
-                        document_hub_id=2
+                        document_hub_id=2,
+                        template_id=43
                     )
                 ]
             )
@@ -234,6 +280,8 @@ class TestDocumentHubFolder:
                     title="My Doc Hub Folder 1",
                     description="This is the description for Doc Hub Folder 1",
                     document_hub_id=2,
+                    template_id=43,
+                    parent_folder_id=100,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -251,6 +299,8 @@ class TestDocumentHubFolder:
                     title="My Doc Hub Folder 2",
                     description="This is the description for Doc Hub Folder 2",
                     document_hub_id=2,
+                    template_id=43,
+                    parent_folder_id=100,
                     custom_fields=[
                         CustomFieldValueItem(
                             field_id=1323,
@@ -284,6 +334,48 @@ class TestDocumentHubFolder:
                     ]
                 )
             )
+        ]
+
+        actual_payload = json.loads(requests_mock.request_history[0].text)
+        assert actual_payload == [
+            {
+                "id": 10,
+                "title": "My Doc Hub Folder 1",
+                "description": "This is the description for Doc Hub Folder 1",
+                "document_hub_id": 2,
+                "template_id": 43,
+                "parent_folder_id": 100,
+                "custom_fields": [
+                    {
+                        "field_id": 1323,
+                        "value": [
+                            {
+                                "otype": "glossary_term",
+                                "oid": 159
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": 11,
+                "title": "My Doc Hub Folder 2",
+                "description": "This is the description for Doc Hub Folder 2",
+                "document_hub_id": 2,
+                "template_id": 43,
+                "parent_folder_id": 100,
+                "custom_fields": [
+                    {
+                        "field_id": 1323,
+                        "value": [
+                            {
+                                "otype": "glossary_term",
+                                "oid": 160
+                            }
+                        ]
+                    }
+                ]
+            }
         ]
 
         assert function_expected_result == update_document_hub_folders_result

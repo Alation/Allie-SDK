@@ -124,7 +124,6 @@ class TestDocumentModels:
             , parent_folder_id = 1
             , parent_document_id = 2
             , nav_link_folder_ids = [ 6 ]
-            , document_hub_id = 2
             , custom_fields = [
                 CustomFieldValueItem(
                     field_id = 44
@@ -150,7 +149,6 @@ class TestDocumentModels:
             , "parent_folder_id": 1
             , "parent_document_id": 2
             , "nav_link_folder_ids": [ 6 ]
-            , "document_hub_id": 2
             , "custom_fields": [
                 {
                     "field_id": 44
@@ -164,5 +162,35 @@ class TestDocumentModels:
             ]
         }
 
+
+        assert input_transformed == output
+
+    def test_document_params_model(self):
+
+        input = DocumentParams(
+            id = 12,
+            folder_id = 44,
+            document_hub_id = 5,
+            parent_folder_id = 11,
+            parent_document_id = 22,
+            nav_link_folder_id = 33,
+            search = "Quarterly",
+            deleted = True,
+            values = "id,title"
+        )
+
+        input_transformed = input.generate_params_dict()
+
+        output = {
+            "id": 12,
+            "folder_id": 44,
+            "document_hub_id": 5,
+            "parent_folder_id": 11,
+            "parent_document_id": 22,
+            "nav_link_folder_id": 33,
+            "search": "Quarterly",
+            "deleted": True,
+            "values": "id,title"
+        }
 
         assert input_transformed == output

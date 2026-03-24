@@ -22,6 +22,9 @@ import configparser
 # specify the document hub id
 DOCUMENT_HUB_ID = 4
 
+# specify the folder template id assigned to the document hub
+FOLDER_TEMPLATE_ID = 43
+
 # ================================
 # Define Logging Config
 # ================================
@@ -80,6 +83,7 @@ create_folder_response = alation.document_hub_folder.create_document_hub_folders
             title = 'Test Document Hub Folder'
             , description = 'Test Document Hub Folder'
             , document_hub_id = DOCUMENT_HUB_ID
+            , template_id = FOLDER_TEMPLATE_ID
             , custom_fields = [
                 allie.CustomFieldValueItem(
                     field_id = status_field_id
@@ -154,6 +158,7 @@ update_folder_response = alation.document_hub_folder.update_document_hub_folders
             , title = 'Test Document Hub Folder'
             , description = 'Test Document Hub Folder'
             , document_hub_id = DOCUMENT_HUB_ID
+            , template_id = FOLDER_TEMPLATE_ID
             , custom_fields = [
                 allie.CustomFieldValueItem(
                     field_id = status_field_id

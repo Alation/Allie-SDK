@@ -19,6 +19,7 @@ import datetime
 # ================================
 
 DOCUMENT_HUB_ID = 2
+FOLDER_TEMPLATE_ID = 43
 
 # ================================
 # Define Logging Config
@@ -70,6 +71,7 @@ update_folder_result = alation.document_hub_folder.update_document_hub_folders(
             , title = 'Test Document Hub Folder'
             , description = 'Test Document Hub Folder'
             , document_hub_id = DOCUMENT_HUB_ID
+            , template_id = FOLDER_TEMPLATE_ID
             , custom_fields = [
                 allie.CustomFieldValueItem(
                     field_id = 999999999
@@ -88,13 +90,13 @@ if update_folder_result[0].status == "failed":
 """
 Expected response:
 
-[JobDetailsDocumentHubFolderPut(status='failed', msg=None, result={'job_id': None, 'invalid_folders': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'folder': {'id': 9999999999, 'title': 'Test Document Hub Folder', 'description': 'Test Document Hub Folder', 'document_hub_id': None, 'custom_fields': [{'field_id': 999999999, 'value': 'Under Review'}]}}]})]
+[JobDetailsDocumentHubFolderPut(status='failed', msg=None, result={'job_id': None, 'invalid_folders': [{'index': 0, 'errors': [[{'field_id': ['The field_id 999999999 is not present on the chosen template.']}]], 'folder': {'id': 9999999999, 'title': 'Test Document Hub Folder', 'description': 'Test Document Hub Folder', 'document_hub_id': 2, 'template_id': 43, 'custom_fields': [{'field_id': 999999999, 'value': 'Under Review'}]}}]})]
 
 Expected log message:
 
 ERROR MESSAGE: Error submitting the PUT Request to: //integration/v2/folder/
-ERROR: {'job_id': None, 'invalid_folders': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'folder': {'id': 9999999999, 'title': 'Test Document Hub Folder', 'description': 'Test Document Hub Folder', 'document_hub_id': None, 'custom_fields': [{'field_id': 999999999, 'value': 'Under Review'}]}}]}
+ERROR: {'job_id': None, 'invalid_folders': [{'index': 0, 'errors': [[{'field_id': ['The field_id 999999999 is not present on the chosen template.']}]], 'folder': {'id': 9999999999, 'title': 'Test Document Hub Folder', 'description': 'Test Document Hub Folder', 'document_hub_id': 2, 'template_id': 43, 'custom_fields': [{'field_id': 999999999, 'value': 'Under Review'}]}}]}
 2024-12-23 15:39:26,988 - ERROR - ERROR MESSAGE: Error submitting the PUT Request to: //integration/v2/folder/
-ERROR: {'job_id': None, 'invalid_folders': [{'index': 0, 'errors': [{'custom_fields': ['Custom field values were included, but no template was specified.']}], 'folder': {'id': 9999999999, 'title': 'Test Document Hub Folder', 'description': 'Test Document Hub Folder', 'document_hub_id': None, 'custom_fields': [{'field_id': 999999999, 'value': 'Under Review'}]}}]}
+ERROR: {'job_id': None, 'invalid_folders': [{'index': 0, 'errors': [[{'field_id': ['The field_id 999999999 is not present on the chosen template.']}]], 'folder': {'id': 9999999999, 'title': 'Test Document Hub Folder', 'description': 'Test Document Hub Folder', 'document_hub_id': 2, 'template_id': 43, 'custom_fields': [{'field_id': 999999999, 'value': 'Under Review'}]}}]}
 
 """
