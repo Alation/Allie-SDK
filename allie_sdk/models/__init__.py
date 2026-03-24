@@ -17,6 +17,7 @@ from .job_model import *
 from .otype_model import *
 from .query_model import *
 from .rdbms_model import *
+from .tag_model import *
 from .trust_check_model import *
 from .user_model import *
 from .virtual_filesystem_model import *
