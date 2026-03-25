@@ -42,3 +42,23 @@ class AlationCustomTemplate(RequestHandler):
             custom_template_checked = [CustomTemplate.from_api_response(ct) for ct in custom_templates]
             return custom_template_checked
         return []
+
+    def get_custom_template_by_id(self, custom_template_id:int) -> CustomTemplate|None:
+        """Use the Custom Template API to retrieve details on a given Custom Template
+
+        Args:
+            custom_template_id: The Custom Template ID.
+
+        Returns:
+            CustomTemplate: Alation Custom Template object
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+
+        custom_template = self.get(url=f'/integration/v1/custom_template/{custom_template_id}/')
+
+        if custom_template:
+            custom_template_checked = CustomTemplate.from_api_response(custom_template)
+            return custom_template_checked
+        return None
