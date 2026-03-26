@@ -38,8 +38,12 @@ ALATION_USER_ID = config.get(section = "api", option = "ALATION_USER_ID")
 ALATION_BASE_URL = config.get(section = "api", option = "ALATION_BASE_URL")
 ALATION_API_REFRESH_TOKEN = config.get(section = "api", option = "ALATION_API_REFRESH_TOKEN")
 
+# OAuth credentials (optional - only if using OAuth authentication)
+ALATION_OAUTH_CLIENT_ID = config.get(section = "api", option = "ALATION_OAUTH_CLIENT_ID", fallback=None)
+ALATION_OAUTH_CLIENT_SECRET = config.get(section = "api", option = "ALATION_OAUTH_CLIENT_SECRET", fallback=None)
+
 # ================================
-# BASIC AUTHENTICATION
+# REFRESH TOKEN AUTHENTICATION
 # ================================
 
 alation = allie.Alation(
@@ -47,6 +51,53 @@ alation = allie.Alation(
     , user_id = ALATION_USER_ID
     , refresh_token = ALATION_API_REFRESH_TOKEN
 )
+
+# ================================
+# OAUTH AUTHENTICATION (Client Credentials)
+# ================================
+
+if ALATION_OAUTH_CLIENT_ID and ALATION_OAUTH_CLIENT_SECRET:
+    logging.info("Using OAuth client_credentials authentication")
+    
+    oauth_alation = allie.Alation(
+        host = ALATION_BASE_URL
+        , client_id = ALATION_OAUTH_CLIENT_ID
+        , client_secret = ALATION_OAUTH_CLIENT_SECRET
+    )
+    
+    # You can also create OAuth tokens directly using the authentication methods
+    oauth_token = oauth_alation.authentication.create_oauth_token()
+    logging.info(f"OAuth token created successfully: {oauth_token.access_token[:20]}...")
+    
+    # You can also use an existing JWT access token
+    oauth_with_token = allie.Alation(
+        host = ALATION_BASE_URL
+        , access_token = oauth_token.access_token  # Use the JWT token directly
+        , client_id = ALATION_OAUTH_CLIENT_ID
+        , client_secret = ALATION_OAUTH_CLIENT_SECRET
+    )
+    
+else:
+    logging.info("OAuth credentials not configured - skipping OAuth examples")
+
+# ================================
+# AUTHENTICATION WITHOUT AUTOMATIC TOKEN CREATION
+# ================================
+
+# You can also instantiate without automatic authentication for token-only operations
+auth_only = allie.Alation(
+    host = ALATION_BASE_URL
+    , disable_authentication = True
+    , user_id = ALATION_USER_ID
+    , refresh_token = ALATION_API_REFRESH_TOKEN
+    , client_id = ALATION_OAUTH_CLIENT_ID
+    , client_secret = ALATION_OAUTH_CLIENT_SECRET
+)
+
+# Then manually create tokens as needed
+if ALATION_OAUTH_CLIENT_ID and ALATION_OAUTH_CLIENT_SECRET:
+    manual_oauth_token = auth_only.authentication.create_oauth_token()
+    logging.info(f"Manually created OAuth token: {manual_oauth_token.token_type} token")
 
 # ================================
 # INITIALIZE ALATION WITHOUT AUTH TOKENS
