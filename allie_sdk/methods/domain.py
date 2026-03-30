@@ -64,7 +64,7 @@ class AlationDomain(AsyncHandler):
             return [Domain.from_api_response(domain) for domain in domains]
         return []
 
-    def create_domains(self, domains: list[DomainItem]) -> list[JobDetails]:
+    def create_domains(self, domains: list[DomainItem]) -> JobDetails:
         """Create one or more Alation domains."""
         if not domains:
             LOGGER.info("No domains supplied for creation.")
