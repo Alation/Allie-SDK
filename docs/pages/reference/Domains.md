@@ -14,7 +14,7 @@ parent: SDK Reference
 
 ### Domain
 
-Python object returned by the `get_domains` method:
+Python object returned by the `get_domains` method and the `move_domain` method:
 
 Attributes:
 
@@ -24,6 +24,38 @@ Attributes:
 | title | string  | Title of the Domain object |
 | description | string | Description of the Domain object |
 | parent_id | integer | The id of the domain's parent, if it has one. |
+
+### DomainItem
+
+Python object used to create domains with `create_domains`.
+
+Attributes:
+
+| Name  | Type    | Description                |
+|-------|---------|----------------------------|
+| title | string  | Title of the domain. Required. |
+| description | string | Description of the domain. |
+| parent_id | integer | Parent domain identifier. Include this when creating a subdomain. |
+
+### DomainDeleteItem
+
+Python object used to delete domains with `delete_domains`.
+
+Attributes:
+
+| Name  | Type    | Description                |
+|-------|---------|----------------------------|
+| id    | integer | Domain identifier to delete. |
+
+### DomainMoveItem
+
+Python object used to move a domain with `move_domain`.
+
+Attributes:
+
+| Name      | Type    | Description                |
+|-----------|---------|----------------------------|
+| parent_id | integer | Identifier of the new parent domain. |
 
 
 ### DomainParams
@@ -78,6 +110,35 @@ Attributes:
 
 ## Methods
 
+### create_domains
+
+```
+create_domains(self, domains: list[DomainItem]) -> list[JobDetails]
+```
+
+Create one or more domains.
+
+Args:
+* `domains`: list of `DomainItem` objects.
+
+Returns:
+* List of `JobDetails`
+  where each `result` value contains the created `Domain` objects
+
+### delete_domains
+
+```
+delete_domains(self, domains: list[Domain | DomainDeleteItem]) -> JobDetails
+```
+
+Delete one or more domains.
+
+Args:
+* `domains`: list of `Domain` or `DomainDeleteItem` objects.
+
+Returns:
+* `JobDetails`
+
 ### get_domains
 
 ```
@@ -91,6 +152,21 @@ Args:
 
 Returns:
 * list: list of Alation Domains
+
+### move_domain
+
+```
+move_domain(self, domain_id: int, domain: DomainMoveItem) -> Domain
+```
+
+Move an existing domain to a different parent domain.
+
+Args:
+* `domain_id`: Identifier of the domain to move.
+* `domain`: `DomainMoveItem` with the new `parent_id`.
+
+Returns:
+* `Domain`
 
 ### assign_objects_to_domain
 
@@ -106,10 +182,10 @@ Args:
 Returns:
 - List of Job Details
 
-### view_domain_membership_rules
+### get_domain_membership_rules
 
 ```
-view_domain_membership_rules(
+get_domain_membership_rules(
     self,
     rules_request: DomainMembershipRuleRequest
 ) -> list[DomainMembershipRule]

@@ -1,5 +1,6 @@
 import pytest
 from allie_sdk.methods.domain import *
+from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 
 class TestDomainModels:
@@ -25,6 +26,41 @@ class TestDomainModels:
         )
 
         assert input_transformed == output
+
+    def test_domain_item_post_payload(self):
+        domain = DomainItem(
+            title="Finance",
+            description="Finance owned assets",
+            parent_id=5,
+        )
+
+        assert domain.generate_api_post_payload() == {
+            "title": "Finance",
+            "description": "Finance owned assets",
+            "parent_id": 5,
+        }
+
+    def test_domain_delete_item_delete_payload(self):
+        domain = DomainDeleteItem(id=7)
+
+        assert domain.generate_api_delete_payload() == {"id": 7}
+
+    def test_domain_move_item_patch_payload(self):
+        domain = DomainMoveItem(parent_id=9)
+
+        assert domain.generate_api_patch_payload() == {"parent_id": 9}
+
+    def test_domain_item_requires_title(self):
+        with pytest.raises(InvalidPostBody):
+            DomainItem().generate_api_post_payload()
+
+    def test_domain_delete_item_requires_id(self):
+        with pytest.raises(InvalidPostBody):
+            DomainDeleteItem().generate_api_delete_payload()
+
+    def test_domain_move_item_requires_parent_id(self):
+        with pytest.raises(InvalidPostBody):
+            DomainMoveItem().generate_api_patch_payload()
 
     def test_domain_membership_model(self):
         # Expected input
