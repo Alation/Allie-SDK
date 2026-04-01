@@ -21,9 +21,10 @@ Attributes:
 | title           | str  | The title of the document                                                                                       |
 | description     | str  | The description of the document                                                                                 |
 | template_id     | int  | The ID of the custom template assigned to the document                                                          |   
-|         parent_folder_id        | int  | The ID of the folder to assign as the parent of the document                                                    |
-| nav_link_folder_ids      | list | An array containing the folder IDs that the document has navigation links to                                    |
-| document_hub_id | int  | The ID of the Document Hub assigned to the document                                                             |
+| parent_folder_id | int  | The ID of the folder to assign as the parent of the document                                                    |
+| parent_document_id | int | The ID of the parent document to assign to the document                                                         |
+| nav_link_folder_ids | list | An array containing the folder IDs that the document has navigation links to                                  |
+| document_hub_id | int  | The ID of the Document Hub assigned to the document. Required for `create_documents`. Not sent by `update_documents`. |
 | custom_fields   | list | A list of `CustomFieldValueItem` objects containing custom field information relative to the custom template ID |
 
 ### Document
@@ -58,6 +59,9 @@ Attributes:
 | id              | int   | Filter by document ID   |
 | folder_id       | int   | The ID of the folder whose documents you want to get.|
 | document_hub_id | int   | The ID of the Document Hub whose documents you want to get. |
+| parent_folder_id | int | Filter by parent folder ID |
+| parent_document_id | int | Filter by parent document ID |
+| nav_link_folder_id | int | Filter by a navigation-link folder ID |
 | search          | str   | Filter by document title |
 | deleted         | bool   | Will return only deleted documents when set to True. |
 | values          | str  | A comma-separated list of fields to be included in the response. When provided, the API will return only the specified set of fields for each object in the response. If not supplied, the API will return all fields by default. |
@@ -101,6 +105,18 @@ update_documents(documents: list[DocumentPutItem]) -> list[JobDetailsDocumentPut
 
 Update Documents in Bulk
 
+Supported `DocumentPutItem` fields:
+* `id`
+* `title`
+* `description`
+* `template_id`
+* `parent_folder_id`
+* `parent_document_id`
+* `nav_link_folder_ids`
+* `custom_fields`
+
+`document_hub_id` is intentionally not included in update payloads. Alation removed it from the Update documents endpoint in the 2025.1 API release notes because the endpoint ignored it and does not support moving a document to another hub.
+
 Args:
 * documents: list of `DocumentPutItem` objects
 
@@ -125,6 +141,5 @@ Returns:
 ## Examples
 
 See `/examples/example_document.py`.
-
 
 

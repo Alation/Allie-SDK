@@ -15,7 +15,7 @@ import configparser
 # ================================
 # Set Global Variables
 # ================================
-
+CUSTOM_TEMPLATE_ID = 42
 CUSTOM_TEMPLATE_NAME = "DS Document"
 
 # ================================
@@ -49,9 +49,20 @@ alation = allie.Alation(
     , refresh_token = ALATION_API_REFRESH_TOKEN
 )
 
+# ================================
+# GET SPECIFIC CUSTOM TEMPLATE BY ID
+# ================================
+template  = alation.custom_template.get_custom_template_by_id(
+    custom_template_id = CUSTOM_TEMPLATE_ID
+)
+
+if template is None:
+    logging.warning(f"No custom template with the id '{CUSTOM_TEMPLATE_ID}' found.")
+else:
+    logging.info(f"Custom template '{template.title}' found.")
 
 # ================================
-# GET SPECIFIC CUSTOM TEMPLATE
+# GET SPECIFIC CUSTOM TEMPLATE BY NAME
 # ================================
 
 templates = alation.custom_template.get_custom_templates(

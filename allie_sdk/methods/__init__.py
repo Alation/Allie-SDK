@@ -17,6 +17,7 @@ from .otype import AlationOtype
 from .policy_group import AlationPolicyGroup
 from .query import AlationQuery
 from .rdbms import AlationRDBMS
+from .tag import AlationTag
 from .trust_check import AlationTrustChecks
 from .user import AlationUser
 from .virtual_datasource import AlationVirtualDataSource

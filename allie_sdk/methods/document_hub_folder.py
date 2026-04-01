@@ -51,6 +51,7 @@ class AlationDocumentHubFolder(AsyncHandler):
         """Create document hub folders in Bulk
         Args:
             document_hub_folders: list of Allie.DocumentHubFolderPostItem objects. This is the main payload which has to conform to the payload outlined here:
+            The payload supports title, description, document_hub_id, template_id, and custom_fields.
 
             Additional info:
             https://developer.alation.com/dev/reference/postfolders-1
@@ -87,6 +88,7 @@ class AlationDocumentHubFolder(AsyncHandler):
         """Update Document Hub Folders in Bulk
         Args:
             document_hub_folders: This is the main payload which is a list of DocumentHubFolderPutItem objects
+            The payload supports id, title, description, document_hub_id, template_id, and custom_fields.
 
             Additional info:
             https://developer.alation.com/dev/reference/updatefolders
