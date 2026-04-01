@@ -7,6 +7,8 @@ Prerequisites:
 
 """
 
+import pathlib
+
 import allie_sdk as allie
 import logging
 import sys
@@ -30,9 +32,10 @@ logging.basicConfig(
 # ================================
 # Source Global Config
 # ================================
-
+config_path = pathlib.Path(__file__).parent / "config.ini"
 config = configparser.ConfigParser()
-config.read("config.ini")
+with open(config_path, 'r') as f:
+    config.read_file(f)
 
 ALATION_USER_ID = config.get(section = "api", option = "ALATION_USER_ID")
 ALATION_BASE_URL = config.get(section = "api", option = "ALATION_BASE_URL")
@@ -58,15 +61,19 @@ alation = allie.Alation(
 
 if ALATION_OAUTH_CLIENT_ID and ALATION_OAUTH_CLIENT_SECRET:
     logging.info("Using OAuth client_credentials authentication")
-    
+    # JWT is created when the Alation object is instantiated, so we can just create the object with the client credentials and it will generate the token automatically
     oauth_alation = allie.Alation(
         host = ALATION_BASE_URL
         , client_id = ALATION_OAUTH_CLIENT_ID
-        , client_secret = ALATION_OAUTH_CLIENT_SECRET
+        , client_secret = ALATION_OAUTH_CLIENT_SECRET,
     )
     
     # You can also create OAuth tokens directly using the authentication methods
     oauth_token = oauth_alation.authentication.create_oauth_token()
+    logging.info(f"OAuth token created successfully: {oauth_token.access_token[:20]}...")
+
+    # You can also use basic auth scheme to create OAuth tokens directly using the authentication methods
+    oauth_token = oauth_alation.authentication.create_oauth_token(use_basic_auth=True)
     logging.info(f"OAuth token created successfully: {oauth_token.access_token[:20]}...")
     
     # You can also use an existing JWT access token
@@ -97,7 +104,7 @@ auth_only = allie.Alation(
 # Then manually create tokens as needed
 if ALATION_OAUTH_CLIENT_ID and ALATION_OAUTH_CLIENT_SECRET:
     manual_oauth_token = auth_only.authentication.create_oauth_token()
-    logging.info(f"Manually created OAuth token: {manual_oauth_token.token_type} token")
+    logging.info(f"Manually created OAuth token: {manual_oauth_token.access_token[:20]}...")
 
 # ================================
 # INITIALIZE ALATION WITHOUT AUTH TOKENS

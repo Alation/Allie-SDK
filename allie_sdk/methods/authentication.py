@@ -3,6 +3,7 @@
 import logging
 import base64
 import requests
+from requests.auth import HTTPBasicAuth
 
 from ..core.request_handler import RequestHandler
 from ..models.authentication_model import *
@@ -175,14 +176,14 @@ class AlationAuthentication(RequestHandler):
         return JobDetails.from_api_response(mapped_revoke_response)
 
     def create_oauth_token(self, client_credentials: OAuthCredentials = None,
-                          use_basic_auth: bool = True) -> OAuthToken:
+                          use_basic_auth: bool = False) -> OAuthToken:
         """Create an OAuth JWT access token using client_credentials grant type.
 
         Args:
             client_credentials (OAuthCredentials, optional): OAuth client credentials.
                 If not provided, uses the client_id and client_secret from the constructor.
             use_basic_auth (bool): Whether to use Basic authentication header.
-                If False, sends credentials in request body. Defaults to True.
+                If False, sends credentials in request body. Defaults to False.
 
         Returns:
             OAuthToken: OAuth JWT access token with metadata.
@@ -200,25 +201,28 @@ class AlationAuthentication(RequestHandler):
             client_secret = self.client_secret
         if not client_id or not client_secret:
             raise ValueError("Client ID and client secret are required for OAuth authentication")
-        # Prepare request body
-        token_body = {'grant_type': 'client_credentials'}
         # Prepare headers
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        token_body = {}
+        auth=None
         if use_basic_auth:
             # Use Basic authentication header
-            credentials = f"{client_id}:{client_secret}"
-            encoded_credentials = base64.b64encode(credentials.encode()).decode()
-            headers['Authorization'] = f"Basic {encoded_credentials}"
+            LOGGER.info("Using Basic Authentication header for OAuth token creation")
+            auth = HTTPBasicAuth(client_id, client_secret)
+            token_body['grant_type'] = 'client_credentials'
         else:
+            LOGGER.info("Using request body for client credentials in OAuth token creation")
             # Include credentials in request body
+            token_body = {'grant_type': 'client_credentials'}
             token_body['client_id'] = client_id
             token_body['client_secret'] = client_secret
         LOGGER.info("Creating OAuth token using client_credentials grant type")
         # Make request with the token body dict
-        token_response = self.post(
+        token_response = self.post_oauth(
             url='/oauth/v2/token',
             body=token_body,
-            headers=headers
+            headers=headers,
+            auth=auth
         )
         # Check for OAuth-specific errors in the response
         if isinstance(token_response, dict):
@@ -227,7 +231,7 @@ class AlationAuthentication(RequestHandler):
                 if 'error_description' in token_response:
                     error_msg += f" - {token_response['error_description']}"
                 LOGGER.error(error_msg)
-                
+                LOGGER.error(f"OAuth token creation failed with response: {token_response}")
                 # Convert OAuth error to HTTPError with appropriate status code
                 error_response = requests.Response()
                 error_response.status_code = 400  # Bad request for OAuth errors
