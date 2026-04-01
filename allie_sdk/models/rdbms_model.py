@@ -91,9 +91,14 @@ class SchemaPatchItem(BaseRDBMSItem):
     db_comment: str = field(default=None)
 
     def generate_api_patch_payload(self):
-        if self.id is None:
-            raise InvalidPostBody("'id' is a required field for Schema PATCH payload body")
-        payload = {'id': self.id}
+        # if both id and key are None raise error
+        if self.id is None and self.key is None:
+            raise InvalidPostBody("'id' or 'key' is a required field for Schema PATCH payload body")
+        payload = dict()
+        if self.id:
+            payload['id'] = self.id
+        if self.key:
+            payload['key'] = self.key
         if self.title:
             payload['title'] = self.title
         if self.description:
@@ -173,10 +178,15 @@ class TablePatchItem(BaseRDBMSItem):
     partition_columns: list = field(default=None)
 
     def generate_api_patch_payload(self):
-        if self.id is None:
-            raise InvalidPostBody("'id' is a required field for Table PATCH payload body")
+        # if both id and key are None raise error
+        if self.id is None and self.key is None:
+            raise InvalidPostBody("'id' or 'key' is a required field for Table PATCH payload body")
 
-        payload = {'id': self.id}
+        payload = dict()
+        if self.id:
+            payload['id'] = self.id
+        if self.key:
+            payload['key'] = self.key
         if self.title:
             payload['title'] = self.title
         if self.description:
@@ -303,9 +313,14 @@ class ColumnPatchItem(BaseRDBMSItem):
     index: ColumnIndex = field(default=None)
 
     def generate_api_patch_payload(self):
-        if self.id is None:
-            raise InvalidPostBody("'id' is a required field for Column PATCH payload body")
-        payload = {'id': self.id}
+        # if both id and key are None raise error
+        if self.id is None and self.key is None:
+            raise InvalidPostBody("'id' or 'key' is a required field for Column PATCH payload body")
+        payload = dict()
+        if self.id:
+            payload['id'] = self.id
+        if self.key:
+            payload['key'] = self.key
         if self.title:
             payload['title'] = self.title
         if self.description:
