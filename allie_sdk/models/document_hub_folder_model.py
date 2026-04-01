@@ -10,6 +10,8 @@ class DocumentHubFolderBase(BaseClass):
     title:str = field(default = None)
     description:str = field(default = None)
     document_hub_id:int = field(default = None)
+    parent_folder_id: int = field(default=None)
+    template_id:int = field(default = None)
     custom_fields:list[CustomFieldValueItem] = field(default = None)
 
     # the following method is used for post and put methods only
@@ -30,9 +32,12 @@ class DocumentHubFolder(DocumentHubFolderBase):
     id:int = field(default = False)
     # id is not mandatory for the get request you can pick the values you want to extract
     # so id does not necessarily have to be part of this values list
-    template_id: int = field(default=None)
     # Note: Document Hub Folders can have only on template. It is present in the GET response
     # as it may still be useful to know, e.g. to fetch data about the template via the custom template public API
+    parent_folder_id:int = field(default = None)
+    child_documents_count:int = field(default = None)
+    child_folders_count:int = field(default = None)
+    nav_links_count:int = field(default = None)
     deleted:bool = field(default = False)
     ts_deleted:str = field(default = None)
     ts_created:str = field(default = None)
@@ -68,6 +73,10 @@ class DocumentHubFolderPostItem(DocumentHubFolderBase):
             payload['description'] = self.description
         if self.document_hub_id:
             payload['document_hub_id'] = self.document_hub_id
+        if self.template_id:
+            payload['template_id'] = self.template_id
+        if self.parent_folder_id:
+            payload['parent_folder_id'] = self.parent_folder_id
         if self.custom_fields:
             payload['custom_fields'] = self._create_fields_payload()
 
@@ -92,6 +101,10 @@ class DocumentHubFolderPutItem(DocumentHubFolderBase):
             payload['description'] = self.description
         if self.document_hub_id:
             payload['document_hub_id'] = self.document_hub_id
+        if self.template_id:
+            payload['template_id'] = self.template_id
+        if self.parent_folder_id:
+            payload['parent_folder_id'] = self.parent_folder_id
         if self.custom_fields:
             payload['custom_fields'] = self._create_fields_payload()
 
