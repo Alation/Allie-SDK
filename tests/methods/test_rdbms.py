@@ -1,6 +1,7 @@
 """Test the Alation REST API Relational Integration Methods."""
 import pytest
 from allie_sdk.methods.rdbms import *
+from allie_sdk.core.custom_exceptions import InvalidPostBody
 
 class TestRDBMS:
 
@@ -225,28 +226,14 @@ class TestRDBMS:
 
     
     def test_failed_patch_schemas(self, requests_mock):
-        mock_schema = SchemaPatchItem(id=1)
+        mock_schema = SchemaPatchItem()
         mock_schema_list = [mock_schema]
 
-        failed_response = {
-            "detail": "Incorrect input data. Please fix the errors and post the data.",
-            "errors": [
-                {
-                    "id": [
-                        "400068: id is a required input"
-                    ]
-                }
-            ],
-            "code": "400010"
-        }
-
-        requests_mock.register_uri('PATCH', '/integration/v2/schema/?ds_id=1',
-                      json=failed_response, status_code=400)
-
-        with pytest.raises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(InvalidPostBody) as context:
             self.mock_user.patch_schemas(ds_id=1, schemas=mock_schema_list)
 
-        assert context.value.response.status_code == 400
+        assert "'id' or 'key' is a required field for Schema PATCH payload body" in str(context.value)
+        assert requests_mock.called is False
 
     
     def test_success_get_tables(self, requests_mock):
@@ -483,28 +470,14 @@ class TestRDBMS:
 
     
     def test_failed_patch_tables(self, requests_mock):
-        mock_table = TablePatchItem(id=1)
+        mock_table = TablePatchItem()
         mock_table_list = [mock_table]
 
-        failed_response = {
-            "detail": "Incorrect input data. Please fix the errors and post the data.",
-            "errors": [
-                {
-                    "id": [
-                        "400068: id is a required input"
-                    ]
-                }
-            ],
-            "code": "400010",
-        }
-
-        requests_mock.register_uri('PATCH', '/integration/v2/table/?ds_id=1',
-                      json=failed_response, status_code=400)
-
-        with pytest.raises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(InvalidPostBody) as context:
             self.mock_user.patch_tables(ds_id=1, tables=mock_table_list)
 
-        assert context.value.response.status_code == 400
+        assert "'id' or 'key' is a required field for Table PATCH payload body" in str(context.value)
+        assert requests_mock.called is False
 
     
     def test_success_get_columns(self, requests_mock):
@@ -817,25 +790,11 @@ class TestRDBMS:
 
     
     def test_failed_patch_columns(self, requests_mock):
-        mock_column = ColumnPatchItem(id=1)
+        mock_column = ColumnPatchItem()
         mock_column_list = [mock_column]
 
-        failed_response = {
-            "detail": "Incorrect input data. Please fix the errors and post the data.",
-            "errors": [
-                {
-                    "id": [
-                        "400068: id is a required input"
-                    ]
-                }
-            ],
-            "code": "400010",
-        }
-
-        requests_mock.register_uri('PATCH', '/integration/v2/column/?ds_id=1',
-                      json=failed_response, status_code=400)
-
-        with pytest.raises(requests.exceptions.HTTPError) as context:
+        with pytest.raises(InvalidPostBody) as context:
             self.mock_user.patch_columns(ds_id=1, columns=mock_column_list)
 
-        assert context.value.response.status_code == 400
+        assert "'id' or 'key' is a required field for Column PATCH payload body" in str(context.value)
+        assert requests_mock.called is False
