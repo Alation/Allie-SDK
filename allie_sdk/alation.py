@@ -41,19 +41,27 @@ LOGGER = logging.getLogger('allie_sdk_logger')
 class Alation(object):
     """Alation REST API Methods."""
 
-    def __init__(self, host: str, user_id: int, refresh_token: str = None,
+    def __init__(self, host: str, user_id: int = None, refresh_token: str = None,
                  access_token: str = None, validate_ssl: bool = True,
-                 private_ssl_cert: str = None, disable_authentication: bool = False):
+                 private_ssl_cert: str = None, disable_authentication: bool = False,
+                 client_id: str = None, client_secret: str = None):
         """Creates an instance of the Alation object.
 
         Args:
             host (str): Alation URL.
-            refresh_token (str): Alation REST API Refresh Token.
-            user_id (int): Alation User ID.
-            access_token (str): Alation REST API Access Token.
+            user_id (int, optional): Alation User ID. Required for refresh token authentication.
+            refresh_token (str, optional): Alation REST API Refresh Token.
+            access_token (str, optional): Alation REST API Access Token or JWT token.
             validate_ssl (bool): Validate the SSL Cert when using HTTPS Requests.
             private_ssl_cert (str): Path to the Private SSL Cert or CA Bundle.
-            disable_authentication (bool): if True, this Alation instance can be instantiated without authenticating first
+            disable_authentication (bool): if True, this Alation instance can be instantiated without authenticating first.
+            client_id (str, optional): OAuth client ID for client_credentials authentication.
+            client_secret (str, optional): OAuth client secret for client_credentials authentication.
+
+        Note:
+            For OAuth authentication, provide client_id and client_secret.
+            For refresh token authentication, provide user_id and refresh_token.
+            For direct access token use, provide access_token (and user_id for refresh token auth).
 
         """
         self._access_token = None
@@ -63,31 +71,54 @@ class Alation(object):
             session.verify = private_ssl_cert
             
         if not disable_authentication:
-            # Initialize the Authentication Class and generate the Access Token
+            # Initialize the Authentication Class with all credentials
             self.authentication = AlationAuthentication(
-                refresh_token=refresh_token
-                , user_id=user_id
-                , session=session
-                , host=host
+                refresh_token=refresh_token,
+                user_id=user_id,
+                session=session,
+                host=host,
+                client_id=client_id,
+                client_secret=client_secret
             )
             if access_token:
-                self.access_token = self.authentication.validate_access_token(
-                    access_token).api_access_token
-            else:
-                create_access_token_response = self.authentication.create_access_token()
-                if isinstance(create_access_token_response, JobDetails):
-                    if create_access_token_response.status == "failed":
-                        cat_response_error_detail = create_access_token_response.result.get("detail")
-                        if cat_response_error_detail:
-                            LOGGER.error(cat_response_error_detail)
+                # Use the provided access token (could be JWT or regular access token)
+                if client_id and client_secret:
+                    # For OAuth tokens, accept the provided token directly
+                    self.access_token = access_token
+                    LOGGER.info("Using provided OAuth access token")
                 else:
-                    self.access_token = create_access_token_response.api_access_token
+                    # For regular access tokens, use existing validation
+                    self.access_token = self.authentication.validate_access_token(
+                        access_token).api_access_token
+            else:
+                # No access token provided, create one based on available credentials
+                if client_id and client_secret:
+                    # Use OAuth client_credentials flow
+                    LOGGER.info("Using OAuth client_credentials authentication")
+                    oauth_token_response = self.authentication.create_oauth_token()
+                    self.access_token = oauth_token_response.access_token
+                elif refresh_token and user_id is not None:
+                    # Use existing refresh token flow
+                    LOGGER.info("Using refresh token authentication")
+                    create_access_token_response = self.authentication.create_access_token()
+                    if isinstance(create_access_token_response, JobDetails):
+                        if create_access_token_response.status == "failed":
+                            cat_response_error_detail = create_access_token_response.result.get("detail")
+                            if cat_response_error_detail:
+                                LOGGER.error(cat_response_error_detail)
+                    else:
+                        self.access_token = create_access_token_response.api_access_token
+                else:
+                    LOGGER.error("No valid authentication credentials provided. Please provide either OAuth client credentials (client_id/client_secret) or refresh token credentials (refresh_token/user_id)")
+                    raise ValueError("No valid authentication credentials provided")
         else:
             self.authentication = AlationAuthentication(
-                refresh_token=refresh_token
-                , user_id=user_id
-                , session=session
-                , host=host
+                refresh_token=refresh_token,
+                user_id=user_id,
+                session=session,
+                host=host,
+                client_id=client_id,
+                client_secret=client_secret
             )
 
         # Initialize Remaining Alation API Methods

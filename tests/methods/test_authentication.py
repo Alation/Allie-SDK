@@ -175,3 +175,83 @@ class TestAuthentication:
         assert context.value.response.status_code == 401
 
 
+class TestOAuthAuthentication:
+    """Test OAuth authentication methods."""
+    
+    def setup_method(self):
+        """Set up OAuth authentication test instance."""
+        self.oauth_auth = AlationAuthentication(
+            session=requests.session(),
+            host='https://test.com',
+            client_id='test_client_id',
+            client_secret='test_client_secret'
+        )
+        # Set access_token to None to prevent AttributeError in HTTP methods
+        self.oauth_auth.access_token = None
+        
+        self.oauth_auth_no_creds = AlationAuthentication(
+            session=requests.session(),
+            host='https://test.com'
+        )
+        # Set access_token to None to prevent AttributeError in HTTP methods  
+        self.oauth_auth_no_creds.access_token = None
+
+    def test_success_create_oauth_token(self, requests_mock):
+        """Test successful OAuth token creation using client_credentials."""
+        oauth_success_response = {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test_payload.test_signature",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "scope": "read write"
+        }
+        
+        success_token = OAuthToken.from_api_response(oauth_success_response)
+        requests_mock.register_uri('POST', '/oauth/v2/token', json=oauth_success_response)
+        test_token = self.oauth_auth.create_oauth_token()
+
+        assert success_token.access_token == test_token.access_token
+        assert success_token.token_type == test_token.token_type
+        assert success_token.expires_in == test_token.expires_in
+
+    def test_failed_create_oauth_token_invalid_client(self, requests_mock):
+        """Test OAuth token creation failure with invalid client credentials."""
+        failed_response = {
+            "error": "invalid_client",
+            "error_description": "Client authentication failed"
+        }
+        
+        requests_mock.register_uri('POST', '/oauth/v2/token', json=failed_response, status_code=401)
+        
+        # Expect HTTPError to be raised
+        with pytest.raises(requests.exceptions.HTTPError) as context:
+            self.oauth_auth.create_oauth_token()
+        
+        assert context.value.response.status_code == 401
+
+    def test_create_oauth_token_missing_credentials(self):
+        """Test OAuth token creation failure when credentials are missing."""
+        # Expect ValueError when no client credentials are provided
+        with pytest.raises(ValueError) as context:
+            self.oauth_auth_no_creds.create_oauth_token()
+        
+        assert "Client ID and client secret are required" in str(context.value)
+
+    def test_create_oauth_token_with_credentials_parameter(self, requests_mock):
+        """Test OAuth token creation using OAuthCredentials parameter."""
+        oauth_success_response = {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test_payload.test_signature",
+            "token_type": "Bearer",
+            "expires_in": 3600
+        }
+        
+        credentials = OAuthCredentials(
+            client_id='param_client_id',
+            client_secret='param_client_secret'
+        )
+        
+        requests_mock.register_uri('POST', '/oauth/v2/token', json=oauth_success_response)
+        test_token = self.oauth_auth_no_creds.create_oauth_token(client_credentials=credentials)
+
+        assert test_token.access_token == oauth_success_response["access_token"]
+
+
