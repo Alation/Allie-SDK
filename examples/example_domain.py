@@ -1,5 +1,5 @@
 """
-Example of listing domains and assigning object to a given domain.
+Example of creating, moving, listing, and deleting domains, and assigning objects to a given domain.
 
 Prerequisites:
 
@@ -19,7 +19,11 @@ import configparser
 # ================================
 
 # specify the domain name - should be a unique name
-DOMAIN_NAME = "HR"
+DOMAIN_NAME = "TESTDOMAIN"
+DOMAIN_DESCRIPTION = "Example domain created via Allie-SDK"
+DOMAIN_PARENT_ID = None
+MOVE_DOMAIN_TO_PARENT_ID = 1  # Set this to an existing parent domain id to test move_domain
+DELETE_DOMAIN_AT_END = True
 # ids of objects to be assigned to domain id mentioned above
 DOMAIN_ASSIGNMENT_OBJECT_IDS = [1,2,3]
 # object type of the objects that should be assigned to the domain mentioned above
@@ -65,13 +69,28 @@ alation = allie.Alation(
 # CREATE DOMAIN
 # ================================
 
-# Currently not supported by Allie-SDK
+create_result = alation.domain.create_domains(
+    [
+        allie.DomainItem(
+            title=DOMAIN_NAME,
+            description=DOMAIN_DESCRIPTION,
+            parent_id=DOMAIN_PARENT_ID,
+        )
+    ]
+)
+
+if not create_result:
+    logging.error("No response received when creating the domain.")
+    sys.exit(1)
+else:
+    logging.info("Create domain result: status=%s, msg=%s, result=%s", create_result.status,
+                 create_result.msg, create_result.result)
+    domain_id = create_result.result[0].id
 
 # ================================
 # FETCH DOMAINS
 # ================================
 
-domain_id:int
 
 domains = alation.domain.get_domains()
 
@@ -80,12 +99,29 @@ if domains is None:
     sys.exit(1)
 elif isinstance(domains, list):
     logging.info("Successfully fetched domains")
-    for d in domains:
-        if d.title == DOMAIN_NAME:
-            domain_id = d.id
+    # for d in domains:
+    #     if d.title == DOMAIN_NAME:
+    #         domain_id = d.id
 else:
     logging.error("Unexpected result ... I don't know what to do")
     sys.exit(1)
+
+# ================================
+# MOVE DOMAIN
+# ================================
+
+if domain_id and MOVE_DOMAIN_TO_PARENT_ID is not None:
+    moved_domain = alation.domain.move_domain(
+        domain_id=domain_id,
+        domain=allie.DomainMoveItem(parent_id=MOVE_DOMAIN_TO_PARENT_ID),
+    )
+
+    if moved_domain.status == "successful":
+        logging.info(
+            "Moved domain '%s' to parent_id=%s",
+            moved_domain.result.title,
+            moved_domain.result.parent_id,
+        )
 
 # ================================
 # ASSIGN OBJECTS TO DOMAINS
@@ -138,3 +174,17 @@ if domain_id:
                 rule.exclude,
                 rule.recursive,
             )
+
+    # ================================
+    # DELETE DOMAIN
+    # ================================
+
+    if DELETE_DOMAIN_AT_END:
+        delete_result = alation.domain.delete_domains(
+            [allie.DomainDeleteItem(id=domain_id)]
+        )
+
+        if delete_result[0].status == "successful":
+            logging.info("Successfully deleted domain id=%s", domain_id)
+        else:
+            logging.error("Unable to delete domain id=%s", domain_id)

@@ -80,6 +80,110 @@ class TestDomain:
         ]
         assert function_expected_result == create_domain_membership_result
 
+    def test_create_domains(self, requests_mock):
+        api_response = [
+            {
+                "id": 101,
+                "title": "Finance",
+                "description": "Finance owned assets",
+                "parent_id": 10,
+            }
+        ]
+
+        requests_mock.register_uri(
+            method='POST',
+            url='/integration/v2/domain/',
+            json=api_response,
+            status_code=201,
+        )
+
+        result = self.mock_user.create_domains(
+            [
+                DomainItem(
+                    title="Finance",
+                    description="Finance owned assets",
+                    parent_id=10,
+                )
+            ]
+        )
+
+        expected = allie.JobDetails(
+            status="successful",
+            msg="",
+            result=[
+                Domain(
+                    id=101,
+                    title="Finance",
+                    description="Finance owned assets",
+                    parent_id=10,
+                )
+            ],
+        )
+
+        assert expected == result
+
+    def test_delete_domains(self, requests_mock):
+        api_response = {
+            "status": "successful",
+            "msg": "",
+            "deleted_domain_count": 1,
+            "deleted_domain_ids": [101],
+        }
+
+        requests_mock.register_uri(
+            method='DELETE',
+            url='/integration/v2/domain/',
+            json=api_response,
+            status_code=200,
+        )
+
+        result = self.mock_user.delete_domains(
+            [DomainDeleteItem(id=101)]
+        )
+
+        expected = [
+            allie.JobDetails(
+                status="successful",
+                msg="",
+                result=None,
+            )
+        ]
+
+        assert expected == result
+
+    def test_move_domain(self, requests_mock):
+        api_response = {
+            "id": 101,
+            "title": "Finance",
+            "description": "Finance owned assets",
+            "parent_id": 11,
+        }
+
+        requests_mock.register_uri(
+            method='PATCH',
+            url='/integration/v2/domain/101/',
+            json=api_response,
+            status_code=200,
+        )
+
+        result = self.mock_user.move_domain(
+            101,
+            DomainMoveItem(parent_id=11),
+        )
+
+        expected = allie.JobDetails(
+            status="successful",
+            msg="",
+            result=Domain(
+                id=101,
+                title="Finance",
+                description="Finance owned assets",
+                parent_id=11,
+            ),
+        )
+
+        assert expected == result
+
     
     def test_view_domain_membership_rules(self, requests_mock):
         api_response = [

@@ -6,12 +6,15 @@ import requests
 
 from ..core.request_handler import RequestHandler
 from ..core.async_handler import AsyncHandler
-from ..core.custom_exceptions import validate_query_params, validate_rest_payload
+from ..core.custom_exceptions import InvalidPostBody, validate_query_params, validate_rest_payload
 from ..models.domain_model import (
     Domain,
+    DomainDeleteItem,
+    DomainItem,
     DomainMembership,
     DomainMembershipRule,
     DomainMembershipRuleRequest,
+    DomainMoveItem,
     DomainParams,
 )
 from ..models.job_model import JobDetails
@@ -33,6 +36,7 @@ class AlationDomain(AsyncHandler):
 
         """
         super().__init__(session = session, host = host, access_token = access_token)
+
 
     def get_domains(
         self
@@ -59,6 +63,104 @@ class AlationDomain(AsyncHandler):
         if domains:
             return [Domain.from_api_response(domain) for domain in domains]
         return []
+
+    def create_domains(self, domains: list[DomainItem]) -> JobDetails:
+        """Create one or more Alation domains."""
+        if not domains:
+            LOGGER.info("No domains supplied for creation.")
+            return []
+        try:
+            validate_rest_payload(payload=domains, expected_types=(DomainItem,))
+            payload = [domain.generate_api_post_payload() for domain in domains]
+
+            LOGGER.info("Creating %s domain(s).", len(domains))
+            results = self.post(url="/integration/v2/domain/", body=payload)
+
+            mapped_response = self._map_request_success_to_job_details(
+                response_data = [Domain.from_api_response(r) for r in results]
+            )
+            return JobDetails.from_api_response(mapped_response)
+
+        except requests.exceptions.HTTPError as e:
+            # For test compatibility, handle HTTP errors specially
+            if e.response.status_code >= 400:
+                # Return error in the expected format
+                return JobDetails(
+                    status='failed',
+                    msg=None,
+                    result=e.response.json()
+                )
+            # Re-raise other HTTP errors
+            raise
+
+    def delete_domains(self, domains: list[Domain | DomainDeleteItem]) -> JobDetails:
+        """Delete one or more Alation domains."""
+        if not domains:
+            LOGGER.info("No domains supplied for deletion.")
+            return JobDetails(status="successful", msg="", result=None)
+
+        try:
+            validate_rest_payload(payload=domains, expected_types=(Domain, DomainDeleteItem))
+            domain_ids = []
+            for domain in domains:
+                if domain.id is None:
+                    raise InvalidPostBody("'id' is a required field for Domain DELETE payload body")
+                domain_ids.append(domain.id)
+
+            payload = {"id": domain_ids}
+
+            LOGGER.info("Deleting %s domain(s).", len(domains))
+            delete_results = self.async_delete_dict_payload(
+                url="/integration/v2/domain/",
+                payload=payload,
+            )
+
+            if delete_results:
+                return [JobDetails.from_api_response(item) for item in delete_results]
+            return []
+        except requests.exceptions.HTTPError as e:
+            # For test compatibility, handle HTTP errors specially
+            if e.response.status_code >= 400:
+                # Return error in the expected format
+                return JobDetails(
+                    status='failed',
+                    msg=None,
+                    result=e.response.json()
+                )
+            # Re-raise other HTTP errors
+            raise
+
+    def move_domain(self, domain_id: int, domain: DomainMoveItem) -> Domain:
+        """Move a domain to a different parent domain."""
+        if domain_id is None:
+            raise InvalidPostBody("'domain_id' must be provided to move a domain.")
+
+        try:
+            validate_rest_payload(payload=[domain], expected_types=(DomainMoveItem,))
+            payload = domain.generate_api_patch_payload()
+
+            LOGGER.info("Moving domain %s to parent %s.", domain_id, domain.parent_id)
+            updated_domain = self.patch(
+                url=f"/integration/v2/domain/{domain_id}/",
+                body=payload,
+            )
+
+            mapped_response = self._map_request_success_to_job_details(
+                response_data=Domain.from_api_response(updated_domain)
+            )
+            return JobDetails.from_api_response(mapped_response)
+
+        except requests.exceptions.HTTPError as e:
+            # For test compatibility, handle HTTP errors specially
+            if e.response.status_code >= 400:
+                # Return error in the expected format
+                return JobDetails(
+                    status='failed',
+                    msg=None,
+                    result=e.response.json()
+                )
+            # Re-raise other HTTP errors
+            raise
 
     def assign_objects_to_domain(
         self
@@ -152,4 +254,3 @@ class AlationDomain(AsyncHandler):
             return _map_rules(response)
 
         return []
-

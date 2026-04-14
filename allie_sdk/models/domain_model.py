@@ -7,11 +7,53 @@ from ..core.data_structures import BaseClass, BaseParams
 from ..core.custom_exceptions import InvalidPostBody
 
 @dataclass(kw_only = True)
-class Domain(BaseClass):
-    id:int = field(default = None)
+class DomainBase(BaseClass):
     title:str = field(default = None)
     description:str = field(default = None)
     parent_id:int = field(default = None)
+
+
+@dataclass(kw_only = True)
+class Domain(DomainBase):
+    id:int = field(default = None)
+
+
+@dataclass(kw_only = True)
+class DomainItem(DomainBase):
+    def generate_api_post_payload(self) -> dict:
+        if self.title is None:
+            raise InvalidPostBody("'title' is a required field for Domain POST payload body")
+
+        payload = {"title": self.title}
+
+        if self.description is not None:
+            payload["description"] = self.description
+        if self.parent_id is not None:
+            payload["parent_id"] = self.parent_id
+
+        return payload
+
+
+@dataclass(kw_only = True)
+class DomainDeleteItem(BaseClass):
+    id:int = field(default = None)
+
+    def generate_api_delete_payload(self) -> dict:
+        if self.id is None:
+            raise InvalidPostBody("'id' is a required field for Domain DELETE payload body")
+
+        return {"id": self.id}
+
+
+@dataclass(kw_only = True)
+class DomainMoveItem(BaseClass):
+    parent_id:int = field(default = None)
+
+    def generate_api_patch_payload(self) -> dict:
+        if self.parent_id is None:
+            raise InvalidPostBody("'parent_id' is a required field for Domain PATCH payload body")
+
+        return {"parent_id": self.parent_id}
 
 # class serves both for the POST payload and the response
 @dataclass(kw_only = True)
