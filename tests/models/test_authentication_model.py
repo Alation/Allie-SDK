@@ -44,3 +44,39 @@ class TestAuthenticationModels:
         )
 
         assert access_token == access_model
+
+    def test_oauth_credentials_model(self):
+
+        oauth_credentials_data = {
+            "client_id": "test_client_id",
+            "client_secret": "test_client_secret"
+        }
+        oauth_credentials = OAuthCredentials.from_api_response(oauth_credentials_data)
+
+        oauth_model = OAuthCredentials(
+            client_id="test_client_id",
+            client_secret="test_client_secret"
+        )
+
+        assert oauth_credentials == oauth_model
+
+    def test_oauth_token_model(self):
+
+        oauth_token_response = {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "scope": "read write",
+            "created_at": "2026-03-26T10:30:00Z"
+        }
+        oauth_token = OAuthToken.from_api_response(oauth_token_response)
+
+        oauth_model = OAuthToken(
+            access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            token_type="Bearer",
+            expires_in=3600,
+            scope="read write",
+            created_at="2026-03-26T10:30:00Z"
+        )
+
+        assert oauth_token == oauth_model

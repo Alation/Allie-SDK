@@ -7,6 +7,27 @@ from ..core.data_structures import BaseClass
 
 
 @dataclass
+class OAuthCredentials(BaseClass):
+    """OAuth client credentials for client_credentials grant type."""
+    client_id: str = field(default=None)
+    client_secret: str = field(default=None)
+
+
+@dataclass
+class OAuthToken(BaseClass):
+    """OAuth JWT access token response."""
+    access_token: str = field(default=None)
+    token_type: str = field(default=None)
+    expires_in: int = field(default=None)
+    scope: str = field(default=None)
+    created_at: datetime = field(default=None)
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = self.convert_timestamp(self.created_at)
+
+
+@dataclass
 class RefreshToken(BaseClass):
     refresh_token: str = field(default=None)
     user_id: int = field(default=None)

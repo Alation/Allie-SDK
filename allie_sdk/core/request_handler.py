@@ -3,6 +3,7 @@
 import json
 import logging
 import requests
+from requests.auth import HTTPBasicAuth
 
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
@@ -36,8 +37,8 @@ class RequestHandler(object):
         self.s.mount('https://', HTTPAdapter(max_retries=retries))
 
         self.headers = {"Content-Type": "application/json; charset=utf-8"}
+        self.access_token = access_token
         if access_token:
-            self.access_token = access_token
             self.headers['Token'] = access_token
 
     def delete(
@@ -255,6 +256,73 @@ class RequestHandler(object):
             body = json.dumps(body, default=str)
 
         api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers, files=files)
+
+        try:
+            response_data = api_response.json()
+        except requests.exceptions.JSONDecodeError:
+            try:
+                response_data = api_response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                response_data = api_response.content
+
+        log_url = self._format_log_url(api_response.url)
+        log_details = {
+            'Method': 'POST'
+            , 'URL': api_response.url
+            , 'Response': api_response.status_code
+        }
+
+        if api_response.status_code not in SUCCESS_CODES:
+            self._log_error(
+                response_data
+                , log_details
+                , message = f'Error submitting the POST Request to: {log_url}'
+            )
+            
+            # Raise HTTP error instead of returning error details
+            api_response.raise_for_status()
+
+        self._log_success(
+            log_details
+            , message = f'Successfully submitted the POST Request to: {log_url}'
+        )
+
+        return response_data
+    
+    def post_oauth(self, url: str, body: any, query_params: dict = None, headers: dict = None,
+             files: dict = None, auth: HTTPBasicAuth = None) -> dict | list:
+        """API Post Request for calling OAuth specific endpoint to generate a JWT token.
+
+        This function is needed because the OAuth end point accepts content type of 'application/x-www-form-urlencoded' instead of 'application/json' 
+        and also requires client credentials to be sent in the body instead of the header. We convert the JSON body to a string in the 
+        post method in RequestHandler, so we need a separate method to handle the OAuth token generation request. Python requests library
+        considers a dict passed to the data parameter as form data and will encode it as 'application/x-www-form-urlencoded' automatically,
+        so we can just pass the dict body directly without converting it to a string.
+
+        Args:
+            url (str): POST API Call URL.
+            body (any): POST API Body.
+            query_params (dict): POST API Call Query Parameters.
+            headers (dict): POST API Call Headers.
+            files: (dict) POST API Call upload files
+            auth: (HTTPBasicAuth) Optional HTTPBasicAuth object for passing client credentials in the header instead of the body
+
+        Returns:
+            dict | list: API Response Body.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        if query_params is None:
+            query_params = {}
+
+        if headers:
+            if self.access_token:
+                headers['Token'] = self.access_token
+        else:
+            headers = self.headers
+
+        api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers, files=files, auth=auth)
 
         try:
             response_data = api_response.json()
