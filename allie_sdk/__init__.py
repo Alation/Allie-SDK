@@ -130,6 +130,8 @@ from .models import (
     QueryItem,
     QueryDatasource,
     QueryDomain,
+    QueryParams,
+    QuerySchedule,
     QueryTag,
     RefreshToken,
     Schema,
