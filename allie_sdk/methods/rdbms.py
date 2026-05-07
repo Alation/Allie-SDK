@@ -9,7 +9,9 @@ from ..models.rdbms_model import (
 
     Schema, SchemaItem, SchemaParams, SchemaPatchItem,
     Table, TableItem, TablePatchItem, TableParams,
-    Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams
+    Column, ColumnItem, ColumnIndex, ColumnPatchItem, ColumnParams,
+    ChildColumn, ChildColumnParams, ChildColumnPatchItem, RootColumnChildrenPatchItem,
+    ColumnChildren
 )
 from ..models.job_model import *
 
@@ -201,6 +203,96 @@ class AlationRDBMS(AsyncHandler):
         validate_rest_payload(columns, (ColumnPatchItem,))
         payload = [item.generate_api_patch_payload() for item in columns]
         async_results = self.async_patch(f'/integration/v2/column/?ds_id={ds_id}', payload)
+
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
+        return []
+
+    def get_child_columns(
+            self,
+            column_id: int,
+            query_params: ChildColumnParams = None
+    ) -> ColumnChildren | None:
+        """Fetch child columns for a STRUCT column.
+
+        Args:
+            column_id (int): ID of the parent column.
+            query_params (ChildColumnParams): Optional filters for child column IDs or paths.
+
+        Returns:
+            ColumnChildren | None: Child-column response for the given column.
+
+        """
+        try:
+            validate_query_params(query_params, ChildColumnParams)
+            params = query_params.generate_params_dict() if query_params else None
+            LOGGER.info("Fetching child columns for column %s.", column_id)
+            columns = self.get(
+                f"/integration/v2/column/{column_id}/children/",
+                query_params=params,
+                pagination=False
+            )
+
+            if columns:
+                return ColumnChildren.from_api_response(columns)
+            return None
+        except requests.exceptions.HTTPError:
+            raise
+
+    def patch_child_columns(
+            self,
+            ds_id: int,
+            column_id: int,
+            children: list[ChildColumnPatchItem]
+    ) -> list[JobDetailsRdbms]:
+        """Patch child columns under a given parent column.
+
+        Args:
+            ds_id (int): ID of the parent datasource.
+            column_id (int): ID of the parent column.
+            children (list[ChildColumnPatchItem]): Child columns to update.
+
+        Returns:
+            list[JobDetailsRdbms]: Result of the job.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        item: ChildColumnPatchItem
+        validate_rest_payload(children, (ChildColumnPatchItem,))
+        payload = [item.generate_api_patch_payload() for item in children]
+        LOGGER.info("Updating child columns for column %s.", column_id)
+        async_results = self.async_patch(
+            f"/integration/v2/column/{column_id}/children/?ds_id={ds_id}",
+            payload
+        )
+
+        if async_results:
+            return [JobDetailsRdbms.from_api_response(item) for item in async_results]
+        return []
+
+    def patch_root_child_columns(
+            self,
+            ds_id: int,
+            children: list[RootColumnChildrenPatchItem]
+    ) -> list[JobDetailsRdbms]:
+        """Patch child columns in bulk for different root columns.
+
+        Args:
+            ds_id (int): ID of the parent datasource.
+            children (list[RootColumnChildrenPatchItem]): Root-column child updates.
+
+        Returns:
+            list[JobDetailsRdbms]: Result of the job.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+        """
+        item: RootColumnChildrenPatchItem
+        validate_rest_payload(children, (RootColumnChildrenPatchItem,))
+        payload = [item.generate_api_patch_payload() for item in children]
+        LOGGER.info("Updating child columns for multiple root columns.")
+        async_results = self.async_patch(f"/integration/v2/column/children/?ds_id={ds_id}", payload)
 
         if async_results:
             return [JobDetailsRdbms.from_api_response(item) for item in async_results]
