@@ -79,5 +79,6 @@ class TrustCheckFlagItem:
 
 @dataclass
 class TrustCheckFlagParams(BaseParams):
-    oid: set = field(default_factory=set)
-    otype: set = field(default_factory=set)
+    oid: int = field(default=None)
+    otype: str = field(default=None)
+    exclude_deleted: bool = field(default=None)
