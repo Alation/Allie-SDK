@@ -273,6 +273,39 @@ class Column(BaseRDBMS):
 
 
 @dataclass
+class ChildColumn(BaseClass):
+    key: str = field(default=None)
+    type: str = field(default=None)
+    id: int = field(default=None)
+    path: str = field(default=None)
+    other_metadata: dict = field(default=None)
+    title: str = field(default=None)
+    description: str = field(default=None)
+    children: list = field(default_factory=list) # list of nested ChildColumn
+
+    def __post_init__(self):
+        if isinstance(self.children, list):
+            self.children = [
+                ChildColumn.from_api_response(item) if isinstance(item, dict) else item
+                for item in self.children
+            ]
+
+
+@dataclass
+class ColumnChildren(BaseClass):
+    ds_id: int = field(default=None)
+    parent_fully_qualified_name: str = field(default=None)
+    children: list[ChildColumn] = field(default_factory=list)
+
+    def __post_init__(self):
+        if isinstance(self.children, list):
+            self.children = [
+                ChildColumn.from_api_response(item) if isinstance(item, dict) else item
+                for item in self.children
+            ]
+
+
+@dataclass
 class ColumnItem(BaseRDBMSItem):
     column_type: str = field(default=None)
     column_comment: str = field(default=None)
@@ -338,6 +371,48 @@ class ColumnPatchItem(BaseRDBMSItem):
 
         return payload
 
+
+@dataclass
+class ChildColumnPatchItem(BaseClass):
+    key: str = field(default=None)
+    title: str = field(default=None)
+    description: str = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.key is None:
+            raise InvalidPostBody("'key' is a required field for Child Column PATCH payload body")
+
+        payload = {"key": self.key}
+        if self.title:
+            payload["title"] = self.title
+        if self.description:
+            payload["description"] = self.description
+
+        return payload
+
+
+@dataclass
+class RootColumnChildrenPatchItem(BaseClass):
+    parent_key: str = field(default=None)
+    key: str = field(default=None)
+    title: str = field(default=None)
+    description: str = field(default=None)
+
+    def generate_api_patch_payload(self):
+        if self.parent_key is None:
+            raise InvalidPostBody("'parent_key' is a required field for Root Column Children PATCH payload body")
+        if self.key is None:
+            raise InvalidPostBody("'key' is a required field for Root Column Children PATCH payload body")
+
+        payload = {"parent_key": self.parent_key, "key": self.key}
+        if self.title:
+            payload["title"] = self.title
+        if self.description:
+            payload["description"] = self.description
+
+        return payload
+
+
 @dataclass
 class ColumnParams(BaseRDBMSParams):
     table_id: set = field(default_factory=set)
@@ -362,3 +437,11 @@ class ColumnParams(BaseRDBMSParams):
     schema_id__gte: set = field(default_factory=set)
     schema_id__lt: set = field(default_factory=set)
     schema_id__lte: set = field(default_factory=set)
+
+
+@dataclass
+class ChildColumnParams(BaseParams):
+    child_limit: int = field(default=None)
+    child_offset: int = field(default=None)
+    ids: str = field(default=None)
+    paths: str = field(default=None)

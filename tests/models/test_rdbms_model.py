@@ -325,6 +325,93 @@ class TestRDBMSModels:
 
         assert mock_column.index == expected_index
 
+    def test_child_column(self):
+
+        child_column_response = {
+            "key": "address",
+            "type": "STRUCT",
+            "id": 2001,
+            "path": "address",
+            "other_metadata": {"source": "docstore"},
+            "title": "Address",
+            "description": "Structured address information",
+            "children": [
+                {
+                    "key": "city",
+                    "type": "VARCHAR(100)",
+                    "id": 2002,
+                    "path": "address.city",
+                    "other_metadata": {},
+                    "title": "City",
+                    "description": "Customer city",
+                    "children": []
+                }
+            ]
+        }
+
+        child_column = ChildColumn.from_api_response(child_column_response)
+
+        expected_child_column = ChildColumn(
+            key="address",
+            type="STRUCT",
+            id=2001,
+            path="address",
+            other_metadata={"source": "docstore"},
+            title="Address",
+            description="Structured address information",
+            children=[
+                {
+                    "key": "city",
+                    "type": "VARCHAR(100)",
+                    "id": 2002,
+                    "path": "address.city",
+                    "other_metadata": {},
+                    "title": "City",
+                    "description": "Customer city",
+                    "children": []
+                }
+            ]
+        )
+
+        assert child_column == expected_child_column
+
+    def test_children_response(self):
+        response = ColumnChildren.from_api_response(
+            {
+                "ds_id": 95,
+                "parent_fully_qualified_name": "95.employees.address",
+                "children": [
+                    {
+                        "key": "city",
+                        "type": "STRING",
+                        "id": 3,
+                        "path": "address.city",
+                        "other_metadata": {},
+                        "title": "City",
+                        "description": "Customer city"
+                    }
+                ]
+            }
+        )
+
+        expected = ColumnChildren(
+            ds_id=95,
+            parent_fully_qualified_name="95.employees.address",
+            children=[
+                {
+                    "key": "city",
+                    "type": "STRING",
+                    "id": 3,
+                    "path": "address.city",
+                    "other_metadata": {},
+                    "title": "City",
+                    "description": "Customer city"
+                }
+            ]
+        )
+
+        assert response == expected
+
     def test_column_item_payload(self):
 
         mock_column = ColumnItem(
@@ -450,6 +537,67 @@ class TestRDBMSModels:
         )
 
         pytest.raises(InvalidPostBody, lambda: mock_column.generate_api_patch_payload())
+
+    def test_child_column_patch_item_payload(self):
+        mock_child_column = ChildColumnPatchItem(
+            key="address.city",
+            title="City",
+            description="Customer city"
+        )
+
+        expected_payload = {
+            "key": "address.city",
+            "title": "City",
+            "description": "Customer city"
+        }
+
+        assert mock_child_column.generate_api_patch_payload() == expected_payload
+
+    def test_child_column_patch_item_exception_missing_key(self):
+        mock_child_column = ChildColumnPatchItem(
+            title="City"
+        )
+
+        pytest.raises(InvalidPostBody, lambda: mock_child_column.generate_api_patch_payload())
+
+    def test_root_column_children_patch_item_payload(self):
+        mock_root_column_children = RootColumnChildrenPatchItem(
+            parent_key="95.employees.address",
+            key="address.city",
+            title="City",
+            description="Customer city"
+        )
+
+        expected_payload = {
+            "parent_key": "95.employees.address",
+            "key": "address.city",
+            "title": "City",
+            "description": "Customer city"
+        }
+
+        assert mock_root_column_children.generate_api_patch_payload() == expected_payload
+
+    def test_root_column_children_patch_item_exception_missing_parent_key(self):
+        mock_root_column_children = RootColumnChildrenPatchItem(
+            key="address.city"
+        )
+
+        pytest.raises(InvalidPostBody, lambda: mock_root_column_children.generate_api_patch_payload())
+
+    def test_child_column_params_generate_query_params(self):
+        mock_params = ChildColumnParams(
+            child_limit=50,
+            child_offset=10,
+            ids="2002,2003",
+            paths="address.city,address.zip"
+        )
+
+        assert mock_params.generate_params_dict() == {
+            "child_limit": 50,
+            "child_offset": 10,
+            "ids": "2002,2003",
+            "paths": "address.city,address.zip"
+        }
 
     def test_base_rdbms_custom_field_parsing(self):
 

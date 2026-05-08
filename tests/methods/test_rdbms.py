@@ -589,6 +589,51 @@ class TestRDBMS:
         with pytest.raises(requests.exceptions.HTTPError):
             self.mock_user.get_columns()
 
+    def test_success_get_child_columns(self, requests_mock):
+
+        mock_params = ChildColumnParams(paths="address.city")
+        success_response = {
+            "ds_id": 1,
+            "parent_fully_qualified_name": "1.ORDERS.customers.address",
+            "children": [
+                {
+                    "key": "city",
+                    "type": "VARCHAR(100)",
+                    "id": 2002,
+                    "path": "address.city",
+                    "other_metadata": {},
+                    "title": "City",
+                    "description": "Customer city"
+                }
+            ]
+        }
+        success_child_columns = ColumnChildren.from_api_response(success_response)
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/column/2001/children/?paths=address.city",
+            json=success_response
+        )
+
+        child_columns = self.mock_user.get_child_columns(2001, mock_params)
+
+        assert success_child_columns == child_columns
+
+    def test_failed_get_child_columns(self, requests_mock):
+
+        failed_response = {
+            "detail": "Column with id 0 does not exist",
+            "code": "404000"
+        }
+        requests_mock.register_uri(
+            "GET",
+            "/integration/v2/column/0/children/",
+            json=failed_response,
+            status_code=404
+        )
+
+        with pytest.raises(requests.exceptions.HTTPError):
+            self.mock_user.get_child_columns(0)
+
     
     def test_success_post_columns(self, requests_mock):
 
@@ -788,6 +833,154 @@ class TestRDBMS:
 
         assert expected_result == async_result
 
+    def test_success_patch_child_columns(self, requests_mock):
+
+        children = [
+            ChildColumnPatchItem(
+                key="address.city",
+                title="City",
+                description="Updated city description"
+            )
+        ]
+
+        async_response = {
+            "job_id": 27811
+        }
+
+        requests_mock.register_uri(
+            method="PATCH",
+            url="/integration/v2/column/2001/children/?ds_id=1",
+            json=async_response,
+            status_code=202
+        )
+
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 2.150000 seconds at 2024-12-02 12:15:00.000000+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 child column objects.",
+                    "mapping": [
+                        {"id": 2002, "key": "1.ORDERS.customers.address.city"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        requests_mock.register_uri(
+            method="GET",
+            url="/api/v1/bulk_metadata/job/?id=27811",
+            json=job_api_response
+        )
+
+        async_result = self.mock_user.patch_child_columns(
+            ds_id=1,
+            column_id=2001,
+            children=children
+        )
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful",
+                msg="Job finished in 2.150000 seconds at 2024-12-02 12:15:00.000000+00:00",
+                result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 child column objects.",
+                        mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=2002,
+                                key="1.ORDERS.customers.address.city"
+                            )
+                        ],
+                        errors=[]
+                    )
+                ]
+            )
+        ]
+
+        assert expected_result == async_result
+        assert requests_mock.request_history[0].json() == [
+            {
+                "key": "address.city",
+                "title": "City",
+                "description": "Updated city description"
+            }
+        ]
+
+    def test_success_patch_root_child_columns(self, requests_mock):
+
+        children = [
+            RootColumnChildrenPatchItem(
+                parent_key="1.ORDERS.customers.address",
+                key="address.city",
+                title="City",
+                description="Updated city description"
+            )
+        ]
+
+        async_response = {
+            "job_id": 27812
+        }
+
+        requests_mock.register_uri(
+            method="PATCH",
+            url="/integration/v2/column/children/?ds_id=1",
+            json=async_response,
+            status_code=202
+        )
+
+        job_api_response = {
+            "status": "successful",
+            "msg": "Job finished in 2.750000 seconds at 2024-12-02 12:18:00.000000+00:00",
+            "result": [
+                {
+                    "response": "Updated 1 root child column groups.",
+                    "mapping": [
+                        {"id": 2001, "key": "1.ORDERS.customers.address"}
+                    ],
+                    "errors": []
+                }
+            ]
+        }
+
+        requests_mock.register_uri(
+            method="GET",
+            url="/api/v1/bulk_metadata/job/?id=27812",
+            json=job_api_response
+        )
+
+        async_result = self.mock_user.patch_root_child_columns(ds_id=1, children=children)
+
+        expected_result = [
+            JobDetailsRdbms(
+                status="successful",
+                msg="Job finished in 2.750000 seconds at 2024-12-02 12:18:00.000000+00:00",
+                result=[
+                    JobDetailsRdbmsResult(
+                        response="Updated 1 root child column groups.",
+                        mapping=[
+                            JobDetailsRdbmsResultMapping(
+                                id=2001,
+                                key="1.ORDERS.customers.address"
+                            )
+                        ],
+                        errors=[]
+                    )
+                ]
+            )
+        ]
+
+        assert expected_result == async_result
+        assert requests_mock.request_history[0].json() == [
+            {
+                "parent_key": "1.ORDERS.customers.address",
+                "key": "address.city",
+                "title": "City",
+                "description": "Updated city description"
+            }
+        ]
+
     
     def test_failed_patch_columns(self, requests_mock):
         mock_column = ColumnPatchItem()
@@ -797,4 +990,24 @@ class TestRDBMS:
             self.mock_user.patch_columns(ds_id=1, columns=mock_column_list)
 
         assert "'id' or 'key' is a required field for Column PATCH payload body" in str(context.value)
+        assert requests_mock.called is False
+
+    def test_failed_patch_child_columns(self, requests_mock):
+        mock_child_column = ChildColumnPatchItem()
+        mock_child_column_list = [mock_child_column]
+
+        with pytest.raises(InvalidPostBody) as context:
+            self.mock_user.patch_child_columns(ds_id=1, column_id=2001, children=mock_child_column_list)
+
+        assert "'key' is a required field for Child Column PATCH payload body" in str(context.value)
+        assert requests_mock.called is False
+
+    def test_failed_patch_root_child_columns(self, requests_mock):
+        mock_root_child_columns = RootColumnChildrenPatchItem()
+        mock_root_child_columns_list = [mock_root_child_columns]
+
+        with pytest.raises(InvalidPostBody) as context:
+            self.mock_user.patch_root_child_columns(ds_id=1, children=mock_root_child_columns_list)
+
+        assert "'parent_key' is a required field for Root Column Children PATCH payload body" in str(context.value)
         assert requests_mock.called is False

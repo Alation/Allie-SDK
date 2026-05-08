@@ -22,6 +22,7 @@ from allie_sdk import JobDetailsRdbmsResult
 
 # adjust to your requirements
 DATA_SOURCE_ID = 1
+STRUCT_COLUMN_ID = 20819
 
 # ================================
 # Define Logging Config
@@ -304,3 +305,91 @@ else:
         logging.error("Unexpected result ... I don't know how to handle this ...")
         sys.exit(1)
 
+
+# ================================
+# FETCH CHILD COLUMNS OF A STRUCT COLUMN
+# ================================
+
+if STRUCT_COLUMN_ID:
+    child_column_response = alation.rdbms.get_child_columns(
+        column_id = STRUCT_COLUMN_ID
+    )
+
+    """
+    Example response content:
+    ChildrenResponse(ds_id=193, parent_fully_qualified_name='193.ORDERS.refunds.address', children=[ChildColumn(key='city', type='STRING', id=848419, path='address.city', other_metadata={}, title='City', description='Customer city', children=[])])
+    """
+
+    if child_column_response is None:
+        logging.error("Tried to fetch child columns ... but somehow heard nothing back!")
+        sys.exit(1)
+    else:
+        logging.info(
+            f"Fetched {len(child_column_response.children)} child columns for column ID {STRUCT_COLUMN_ID}"
+        )
+else:
+    logging.warning("Skipping child column examples because STRUCT_COLUMN_ID is not set.")
+
+
+# ================================
+# UPDATE CHILD COLUMNS UNDER A COLUMN
+# ================================
+
+if STRUCT_COLUMN_ID:
+    patch_child_columns_response = alation.rdbms.patch_child_columns(
+        ds_id = DATA_SOURCE_ID
+        , column_id = STRUCT_COLUMN_ID
+        , children = [
+            allie.ChildColumnPatchItem(
+                key = "address.city"
+                , title = "City"
+                , description = "Updated description for the city child column ..."
+            )
+        ]
+    )
+
+    if patch_child_columns_response is None:
+        logging.error("Tried to patch child columns ... but somehow heard nothing back!")
+        sys.exit(1)
+    else:
+        if isinstance(patch_child_columns_response, list):
+            for r in patch_child_columns_response:
+                if r.status == "successful":
+                    logging.info(r.result[0].response)
+                else:
+                    logging.error(f"Finished with status {r.status}: {r.result}")
+        else:
+            logging.error("Unexpected child column patch result ... I don't know how to handle this ...")
+            sys.exit(1)
+
+
+# ================================
+# UPDATE CHILD COLUMNS FOR MULTIPLE ROOT COLUMNS
+# ================================
+
+if STRUCT_COLUMN_ID:
+    patch_root_child_columns_response = alation.rdbms.patch_root_child_columns(
+        ds_id = DATA_SOURCE_ID
+        , children = [
+            allie.RootColumnChildrenPatchItem(
+                parent_key = f"{DATA_SOURCE_ID}.ORDERS.refunds.address"
+                , key = "address.city"
+                , title = "City"
+                , description = "Bulk updated description for the city child column ..."
+            )
+        ]
+    )
+
+    if patch_root_child_columns_response is None:
+        logging.error("Tried to patch root child columns ... but somehow heard nothing back!")
+        sys.exit(1)
+    else:
+        if isinstance(patch_root_child_columns_response, list):
+            for r in patch_root_child_columns_response:
+                if r.status == "successful":
+                    logging.info(r.result[0].response)
+                else:
+                    logging.error(f"Finished with status {r.status}: {r.result}")
+        else:
+            logging.error("Unexpected root child column patch result ... I don't know how to handle this ...")
+            sys.exit(1)
