@@ -11,7 +11,7 @@ import logging
 import sys
 
 import allie_sdk as allie
-from allie_sdk.models import QueryParams
+
 
 # ================================
 # Set Global Variables
@@ -80,7 +80,7 @@ logging.info("Created query %s (id=%s)", created_query.result.title, created_que
 # ================================
 
 queries = alation.query.get_queries(
-    query_params = QueryParams(
+    query_params = allie.QueryParams(
         datasource_id=DATASOURCE_ID
     )
 )

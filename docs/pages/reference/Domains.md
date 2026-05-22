@@ -187,7 +187,8 @@ Returns:
 ```
 get_domain_membership_rules(
     self,
-    rules_request: DomainMembershipRuleRequest
+    rules_request: DomainMembershipRuleRequest,
+    query_params: DomainMembershipRuleParams = None
 ) -> list[DomainMembershipRule]
 ```
 
@@ -195,9 +196,11 @@ Browse the membership rules that are applied to the requested domains.
 
 Args:
 - `rules_request`: Filters describing which rules should be returned.
+- `query_params`: Optional `DomainMembershipRuleParams` for `limit` and `skip`.
 
 Returns:
-- List of `DomainMembershipRule` instances representing the matching rules.
+- List of `DomainMembershipRule` instances representing the matching rules. The SDK
+  automatically follows `X-Next-Page` headers and returns all matching pages.
 
 ## Examples
 

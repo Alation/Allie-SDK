@@ -159,7 +159,12 @@ if domain_id:
         recursive=DOMAIN_RULES_RECURSIVE,
     )
 
-    rules = alation.domain.get_domain_membership_rules(rules_request)
+    rules_query_params = allie.DomainMembershipRuleParams(limit=200)
+
+    rules = alation.domain.get_domain_membership_rules(
+        rules_request,
+        rules_query_params,
+    )
 
     if not rules:
         logging.info("No membership rules matched the supplied filters.")
