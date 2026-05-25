@@ -111,6 +111,23 @@ class DomainMembershipRuleRequest(BaseClass):
 
 
 @dataclass(kw_only = True)
+class DomainMembershipRuleParams(BaseParams):
+    limit: int = field(default=None)
+    skip: int = field(default=None)
+
+    def generate_params_dict(self) -> dict:
+        params = {}
+
+        if self.limit is not None:
+            params["limit"] = self.limit
+
+        if self.skip is not None:
+            params["skip"] = self.skip
+
+        return params
+
+
+@dataclass(kw_only = True)
 class DomainMembershipRule(BaseClass):
     domain_id: int = field(default=None)
     exclude: bool = field(default=None)

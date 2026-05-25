@@ -80,6 +80,7 @@ from .models import (
     DomainItem,
     DomainMembership,
     DomainMembershipRule,
+    DomainMembershipRuleParams,
     DomainMembershipRuleRequest,
     DomainMoveItem,
     DomainParams,

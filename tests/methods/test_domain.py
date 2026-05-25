@@ -221,3 +221,101 @@ class TestDomain:
         ]
 
         assert expected_rules == rules
+
+    def test_view_domain_membership_rules_with_pagination(self, requests_mock):
+        first_page = [
+            {
+                "domain_id": 1,
+                "exclude": False,
+                "recursive": False,
+                "otype": "table",
+                "oid": 10,
+            }
+        ]
+        second_page = [
+            {
+                "domain_id": 1,
+                "exclude": False,
+                "recursive": True,
+                "otype": "schema",
+                "oid": 11,
+            }
+        ]
+
+        requests_mock.register_uri(
+            method="POST",
+            url="/integration/v2/domain/membership/view_rules/",
+            json=first_page,
+            headers={"X-Next-Page": "/integration/v2/domain/membership/view_rules/?skip=1&limit=1"},
+            status_code=200,
+        )
+        requests_mock.register_uri(
+            method="POST",
+            url="/integration/v2/domain/membership/view_rules/?skip=1&limit=1",
+            json=second_page,
+            status_code=200,
+        )
+
+        rules = self.mock_user.get_domain_membership_rules(
+            DomainMembershipRuleRequest(
+                domain_ids=[1],
+                exclude=False,
+            )
+        )
+
+        assert rules == [
+            DomainMembershipRule(
+                domain_id=1,
+                exclude=False,
+                recursive=False,
+                otype="table",
+                oid=10,
+            ),
+            DomainMembershipRule(
+                domain_id=1,
+                exclude=False,
+                recursive=True,
+                otype="schema",
+                oid=11,
+            ),
+        ]
+        assert requests_mock.call_count == 2
+        assert requests_mock.request_history[0].json() == {"domain_id": [1], "exclude": False}
+        assert requests_mock.request_history[1].json() == {"domain_id": [1], "exclude": False}
+
+    def test_view_domain_membership_rules_with_query_params(self, requests_mock):
+        api_response = [
+            {
+                "domain_id": 1,
+                "exclude": False,
+                "recursive": False,
+                "otype": "table",
+                "oid": 10,
+            }
+        ]
+
+        requests_mock.register_uri(
+            method="POST",
+            url="/integration/v2/domain/membership/view_rules/",
+            json=api_response,
+            status_code=200,
+        )
+
+        rules = self.mock_user.get_domain_membership_rules(
+            DomainMembershipRuleRequest(
+                domain_ids=[1],
+                exclude=False,
+            ),
+            DomainMembershipRuleParams(limit=50, skip=0),
+        )
+
+        assert rules == [
+            DomainMembershipRule(
+                domain_id=1,
+                exclude=False,
+                recursive=False,
+                otype="table",
+                oid=10,
+            )
+        ]
+        assert requests_mock.last_request.qs == {"limit": ["50"], "skip": ["0"]}

@@ -115,3 +115,11 @@ class TestDomainModels:
                 otype="table",
                 oid=42,
             )
+
+    def test_domain_membership_rule_params_preserve_zero_values(self):
+        params = DomainMembershipRuleParams(limit=100, skip=0)
+
+        assert params.generate_params_dict() == {
+            "limit": 100,
+            "skip": 0,
+        }

@@ -13,6 +13,7 @@ from ..models.domain_model import (
     DomainItem,
     DomainMembership,
     DomainMembershipRule,
+    DomainMembershipRuleParams,
     DomainMembershipRuleRequest,
     DomainMoveItem,
     DomainParams,
@@ -229,6 +230,7 @@ class AlationDomain(AsyncHandler):
     def get_domain_membership_rules(
         self,
         rules_request: DomainMembershipRuleRequest,
+        query_params: DomainMembershipRuleParams = None,
     ) -> list[DomainMembershipRule]:
         """Retrieve membership rules applied to the requested domains."""
 
@@ -239,12 +241,15 @@ class AlationDomain(AsyncHandler):
             payload=[rules_request],
             expected_types=(DomainMembershipRuleRequest,),
         )
+        validate_query_params(query_params, DomainMembershipRuleParams)
 
         payload = rules_request.generate_api_post_payload()
+        params = query_params.generate_params_dict() if query_params else None
 
-        response = self.post(
+        response = self.post_paginated(
             url='/integration/v2/domain/membership/view_rules/',
-            body=payload
+            body=payload,
+            query_params=params,
         )
 
         def _map_rules(items: list) -> list[DomainMembershipRule]:

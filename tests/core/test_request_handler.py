@@ -88,6 +88,41 @@ class TestRequestHandler:
         assert result == {'id': 2, 'name': 'New Test'}
         assert requests_mock.last_request.headers['Token'] == 'test_token'
 
+    def test_post_paginated(self, requests_mock):
+        requests_mock.post(
+            'https://test.alation.com/test/post',
+            json=[{'id': 1, 'name': 'Test 1'}],
+            headers={'X-Next-Page': '/test/post?skip=1&limit=1'},
+        )
+        requests_mock.post(
+            'https://test.alation.com/test/post?skip=1&limit=1',
+            json=[{'id': 2, 'name': 'Test 2'}],
+        )
+
+        result = self.handler.post_paginated('/test/post', {'name': 'New Test'})
+
+        assert result == [{'id': 1, 'name': 'Test 1'}, {'id': 2, 'name': 'Test 2'}]
+        assert requests_mock.call_count == 2
+        assert requests_mock.request_history[0].json() == {'name': 'New Test'}
+        assert requests_mock.request_history[1].json() == {'name': 'New Test'}
+
+    def test_post_paginated_error(self, requests_mock):
+        requests_mock.post(
+            'https://test.alation.com/test/post',
+            json=[{'id': 1, 'name': 'Test 1'}],
+            headers={'X-Next-Page': '/test/post?skip=1&limit=1'},
+        )
+        requests_mock.post(
+            'https://test.alation.com/test/post?skip=1&limit=1',
+            json={'error': 'Server error'},
+            status_code=500,
+        )
+
+        with pytest.raises(HTTPError) as context:
+            self.handler.post_paginated('/test/post', {'name': 'New Test'})
+
+        assert context.value.response.status_code == 500
+
     
     def test_post_error(self, requests_mock):
         requests_mock.post('https://test.alation.com/test/post', json={'error': 'Server error'}, status_code=500)

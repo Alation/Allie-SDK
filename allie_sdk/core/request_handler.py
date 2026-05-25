@@ -247,15 +247,13 @@ class RequestHandler(object):
         if query_params is None:
             query_params = {}
 
-        if headers:
-            headers['Token'] = self.access_token
-        else:
-            headers = self.headers
-
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
-
-        api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers, files=files)
+        api_response = self._api_single_post(
+            self.host + url,
+            body=body,
+            params=query_params,
+            headers=headers,
+            files=files,
+        )
 
         try:
             response_data = api_response.json()
@@ -265,29 +263,93 @@ class RequestHandler(object):
             except UnicodeDecodeError:
                 response_data = api_response.content
 
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            'Method': 'POST'
-            , 'URL': api_response.url
-            , 'Response': api_response.status_code
-        }
-
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(
-                response_data
-                , log_details
-                , message = f'Error submitting the POST Request to: {log_url}'
-            )
-            
-            # Raise HTTP error instead of returning error details
             api_response.raise_for_status()
 
-        self._log_success(
-            log_details
-            , message = f'Successfully submitted the POST Request to: {log_url}'
+        return response_data
+
+    def post_paginated(
+        self,
+        url: str,
+        body: any,
+        query_params: dict = None,
+        headers: dict = None,
+        files: dict = None,
+    ) -> dict | list:
+        """API Post Request with pagination support via ``X-Next-Page``.
+
+        Args:
+            url (str): POST API Call URL.
+            body (any): POST API Body.
+            query_params (dict): POST API Call Query Parameters.
+            headers (dict): POST API Call Headers.
+            files: (dict) POST API Call upload files
+
+        Returns:
+            dict | list: API Response Body.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+            ValueError: If the API returns paginated data in a non-list response shape.
+        """
+        if query_params is None:
+            query_params = {}
+
+        api_response = self._api_single_post(
+            self.host + url,
+            body=body,
+            params=query_params,
+            headers=headers,
+            files=files,
         )
 
-        return response_data
+        if api_response.status_code not in SUCCESS_CODES:
+            api_response.raise_for_status()
+
+        try:
+            returned_items = api_response.json()
+        except requests.exceptions.JSONDecodeError:
+            try:
+                returned_items = api_response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                returned_items = api_response.content
+
+        if not isinstance(returned_items, list):
+            if "X-Next-Page" in api_response.headers:
+                raise ValueError("Paginated POST requests must return list responses.")
+            return returned_items
+
+        while "X-Next-Page" in api_response.headers:
+            next_url = api_response.headers.get("X-Next-Page")
+            if not next_url:
+                break
+
+            parsed_next_url = urlparse(next_url)
+            request_url = next_url if parsed_next_url.scheme else self.host + next_url
+            api_response = self._api_single_post(
+                request_url,
+                body=body,
+                headers=headers,
+                files=files,
+            )
+
+            if api_response.status_code not in SUCCESS_CODES:
+                api_response.raise_for_status()
+
+            try:
+                response_data = api_response.json()
+            except requests.exceptions.JSONDecodeError:
+                try:
+                    response_data = api_response.content.decode("utf-8")
+                except UnicodeDecodeError:
+                    response_data = api_response.content
+
+            if not isinstance(response_data, list):
+                raise ValueError("Paginated POST requests must return list responses.")
+
+            returned_items.extend(response_data)
+
+        return returned_items
     
     def post_oauth(self, url: str, body: any, query_params: dict = None, headers: dict = None,
              files: dict = None, auth: HTTPBasicAuth = None) -> dict | list:
@@ -492,6 +554,77 @@ class RequestHandler(object):
             self._log_success(
                 log_details
                 , message = f'Successfully submitted the GET Request to: {log_url}'
+            )
+
+        return api_response
+
+    def _api_single_post(
+        self,
+        url: str,
+        body: any,
+        params: dict = None,
+        headers: dict = None,
+        files: dict = None,
+    ) -> requests.Response:
+        """Run a Single REST API Post Call.
+
+        Args:
+            url (str): POST API Call URL.
+            body (any): POST API Body.
+            params (dict): POST API Call Query Parameters.
+            headers (dict): POST API Call Headers.
+            files: (dict) POST API Call upload files
+
+        Returns:
+            requests.Response: API POST Response.
+
+        Note:
+            This is a helper method that doesn't raise exceptions directly.
+            The calling method is responsible for checking status codes and raising exceptions.
+        """
+        if headers:
+            headers["Token"] = self.access_token
+        else:
+            headers = self.headers
+
+        if isinstance(body, dict) or isinstance(body, list):
+            body = json.dumps(body, default=str)
+
+        api_response = self.s.post(
+            url,
+            data=body,
+            params=params,
+            headers=headers,
+            files=files,
+        )
+
+        try:
+            response_data = api_response.json()
+        except requests.exceptions.JSONDecodeError:
+            try:
+                response_data = api_response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                response_data = api_response.content
+
+        log_url = self._format_log_url(api_response.url)
+        log_details = {
+            "Method": "POST",
+            "URL": api_response.url,
+            "Response": api_response.status_code,
+        }
+
+        if api_response.status_code not in SUCCESS_CODES:
+            self._log_error(
+                response_data,
+                log_details,
+                message=f"Error submitting the POST Request to: {log_url}",
+            )
+        else:
+            response_objects = len(response_data) if isinstance(response_data, list) else 1
+            log_details["Objects Returned"] = response_objects
+            self._log_success(
+                log_details,
+                message=f"Successfully submitted the POST Request to: {log_url}",
             )
 
         return api_response
