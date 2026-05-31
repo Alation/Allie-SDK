@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "enabledManagers": ["pip_requirements", "poetry", "pep621", "github-actions"],
+  "enabledManagers": ["pep621", "github-actions"],
   "baseBranches": ["main"],
   "prConcurrentLimit": 10,
   "prHourlyLimit": 0,
@@ -32,7 +32,7 @@
   "packageRules": [
     {
       "description": "🐍 Python dependencies - PATCH updates (automerge)",
-      "matchManagers": ["pip_requirements", "poetry", "pep621"],
+      "matchManagers": ["pep621"],
       "matchUpdateTypes": ["patch"],
       "groupName": "python-patch-updates",
       "semanticCommitType": "fix",
@@ -43,7 +43,7 @@
     },
     {
       "description": "🐍 Python dependencies - MINOR updates (automerge)",
-      "matchManagers": ["pip_requirements", "poetry", "pep621"],
+      "matchManagers": ["pep621"],
       "matchUpdateTypes": ["minor"],
       "groupName": "python-minor-updates",
       "semanticCommitType": "feat",
@@ -104,7 +104,7 @@
     },
     {
       "description": "🚫 DISABLED: Internal Alation Python packages",
-      "matchManagers": ["pip_requirements", "poetry", "pep621"],
+      "matchManagers": ["pep621"],
       "matchPackageNames": ["alation-mt-s3", "asimov", "cmsclient", "secrets-store-env"],
       "enabled": false
     },
@@ -115,8 +115,6 @@
       "enabled": false
     }
   ],
-  "pip_requirements": { "enabled": true, "fileMatch": ["(^|/)requirements.*\\.txt$"] },
-  "poetry": { "enabled": true },
   "pep621": { "enabled": true },
   "ignoreDeps": [],
   "ignorePaths": ["**/vendor/**"]
