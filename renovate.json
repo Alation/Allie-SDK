@@ -1,0 +1,121 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["pep621", "github-actions"],
+  "baseBranches": ["main"],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "platformAutomerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "reviewers": [
+    "jonlanham-alation",
+    "diethard-at-alation",
+    "ignaszewskir",
+    "cory-alation"
+  ],
+  "commitMessagePrefix": "chore:",
+  "commitMessageAction": "update",
+  "prHeader": "## 📝 Summary",
+  "prFooter": "## 💡 Solution\n\nUpdate {{{depName}}} from {{currentVersion}} to {{newVersion}}",
+  "prBodyTemplate": "{{{header}}}{{{table}}}{{{warnings}}}{{{notes}}}{{{changelogs}}}{{{footer}}}",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["dependencies", "renovate", "security"],
+    "semanticCommitType": "fix",
+    "semanticCommitScope": "security",
+    "schedule": []
+  },
+  "osvVulnerabilityAlerts": true,
+  "recreateWhen": "always",
+  "labels": ["dependencies", "renovate"],
+  "packageRules": [
+    {
+      "description": "🐍 Python dependencies - PATCH updates (automerge)",
+      "matchManagers": ["pep621"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "python-patch-updates",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "python",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "python", "patch", "automerge"],
+      "prPriority": 40
+    },
+    {
+      "description": "🐍 Python dependencies - MINOR updates (automerge)",
+      "matchManagers": ["pep621"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "python-minor-updates",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "python",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "python", "minor", "automerge"],
+      "prPriority": 30
+    },
+    {
+      "description": "⚙️ GitHub Actions - PATCH updates (automerge)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch"],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": "actions",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "github-actions", "patch", "automerge"],
+      "prPriority": 40
+    },
+    {
+      "description": "⚙️ GitHub Actions - MINOR updates (automerge)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor"],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": "actions",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "github-actions", "minor", "automerge"],
+      "prPriority": 30
+    },
+    {
+      "description": "🚫 DISABLED: All non-security MAJOR updates (temporarily blocked). Placed before the security rules so those still open (last-rule-wins).",
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "🔐 Security PATCH vulnerability fixes (automerge, highest priority). Uses the v42 isVulnerabilityAlert matcher at the top level — nesting packageRules inside vulnerabilityAlerts is silently ignored by Renovate's force/applyPackageRules path.",
+      "matchUpdateTypes": ["patch"],
+      "isVulnerabilityAlert": true,
+      "automerge": true,
+      "prPriority": 99,
+      "labels": ["dependencies", "renovate", "security", "automerge"]
+    },
+    {
+      "description": "🔐 Security MINOR vulnerability fixes (automerge).",
+      "matchUpdateTypes": ["minor"],
+      "isVulnerabilityAlert": true,
+      "automerge": true,
+      "prPriority": 95,
+      "labels": ["dependencies", "renovate", "security", "automerge"]
+    },
+    {
+      "description": "🔐 Security MAJOR vulnerability fixes (manual review). Placed after the major catch-all so security majors re-open for manual review (last-rule-wins); enabled:true overrides the catch-all's enabled:false.",
+      "matchUpdateTypes": ["major"],
+      "isVulnerabilityAlert": true,
+      "enabled": true,
+      "automerge": false,
+      "prPriority": 90,
+      "labels": ["dependencies", "renovate", "security"]
+    },
+    {
+      "description": "🚫 DISABLED: Internal Alation Python packages",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["alation-mt-s3", "asimov", "cmsclient", "secrets-store-env"],
+      "enabled": false
+    },
+    {
+      "description": "🚫 DISABLED: Internal Alation GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["/^alation/.*/", "/^Alation/.*/"],
+      "enabled": false
+    }
+  ],
+  "pep621": { "enabled": true },
+  "ignoreDeps": [],
+  "ignorePaths": ["**/vendor/**"]
+}
