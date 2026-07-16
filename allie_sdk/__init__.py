@@ -14,6 +14,7 @@ from .models import (
     BIServerItem,
     BIServerNameConfiguration,
     BIServerParams,
+    CDEToken,
     BusinessPolicyPostItem,
     DataDictionaryAsyncTask,
     DataDictionaryAsyncTaskDetails,

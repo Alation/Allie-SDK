@@ -1,4 +1,5 @@
 from .authentication_model import *
+from .cdm_authentication_model import *
 from .bi_source_model import *
 from .business_policy_model import *
 from .connector_model import *

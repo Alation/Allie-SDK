@@ -1,4 +1,5 @@
 from .authentication import AlationAuthentication
+from .cdm_authentication import AlationCDMAuthentication
 from .bi_source import AlationBISource
 from .business_policy import AlationBusinessPolicy
 from .connector import AlationConnector
