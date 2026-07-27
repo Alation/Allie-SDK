@@ -93,7 +93,9 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
         return CriticalDataElement.from_api_response(critical_data_element)
 
     def create_critical_data_element(
-        self, critical_data_element: CriticalDataElementItem
+        self,
+        critical_data_element: CriticalDataElementItem,
+        allow_duplicates: bool = False,
     ) -> CriticalDataElement:
         """Create a single Critical Data Element.
 
@@ -102,7 +104,10 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
         Args:
             critical_data_element (CriticalDataElementItem): The element to create
                 (``name`` is required; ``status`` must be a creation status, e.g.
-                ``CANDIDATE`` or ``DRAFT``).
+                ``CANDIDATE`` or ``DRAFT``). Optional risk / relationship / overlay-standard
+                / PDE fields are passed through if set.
+            allow_duplicates (bool): Whether the server may create an element whose name
+                duplicates an existing one.
 
         Returns:
             CriticalDataElement: The created Critical Data Element.
@@ -115,6 +120,8 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
         """
         validate_rest_payload([critical_data_element], (CriticalDataElementItem,))
         payload = critical_data_element.generate_api_post_payload()
+        if allow_duplicates:
+            payload["options"] = {"allow_duplicates": True}
 
         created = self._cde_post(CDE_ENDPOINT, body=payload)
         return CriticalDataElement.from_api_response(created)

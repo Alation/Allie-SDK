@@ -153,6 +153,28 @@ class TestCDMCriticalDataElement:
             "name": "Customer ID", "status": "CANDIDATE"
         }
 
+    def test_create_critical_data_element_with_optional_fields_and_allow_duplicates(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri(
+            "POST", "/cde-service/integration/cde/",
+            json={"id": 9, "name": "Customer SSN"}, status_code=201,
+        )
+
+        self.cde.create_critical_data_element(
+            CriticalDataElementItem(
+                name="Customer SSN",
+                risk_level_value=3,
+                owners=[{"id": 123, "name": "Privacy Officer", "source_key": "alation://user/123"}],
+            ),
+            allow_duplicates=True,
+        )
+
+        body = requests_mock.last_request.json()
+        assert body["name"] == "Customer SSN"
+        assert body["risk_level_value"] == 3
+        assert body["owners"][0]["source_key"] == "alation://user/123"
+        assert body["options"] == {"allow_duplicates": True}
+
     def test_create_critical_data_element_requires_name(self, requests_mock):
         self._register_auth(requests_mock)
         with pytest.raises(InvalidPostBody):

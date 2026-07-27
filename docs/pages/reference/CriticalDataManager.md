@@ -53,13 +53,17 @@ Attributes:
 | description        | str      | The Critical Data Element description.                                     |
 | version            | int      | Version number.                                                            |
 | status             | str      | Lifecycle status (e.g. `CANDIDATE`, `DRAFT`, `CERTIFIED`).                  |
-| cde_risk_level     | str      | Risk level label (e.g. `Low`/`Medium`/`High`), read-only.                  |
+| cde_risk_level     | str      | Risk level label (list responses; e.g. `Low`/`Medium`/`High`).             |
+| risk_level         | dict     | Risk object `{value, label, number_of_levels}` (get responses).            |
+| risk_rationale     | str      | Rationale for the risk assessment.                                         |
+| risk_confidence    | float    | Confidence of the risk assessment.                                         |
 | domains            | list     | Associated domains, as raw object-reference dicts `{id, name, source_key}`. |
 | stewards           | list     | Stewards, as raw object-reference dicts.                                   |
 | owners             | list     | Owners, as raw object-reference dicts.                                     |
 | sources            | list     | Sources, as raw object-reference dicts.                                    |
 | approvers          | list     | Approvers, as raw object-reference dicts.                                  |
 | contributors       | list     | Contributors, as raw object-reference dicts.                               |
+| fields             | list     | Applied overlay-standard data (nested), as raw passthrough.                |
 | data_assets_counts | dict     | PDE-relationship counts, e.g. `{all, control_points, related, suggested}`.  |
 | quality_score      | float    | Data-quality score (nullable).                                             |
 | curation_score     | float    | Curation score (nullable).                                                 |
@@ -77,6 +81,28 @@ values from the API payload (not typed sub-models); typed modelling of those wor
 deferred. Each object-reference dict is shaped like
 `{"id": <int>, "name": <str>, "source_key": "alation://<type>/<id>"}` (e.g.
 `alation://user/123`, `alation://domain/10`).
+
+### CriticalDataElementItem
+The create/update payload for a Critical Data Element (used by
+`create_critical_data_element`, `create_critical_data_elements_bulk`, and
+`update_critical_data_element`). Only set fields are sent.
+
+| Name             | Type | Description                                                                        |
+|------------------|------|------------------------------------------------------------------------------------|
+| name             | str  | The element name (required for create).                                            |
+| description      | str  | The element description.                                                           |
+| status           | str  | Creation status (`CANDIDATE`/`DRAFT`); ignored on update.                           |
+| risk_level_value | int  | Risk level value.                                                                  |
+| risk_level_label | str  | Risk level label.                                                                  |
+| risk_rationale   | str  | Rationale for the risk assessment.                                                 |
+| domains          | list | Domain object-references (raw), `source_key` as `alation://<type>/<id>`.            |
+| stewards         | list | Steward object-references (raw).                                                   |
+| owners           | list | Owner object-references (raw).                                                     |
+| sources          | list | Source object-references (raw).                                                    |
+| approvers        | list | Approver object-references (raw).                                                  |
+| contributors     | list | Contributor object-references (raw).                                               |
+| fields           | list | Applied overlay-standard data (nested, raw).                                       |
+| pdes             | list | Physical-data-element mappings (nested, raw). Create only — omitted on update.      |
 
 ### CriticalDataElementParams
 Filter parameters for `get_critical_data_elements`. Repeatable filters are sets,
@@ -207,6 +233,8 @@ Create a single Critical Data Element. Calls `POST /cde-service/integration/cde/
 Args:
 * critical_data_element (CriticalDataElementItem): The element to create (`name` is
   required; `status` should be a creation status such as `CANDIDATE` or `DRAFT`).
+  Optional risk / relationship / overlay-standard `fields` / `pdes` are passed through if set.
+* allow_duplicates (bool): Whether the server may create a name-duplicate element.
 
 Returns:
 * `CriticalDataElement`

@@ -112,6 +112,114 @@ class TestCriticalDataElementModel:
             "description": "only desc"
         }
 
+    def test_generate_api_post_payload_with_optional_fields(self):
+        item = CriticalDataElementItem(
+            name="Customer SSN",
+            status="DRAFT",
+            risk_level_value=3,
+            risk_level_label="High",
+            risk_rationale="Contains PII",
+            owners=[{"id": 123, "name": "Privacy Officer", "source_key": "alation://user/123"}],
+            domains=[{"id": 10, "name": "Customer Data", "source_key": "alation://domain/10"}],
+            fields=[{"key": "k1", "derived_requirements": []}],
+            pdes=[{
+                "relationship": "control_point", "name": "PDE1", "source_key": "PDE1 Key",
+                "path": [{"type": "schema", "name": "S1"}],
+            }],
+        )
+        payload = item.generate_api_post_payload()
+
+        assert payload["name"] == "Customer SSN"
+        assert payload["risk_level_value"] == 3
+        assert payload["risk_level_label"] == "High"
+        assert payload["risk_rationale"] == "Contains PII"
+        assert payload["owners"][0]["source_key"] == "alation://user/123"
+        assert payload["domains"][0]["id"] == 10
+        assert payload["fields"] == [{"key": "k1", "derived_requirements": []}]
+        assert payload["pdes"][0]["relationship"] == "control_point"
+
+    def test_generate_api_put_payload_omits_pdes(self):
+        # pdes is a create-only field; it must not appear in the update payload.
+        item = CriticalDataElementItem(
+            name="X",
+            owners=[{"id": 1, "name": "O", "source_key": "alation://user/1"}],
+            pdes=[{"relationship": "control_point", "name": "PDE1"}],
+        )
+        payload = item.generate_api_put_payload()
+
+        assert payload["name"] == "X"
+        assert payload["owners"][0]["id"] == 1
+        assert "pdes" not in payload
+
+    def test_fields_validation_missing_key(self):
+        item = CriticalDataElementItem(name="x", fields=[{"derived_requirements": []}])
+        with pytest.raises(InvalidPostBody, match=r"fields\[0\].*key"):
+            item.generate_api_post_payload()
+
+    def test_fields_validation_missing_inner_value(self):
+        item = CriticalDataElementItem(
+            name="x",
+            fields=[{
+                "key": "k1",
+                "derived_requirements": [{"key": "dr1", "fields": [{"key": "f1"}]}],
+            }],
+        )
+        with pytest.raises(InvalidPostBody, match=r"fields\[0\].derived_requirements\[0\].fields\[0\].*value"):
+            item.generate_api_post_payload()
+
+    def test_fields_validation_applies_to_update_too(self):
+        item = CriticalDataElementItem(name="x", fields=[{"key": "k1"}])
+        with pytest.raises(InvalidPostBody, match="derived_requirements"):
+            item.generate_api_put_payload()
+
+    def test_pdes_validation_invalid_relationship(self):
+        item = CriticalDataElementItem(
+            name="x",
+            pdes=[{"name": "P", "relationship": "bogus", "source_key": "k",
+                   "path": [{"type": "t", "name": "n"}]}],
+        )
+        with pytest.raises(InvalidPostBody, match="relationship must be one of"):
+            item.generate_api_post_payload()
+
+    def test_pdes_validation_missing_path(self):
+        item = CriticalDataElementItem(
+            name="x",
+            pdes=[{"name": "P", "relationship": "related", "source_key": "k"}],
+        )
+        with pytest.raises(InvalidPostBody, match=r"pdes\[0\].*path"):
+            item.generate_api_post_payload()
+
+    def test_pdes_validation_path_level_missing_type(self):
+        item = CriticalDataElementItem(
+            name="x",
+            pdes=[{"name": "P", "relationship": "related", "source_key": "k",
+                   "path": [{"name": "n"}]}],
+        )
+        with pytest.raises(InvalidPostBody, match=r"pdes\[0\].path\[0\].*type"):
+            item.generate_api_post_payload()
+
+    def test_from_api_response_risk_object_and_fields(self):
+        # get responses return a risk_level OBJECT (plus risk_rationale/confidence) and
+        # the read-side overlay-standard `fields` — all exposed as raw passthrough.
+        cde = CriticalDataElement.from_api_response(
+            {
+                "id": 1,
+                "name": "x",
+                "risk_level": {"value": 3, "label": "High", "number_of_levels": 3},
+                "risk_rationale": "Contains PII",
+                "risk_confidence": 0.95,
+                "fields": [{"key": "k1", "name": "Data Privacy Standard", "type": "OVERLAY"}],
+            }
+        )
+        assert cde.risk_level == {"value": 3, "label": "High", "number_of_levels": 3}
+        assert cde.risk_rationale == "Contains PII"
+        assert cde.risk_confidence == 0.95
+        assert cde.fields[0]["type"] == "OVERLAY"
+
+    def test_risk_level_default_labels_reference(self):
+        # Fixed 1-3 value scale; labels are the tenant-configurable defaults.
+        assert CDE_RISK_LEVEL_DEFAULT_LABELS == {1: "Low", 2: "Medium", 3: "High"}
+
     def test_params_drops_unset_values(self):
         params = CriticalDataElementParams(search="Customer")
         assert params.generate_params_dict() == {"search": "Customer"}
