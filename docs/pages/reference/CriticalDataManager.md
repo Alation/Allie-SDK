@@ -164,6 +164,67 @@ Returns:
 Raises:
 * `requests.HTTPError`: If the CDE API returns a non-success status code.
 
+#### create_critical_data_element
+
+```
+create_critical_data_element(critical_data_element: CriticalDataElementItem) -> CriticalDataElement
+```
+
+Create a single Critical Data Element. Calls `POST /cde-service/integration/cde/`.
+
+Args:
+* critical_data_element (CriticalDataElementItem): The element to create (`name` is
+  required; `status` should be a creation status such as `CANDIDATE` or `DRAFT`).
+
+Returns:
+* `CriticalDataElement`
+
+Raises:
+* `InvalidPostBody`: If required fields are missing.
+* `UnsupportedPostBody`: If the payload is not a `CriticalDataElementItem`.
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
+#### create_critical_data_elements_bulk
+
+```
+create_critical_data_elements_bulk(critical_data_elements: list[CriticalDataElementItem], allow_duplicates: bool = False, wait_for_completion: bool = True, poll_interval: int = 3, timeout: float = 300) -> CDEJob | str
+```
+
+Create up to 1000 Critical Data Elements in a single asynchronous request. Calls
+`POST /cde-service/integration/cde/bulk/`, which returns a job `key`. By default the SDK
+blocks until the job reaches a terminal state and returns the resulting `CDEJob`; pass
+`wait_for_completion=False` to return the job `key` immediately instead.
+
+Args:
+* critical_data_elements (list[CriticalDataElementItem]): The elements to create (max 1000).
+* allow_duplicates (bool): Whether the server may create name-duplicate elements.
+* wait_for_completion (bool): Block for the job and return a `CDEJob` (default), or return the key.
+* poll_interval (int): Seconds between polls while waiting.
+* timeout (float): Maximum seconds to wait before raising `TimeoutError`. `None` disables it.
+
+Returns:
+* `CDEJob` (when waiting) or `str` (the job key).
+
+Raises:
+* `ValueError`: If more than 1000 elements are supplied, or no job key is returned.
+* `UnsupportedPostBody`: If the payload contains non-`CriticalDataElementItem` items.
+* `TimeoutError`: If the job does not complete within `timeout` (when waiting).
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
+#### delete_critical_data_element
+
+```
+delete_critical_data_element(cde_id: int) -> None
+```
+
+Delete a single Critical Data Element by ID. Calls `DELETE /cde-service/integration/cde/{id}/`.
+
+Args:
+* cde_id (int): The Critical Data Element ID.
+
+Raises:
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
 ### Job methods
 
 The Critical Data Manager job methods are available on the `Alation` object under

@@ -4,15 +4,21 @@ import logging
 import requests
 
 from ..core.cde_request_handler import CDERequestHandler, CDE_BASE
-from ..core.custom_exceptions import validate_query_params
+from ..core.custom_exceptions import validate_query_params, validate_rest_payload
+from ..models.cde_job_model import CDEJob
 from ..models.critical_data_element_model import (
     CriticalDataElement,
+    CriticalDataElementItem,
     CriticalDataElementParams,
 )
 
 LOGGER = logging.getLogger("allie_sdk_logger")
 
 CDE_ENDPOINT = f"{CDE_BASE}/cde/"
+CDE_BULK_ENDPOINT = f"{CDE_BASE}/cde/bulk/"
+
+# The CDE bulk-create endpoint accepts at most 1000 elements per request.
+CDE_BULK_MAX = 1000
 
 
 class AlationCDMCriticalDataElement(CDERequestHandler):
@@ -84,3 +90,109 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
             f"{CDE_ENDPOINT}{cde_id}/", paginate=False
         )
         return CriticalDataElement.from_api_response(critical_data_element)
+
+    def create_critical_data_element(
+        self, critical_data_element: CriticalDataElementItem
+    ) -> CriticalDataElement:
+        """Create a single Critical Data Element.
+
+        Calls ``POST /cde-service/integration/cde/``.
+
+        Args:
+            critical_data_element (CriticalDataElementItem): The element to create
+                (``name`` is required; ``status`` must be a creation status, e.g.
+                ``CANDIDATE`` or ``DRAFT``).
+
+        Returns:
+            CriticalDataElement: The created Critical Data Element.
+
+        Raises:
+            InvalidPostBody: If the payload is missing required fields.
+            UnsupportedPostBody: If the payload is not a CriticalDataElementItem.
+            requests.HTTPError: If the CDE API returns a non-success status code.
+
+        """
+        validate_rest_payload([critical_data_element], (CriticalDataElementItem,))
+        payload = critical_data_element.generate_api_post_payload()
+
+        created = self._cde_post(CDE_ENDPOINT, body=payload)
+        return CriticalDataElement.from_api_response(created)
+
+    def create_critical_data_elements_bulk(
+        self,
+        critical_data_elements: list[CriticalDataElementItem],
+        allow_duplicates: bool = False,
+        wait_for_completion: bool = True,
+        poll_interval: int = 3,
+        timeout: float = 300,
+    ) -> CDEJob | str:
+        """Create multiple Critical Data Elements in a single asynchronous request.
+
+        Calls ``POST /cde-service/integration/cde/bulk/`` (up to 1000 elements). The
+        endpoint runs asynchronously and returns a job ``key``.
+
+        Args:
+            critical_data_elements (list[CriticalDataElementItem]): The elements to
+                create (max 1000).
+            allow_duplicates (bool): Whether the server may create elements whose names
+                duplicate existing ones.
+            wait_for_completion (bool): If True (default), block until the job reaches a
+                terminal state and return the resulting :class:`CDEJob`. If False, return
+                the job ``key`` immediately.
+            poll_interval (int): Seconds between polls while waiting.
+            timeout (float): Maximum seconds to wait before raising. None disables it.
+
+        Returns:
+            CDEJob | str: The terminal :class:`CDEJob` (when waiting) or the job ``key``.
+
+        Raises:
+            ValueError: If more than 1000 elements are supplied, or no job key is returned.
+            UnsupportedPostBody: If the payload contains non-CriticalDataElementItem items.
+            TimeoutError: If the job does not complete within ``timeout`` (when waiting).
+            requests.HTTPError: If the CDE API returns a non-success status code.
+
+        """
+        validate_rest_payload(critical_data_elements, (CriticalDataElementItem,))
+        if len(critical_data_elements) > CDE_BULK_MAX:
+            raise ValueError(
+                f"The CDE bulk-create endpoint accepts at most {CDE_BULK_MAX} elements "
+                f"per request; {len(critical_data_elements)} were supplied. Split them "
+                f"into batches of {CDE_BULK_MAX} or fewer."
+            )
+
+        payload = {
+            "cdes": [item.generate_api_post_payload() for item in critical_data_elements],
+            "options": {"allow_duplicates": allow_duplicates},
+        }
+
+        response = self._cde_post(CDE_BULK_ENDPOINT, body=payload)
+        job_key = self._extract_job_key(response)
+        if job_key is None:
+            error_message = (
+                "The CDE bulk-create endpoint returned a success status but no job key "
+                f"could be parsed from the response: {response!r}"
+            )
+            LOGGER.error(error_message)
+            raise ValueError(error_message)
+
+        if not wait_for_completion:
+            return job_key
+
+        terminal_job = self._wait_for_cde_job(
+            job_key, poll_interval=poll_interval, timeout=timeout
+        )
+        return CDEJob.from_api_response(terminal_job)
+
+    def delete_critical_data_element(self, cde_id: int) -> None:
+        """Delete a single Critical Data Element by its ID.
+
+        Calls ``DELETE /cde-service/integration/cde/{id}/``.
+
+        Args:
+            cde_id (int): The Critical Data Element ID.
+
+        Raises:
+            requests.HTTPError: If the CDE API returns a non-success status code.
+
+        """
+        self._cde_delete(f"{CDE_ENDPOINT}{cde_id}/")

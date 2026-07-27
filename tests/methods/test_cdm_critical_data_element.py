@@ -1,8 +1,14 @@
 """Test the Alation Critical Data Manager (CDM / CDE) Critical Data Element Methods."""
+import pytest
 import requests
 
 from allie_sdk.methods.cdm_critical_data_element import *
-from allie_sdk.models.critical_data_element_model import CriticalDataElementParams
+from allie_sdk.models.cde_job_model import CDEJob
+from allie_sdk.models.critical_data_element_model import (
+    CriticalDataElementItem,
+    CriticalDataElementParams,
+)
+from allie_sdk.core.custom_exceptions import InvalidPostBody, UnsupportedPostBody
 
 
 CDE_TOKEN_STRING = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.cde_payload.cde_signature"
@@ -101,3 +107,120 @@ class TestCDMCriticalDataElement:
         assert isinstance(result, CriticalDataElement)
         assert result.id == 42
         assert result.status == "DRAFT"
+
+    # --- single create ----------------------------------------------------
+
+    def test_create_critical_data_element(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri(
+            "POST",
+            "/cde-service/integration/cde/",
+            json={"id": 7, "name": "Customer ID", "status": "CANDIDATE"},
+            status_code=201,
+        )
+
+        result = self.cde.create_critical_data_element(
+            CriticalDataElementItem(name="Customer ID", status="CANDIDATE")
+        )
+
+        assert isinstance(result, CriticalDataElement)
+        assert result.id == 7
+        # Request carried the CDEToken (never Token) and the expected body.
+        assert requests_mock.last_request.headers.get("CDEToken") == CDE_TOKEN_STRING
+        assert requests_mock.last_request.headers.get("Token") is None
+        assert requests_mock.last_request.json() == {
+            "name": "Customer ID", "status": "CANDIDATE"
+        }
+
+    def test_create_critical_data_element_requires_name(self, requests_mock):
+        self._register_auth(requests_mock)
+        with pytest.raises(InvalidPostBody):
+            self.cde.create_critical_data_element(CriticalDataElementItem(description="no name"))
+
+    def test_create_critical_data_element_rejects_wrong_type(self, requests_mock):
+        self._register_auth(requests_mock)
+        with pytest.raises(UnsupportedPostBody):
+            self.cde.create_critical_data_element({"name": "not an item"})
+
+    # --- bulk create ------------------------------------------------------
+
+    def test_create_bulk_waits_for_job(self, requests_mock):
+        self._register_auth(requests_mock)
+        bulk = requests_mock.register_uri(
+            "POST", "/cde-service/integration/cde/bulk/", json={"job_key": "job-123"}
+        )
+        # The poller finds the job terminal.
+        requests_mock.register_uri(
+            "GET",
+            "/cde-service/integration/job/",
+            json=[{"id": 1, "key": "job-123", "status": "FINISHED", "result": {"created": 2}}],
+        )
+
+        result = self.cde.create_critical_data_elements_bulk(
+            [CriticalDataElementItem(name="a"), CriticalDataElementItem(name="b")],
+            poll_interval=0,
+        )
+
+        assert isinstance(result, CDEJob)
+        assert result.status == "FINISHED"
+        # Verify the bulk request body shape.
+        bulk_body = bulk.last_request.json()
+        assert bulk_body["cdes"] == [{"name": "a"}, {"name": "b"}]
+        assert bulk_body["options"] == {"allow_duplicates": False}
+
+    def test_create_bulk_no_wait_returns_key(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri(
+            "POST", "/cde-service/integration/cde/bulk/", json={"key": "job-999"}
+        )
+
+        result = self.cde.create_critical_data_elements_bulk(
+            [CriticalDataElementItem(name="a")], wait_for_completion=False
+        )
+
+        assert result == "job-999"
+
+    def test_create_bulk_allow_duplicates_passed_through(self, requests_mock):
+        self._register_auth(requests_mock)
+        bulk = requests_mock.register_uri(
+            "POST", "/cde-service/integration/cde/bulk/", json={"job_key": "j"}
+        )
+        requests_mock.register_uri(
+            "GET",
+            "/cde-service/integration/job/",
+            json=[{"id": 1, "key": "j", "status": "FINISHED"}],
+        )
+
+        self.cde.create_critical_data_elements_bulk(
+            [CriticalDataElementItem(name="a")], allow_duplicates=True, poll_interval=0
+        )
+
+        assert bulk.last_request.json()["options"] == {"allow_duplicates": True}
+
+    def test_create_bulk_rejects_over_max(self, requests_mock):
+        self._register_auth(requests_mock)
+        too_many = [CriticalDataElementItem(name=f"cde-{i}") for i in range(CDE_BULK_MAX + 1)]
+        with pytest.raises(ValueError, match="at most"):
+            self.cde.create_critical_data_elements_bulk(too_many)
+
+    def test_create_bulk_raises_when_no_job_key(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri(
+            "POST", "/cde-service/integration/cde/bulk/", json={"unexpected": "shape"}
+        )
+        with pytest.raises(ValueError, match="no job key"):
+            self.cde.create_critical_data_elements_bulk([CriticalDataElementItem(name="a")])
+
+    # --- delete -----------------------------------------------------------
+
+    def test_delete_critical_data_element(self, requests_mock):
+        self._register_auth(requests_mock)
+        delete = requests_mock.register_uri(
+            "DELETE", "/cde-service/integration/cde/42/", status_code=204
+        )
+
+        result = self.cde.delete_critical_data_element(42)
+
+        assert result is None
+        assert delete.called
+        assert requests_mock.last_request.headers.get("CDEToken") == CDE_TOKEN_STRING

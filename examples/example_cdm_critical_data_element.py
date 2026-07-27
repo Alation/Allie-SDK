@@ -81,3 +81,36 @@ if all_cdes:
     first_id = all_cdes[0].id
     single_cde = alation.cdm_critical_data_element.get_critical_data_element(first_id)
     logging.info(f"Fetched CDE id={single_cde.id}: {single_cde.name!r}")
+
+# ================================
+# Create a single Critical Data Element (and clean it up)
+# ================================
+
+# NOTE: the following are WRITE operations that create real objects on your server.
+new_cde = alation.cdm_critical_data_element.create_critical_data_element(
+    allie.CriticalDataElementItem(
+        name="SDK Example CDE",
+        description="Created by the Allie-SDK example.",
+        status="CANDIDATE",
+    )
+)
+logging.info(f"Created CDE id={new_cde.id} name={new_cde.name!r}")
+
+# Delete the element we just created so the example leaves no residue.
+alation.cdm_critical_data_element.delete_critical_data_element(new_cde.id)
+logging.info(f"Deleted CDE id={new_cde.id}")
+
+# ================================
+# Bulk-create Critical Data Elements (asynchronous → job)
+# ================================
+
+# Bulk-create runs asynchronously. By default the SDK blocks until the job finishes and
+# returns the terminal CDEJob (pass wait_for_completion=False to get the job key instead).
+job = alation.cdm_critical_data_element.create_critical_data_elements_bulk(
+    [
+        allie.CriticalDataElementItem(name="SDK Example CDE 1", status="CANDIDATE"),
+        allie.CriticalDataElementItem(name="SDK Example CDE 2", status="CANDIDATE"),
+    ]
+)
+logging.info(f"Bulk-create job {job.key} finished with status {job.status}")
+logging.info(f"Job result: {job.result}")
