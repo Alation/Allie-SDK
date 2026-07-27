@@ -83,10 +83,31 @@ class TestCDMCriticalDataElement:
         )
 
         self.cde.get_critical_data_elements(
-            query_params=CriticalDataElementParams(status="CERTIFIED")
+            query_params=CriticalDataElementParams(status={"CERTIFIED"})
         )
 
         assert requests_mock.last_request.qs.get("status") == ["certified"]
+
+    def test_get_critical_data_elements_repeatable_and_bracket_filters(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri("GET", "/cde-service/integration/cde/", json=[])
+
+        self.cde.get_critical_data_elements(
+            query_params=CriticalDataElementParams(
+                status={"CANDIDATE", "PENDING_OWNERS_APPROVAL"},
+                risk_level={1, 2},
+                domain_keys={"domain1", "domain2"},
+                latest_only=True,
+            )
+        )
+
+        qs = requests_mock.last_request.qs
+        # Repeatable filters are serialized as multiple values.
+        assert sorted(qs.get("status")) == ["candidate", "pending_owners_approval"]
+        assert sorted(qs.get("risk_level")) == ["1", "2"]
+        # domain_keys uses the bracketed key name.
+        assert sorted(qs.get("domain_keys[]")) == ["domain1", "domain2"]
+        assert qs.get("latest_only") == ["true"]
 
     def test_get_critical_data_elements_empty(self, requests_mock):
         self._register_auth(requests_mock)

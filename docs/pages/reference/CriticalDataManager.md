@@ -44,27 +44,59 @@ Represents a Critical Data Element returned by the CDE API. Returned by
 
 Attributes:
 
-| Name        | Type     | Description                                              |
-|-------------|----------|----------------------------------------------------------|
-| id          | int      | The Critical Data Element ID.                            |
-| key         | str      | The Critical Data Element key (uuid).                    |
-| name        | str      | The Critical Data Element name.                          |
-| description | str      | The Critical Data Element description.                   |
-| status      | str      | Lifecycle status (e.g. `CANDIDATE`, `DRAFT`, `CERTIFIED`). |
-| job_id      | int      | ID of the async job that created/updated the element.   |
-| ts_created  | datetime | Creation timestamp.                                      |
-| ts_updated  | datetime | Last-updated timestamp.                                  |
+| Name               | Type     | Description                                                                 |
+|--------------------|----------|-----------------------------------------------------------------------------|
+| id                 | int      | The Critical Data Element ID.                                               |
+| key                | str      | The Critical Data Element key (uuid).                                       |
+| id_no              | int      | Human-facing sequential number.                                            |
+| name               | str      | The Critical Data Element name.                                            |
+| description        | str      | The Critical Data Element description.                                     |
+| version            | int      | Version number.                                                            |
+| status             | str      | Lifecycle status (e.g. `CANDIDATE`, `DRAFT`, `CERTIFIED`).                  |
+| cde_risk_level     | str      | Risk level label (e.g. `Low`/`Medium`/`High`), read-only.                  |
+| domains            | list     | Associated domains, as raw object-reference dicts `{id, name, source_key}`. |
+| stewards           | list     | Stewards, as raw object-reference dicts.                                   |
+| owners             | list     | Owners, as raw object-reference dicts.                                     |
+| sources            | list     | Sources, as raw object-reference dicts.                                    |
+| approvers          | list     | Approvers, as raw object-reference dicts.                                  |
+| contributors       | list     | Contributors, as raw object-reference dicts.                               |
+| data_assets_counts | dict     | PDE-relationship counts, e.g. `{all, control_points, related, suggested}`.  |
+| quality_score      | float    | Data-quality score (nullable).                                             |
+| curation_score     | float    | Curation score (nullable).                                                 |
+| job_id             | int      | ID of the async job that created/updated the element.                      |
+| ts_created         | datetime | Creation timestamp.                                                        |
+| ts_updated         | datetime | Last-updated timestamp.                                                    |
+| ts_deleted         | datetime | Deletion timestamp (soft delete).                                          |
+| created_by         | dict     | Creating user, as a raw object-reference dict.                             |
+| updated_by         | dict     | Last-updating user, as a raw object-reference dict.                        |
+| deleted_by         | dict     | Deleting user, as a raw object-reference dict.                             |
+| deleted            | bool     | Whether the element is soft-deleted.                                       |
+
+The relationship/ownership arrays and audit objects are exposed as raw `list`/`dict`
+values from the API payload (not typed sub-models); typed modelling of those workflows is
+deferred. Each object-reference dict is shaped like
+`{"id": <int>, "name": <str>, "source_key": "alation://<type>/<id>"}` (e.g.
+`alation://user/123`, `alation://domain/10`).
 
 ### CriticalDataElementParams
-Filter parameters for `get_critical_data_elements`.
+Filter parameters for `get_critical_data_elements`. Repeatable filters are sets,
+serialized as repeated query parameters. Pagination (`skip`/`limit`) is handled by the
+SDK and is not a parameter here.
 
-| Name     | Type | Description                                        |
-|----------|------|----------------------------------------------------|
-| search   | str  | Free-text search filter.                           |
-| status   | str  | Filter by lifecycle status.                        |
-| key      | str  | Filter by Critical Data Element key (uuid).        |
-| job_id   | int  | Filter by the async job that produced the element. |
-| order_by | str  | Sort order (e.g. `-ts_created`).                   |
+| Name                  | Type | Description                                                              |
+|-----------------------|------|--------------------------------------------------------------------------|
+| search                | str  | Free-text search filter.                                                 |
+| status                | set  | Filter by one or more lifecycle statuses.                                |
+| risk_level            | set  | Filter by one or more integer risk-level codes (e.g. `1`, `2`).          |
+| owner_key             | set  | Filter by owner key(s) (e.g. `alation://user/123`).                      |
+| domain_keys           | set  | Filter by domain key(s) (serialized as `domain_keys[]`).                 |
+| steward_key           | set  | Filter by steward key(s).                                                |
+| version               | set  | Filter by one or more version numbers.                                   |
+| key                   | set  | Filter by one or more Critical Data Element keys (uuid).                 |
+| job_id                | int  | Filter by the async job that produced the element.                       |
+| latest_only           | bool | Only the latest version of each element.                                 |
+| latest_certified_only | bool | Only the latest certified version of each element.                       |
+| order_by              | str  | Sort order (e.g. `status`, `-ts_created`).                               |
 
 ### CDEJob
 Represents a Critical Data Manager background job (used for asynchronous operations such

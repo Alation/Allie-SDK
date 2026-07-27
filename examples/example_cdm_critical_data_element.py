@@ -69,7 +69,7 @@ for cde in all_cdes[:10]:
 # ================================
 
 certified_cdes = alation.cdm_critical_data_element.get_critical_data_elements(
-    query_params=allie.CriticalDataElementParams(status="CERTIFIED")
+    query_params=allie.CriticalDataElementParams(status={"CERTIFIED"})
 )
 logging.info(f"Found {len(certified_cdes)} CERTIFIED Critical Data Element(s).")
 

@@ -22,7 +22,15 @@ class BaseClass:
 
     @staticmethod
     def convert_timestamp(s_date: str) -> datetime:
-        tz_formats = ['%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%S.%f%z']
+        # Accept ISO-8601 timestamps both with and without fractional seconds, and with a
+        # trailing "Z" or an explicit UTC offset. Some Alation APIs omit microseconds
+        # (e.g. "2026-03-09T09:00:00Z"), which the microsecond-only patterns miss.
+        tz_formats = [
+            '%Y-%m-%dT%H:%M:%S.%fZ',
+            '%Y-%m-%dT%H:%M:%S.%f%z',
+            '%Y-%m-%dT%H:%M:%SZ',
+            '%Y-%m-%dT%H:%M:%S%z',
+        ]
 
         for pattern in tz_formats:
             try:

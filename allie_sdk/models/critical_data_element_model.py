@@ -34,18 +34,53 @@ class CriticalDataElementBase(BaseClass):
 
 @dataclass
 class CriticalDataElement(CriticalDataElementBase):
-    """A Critical Data Element as returned by the CDE API (GET responses)."""
+    """A Critical Data Element as returned by the CDE API (GET responses).
+
+    Scalar attributes are typed. The relationship/ownership attributes
+    (``domains``/``stewards``/``owners``/``sources``/``approvers``/``contributors``) and
+    the audit objects (``created_by``/``updated_by``/``deleted_by``) are exposed as raw
+    values (``list``/``dict`` of the API payload) rather than typed sub-models — those
+    workflows are not modelled yet. Each object-reference is shaped like
+    ``{"id": int, "name": str, "source_key": "alation://<type>/<id>"}``.
+    """
     id: int = field(default=None)
     key: str = field(default=None)  # uuid
+    id_no: int = field(default=None)  # human-facing sequential number
+    version: int = field(default=None)
+    cde_risk_level: str = field(default=None)  # e.g. "Low"/"Medium"/"High" (read-only)
+
+    # Relationship / ownership arrays (raw object-reference dicts).
+    domains: list = field(default=None)
+    stewards: list = field(default=None)
+    owners: list = field(default=None)
+    sources: list = field(default=None)
+    approvers: list = field(default=None)
+    contributors: list = field(default=None)
+
+    # Metrics. data_assets_counts is a dict of PDE-relationship counts,
+    # e.g. {"all", "control_points", "related", "suggested"}; scores may be null.
+    data_assets_counts: dict = field(default=None)
+    quality_score: float = field(default=None)
+    curation_score: float = field(default=None)
+
     job_id: int = field(default=None)
+
+    # Audit trail.
     ts_created: datetime = field(default=None)
     ts_updated: datetime = field(default=None)
+    ts_deleted: datetime = field(default=None)
+    created_by: dict = field(default=None)  # {id, name, source_key}
+    updated_by: dict = field(default=None)
+    deleted_by: dict = field(default=None)
+    deleted: bool = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.ts_created, str):
             self.ts_created = self.convert_timestamp(self.ts_created)
         if isinstance(self.ts_updated, str):
             self.ts_updated = self.convert_timestamp(self.ts_updated)
+        if isinstance(self.ts_deleted, str):
+            self.ts_deleted = self.convert_timestamp(self.ts_deleted)
 
 
 @dataclass
@@ -96,13 +131,34 @@ class CriticalDataElementItem(CriticalDataElementBase):
 class CriticalDataElementParams(BaseParams):
     """Filter parameters for GET ``/cde-service/integration/cde/``.
 
+    Repeatable filters (``status``, ``risk_level``, ``owner_key``, ``domain_keys``,
+    ``steward_key``, ``version``, ``key``) are modelled as sets and serialized as repeated
+    query parameters. ``risk_level`` filters by integer risk codes (e.g. ``1``, ``2``),
+    even though the response returns ``cde_risk_level`` as a string label.
+
     Note:
-        ``skip``/``limit`` pagination is handled by the request handler, so callers
-        should generally not set them here (``BaseParams`` also drops falsy values such
-        as ``skip=0``).
+        ``skip``/``limit`` pagination is handled by the request handler, so it is not a
+        parameter here. ``BaseParams`` also drops falsy values, so ``latest_only=False``
+        would be omitted (leaving the server default) rather than sent as ``false``.
     """
     search: str = field(default=None)
-    status: str = field(default=None)
-    key: str = field(default=None)
+    status: set = field(default_factory=set)
+    risk_level: set = field(default_factory=set)
+    owner_key: set = field(default_factory=set)
+    domain_keys: set = field(default_factory=set)
+    steward_key: set = field(default_factory=set)
+    version: set = field(default_factory=set)
+    key: set = field(default_factory=set)
     job_id: int = field(default=None)
+    latest_only: bool = field(default=None)
+    latest_certified_only: bool = field(default=None)
     order_by: str = field(default=None)
+
+    def generate_params_dict(self) -> dict:
+        """Build the query-parameter dict, mapping ``domain_keys`` to the API's
+        bracketed key name ``domain_keys[]`` (the other array filters use the bare name).
+        """
+        params = super().generate_params_dict()
+        if "domain_keys" in params:
+            params["domain_keys[]"] = params.pop("domain_keys")
+        return params

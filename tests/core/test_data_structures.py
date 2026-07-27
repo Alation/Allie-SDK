@@ -58,6 +58,22 @@ class TestBaseClass:
 
         assert parsed_time == datetime(2023, 11, 6, 8, 26, 7, 928812, tzinfo=timezone(timedelta(days=-1, seconds=57600)))
 
+    def test_timezone_conversion_utc_without_microseconds(self):
+        # Some Alation APIs return timestamps without fractional seconds; these must
+        # still parse (previously they silently returned None).
+        mock_class = TestClass()
+        parsed_time = mock_class.convert_timestamp('2026-03-09T09:00:00Z')
+
+        assert parsed_time == datetime(2026, 3, 9, 9, 0, 0)
+
+    def test_timezone_conversion_offset_without_microseconds(self):
+        mock_class = TestClass()
+        parsed_time = mock_class.convert_timestamp('2026-03-09T09:00:00-08:00')
+
+        assert parsed_time == datetime(
+            2026, 3, 9, 9, 0, 0, tzinfo=timezone(timedelta(days=-1, seconds=57600))
+        )
+
 
 class TestBaseParams:
 
