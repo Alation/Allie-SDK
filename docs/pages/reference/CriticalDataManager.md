@@ -38,6 +38,34 @@ Attributes:
 |-------|------|-------------------------------------------------------------------------------------------------------------------|
 | token | str  | The plain-string CDE token, passed in the `CDEToken` header for all CDE API calls. Valid for 24 hours from creation. |
 
+### CriticalDataElement
+Represents a Critical Data Element returned by the CDE API. Returned by
+`get_critical_data_elements` and `get_critical_data_element`.
+
+Attributes:
+
+| Name        | Type     | Description                                              |
+|-------------|----------|----------------------------------------------------------|
+| id          | int      | The Critical Data Element ID.                            |
+| key         | str      | The Critical Data Element key (uuid).                    |
+| name        | str      | The Critical Data Element name.                          |
+| description | str      | The Critical Data Element description.                   |
+| status      | str      | Lifecycle status (e.g. `CANDIDATE`, `DRAFT`, `CERTIFIED`). |
+| job_id      | int      | ID of the async job that created/updated the element.   |
+| ts_created  | datetime | Creation timestamp.                                      |
+| ts_updated  | datetime | Last-updated timestamp.                                  |
+
+### CriticalDataElementParams
+Filter parameters for `get_critical_data_elements`.
+
+| Name     | Type | Description                                        |
+|----------|------|----------------------------------------------------|
+| search   | str  | Free-text search filter.                           |
+| status   | str  | Filter by lifecycle status.                        |
+| key      | str  | Filter by Critical Data Element key (uuid).        |
+| job_id   | int  | Filter by the async job that produced the element. |
+| order_by | str  | Sort order (e.g. `-ts_created`).                   |
+
 ## Methods
 
 The CDM authentication methods are available on the `Alation` object under
@@ -66,6 +94,49 @@ Raises:
 * `ValueError`: If no Alation API token is available to exchange.
 * `requests.HTTPError`: If the CDE auth endpoint returns a non-success status code.
 
+### Critical Data Element methods
+
+The Critical Data Element methods are available on the `Alation` object under
+`alation.cdm_critical_data_element`. The CDE token is obtained transparently on the
+first call (minted from the Alation access token and re-exchanged automatically when it
+expires), so no explicit token handling is required.
+
+#### get_critical_data_elements
+
+```
+get_critical_data_elements(query_params: CriticalDataElementParams = None) -> list[CriticalDataElement]
+```
+
+Get (filter) Critical Data Elements. Calls `GET /cde-service/integration/cde/`, following
+the service's `skip`/`limit` pagination to return all matching elements.
+
+Args:
+* query_params (CriticalDataElementParams, optional): REST API GET filter values.
+
+Returns:
+* `list[CriticalDataElement]`
+
+Raises:
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
+#### get_critical_data_element
+
+```
+get_critical_data_element(cde_id: int) -> CriticalDataElement
+```
+
+Get a single Critical Data Element by ID. Calls `GET /cde-service/integration/cde/{id}/`.
+
+Args:
+* cde_id (int): The Critical Data Element ID.
+
+Returns:
+* `CriticalDataElement`
+
+Raises:
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
 ## Examples
 
-See `/examples/example_cdm_authentication.py`.
+See `/examples/example_cdm_authentication.py` and
+`/examples/example_cdm_critical_data_element.py`.

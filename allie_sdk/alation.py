@@ -8,6 +8,7 @@ from .core.logs import LoggingConfigs
 from .methods import (
     AlationAuthentication,
     AlationCDMAuthentication,
+    AlationCDMCriticalDataElement,
     AlationBISource,
     AlationBusinessPolicy,
     AlationConnector,
@@ -124,6 +125,9 @@ class Alation(object):
 
         # Initialize Remaining Alation API Methods
         self.cdm_authentication = AlationCDMAuthentication(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.cdm_critical_data_element = AlationCDMCriticalDataElement(
             access_token=self.access_token, session=session, host=host
         )
         self.bi_source = AlationBISource(
