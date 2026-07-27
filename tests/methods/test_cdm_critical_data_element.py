@@ -211,6 +211,45 @@ class TestCDMCriticalDataElement:
         with pytest.raises(ValueError, match="no job key"):
             self.cde.create_critical_data_elements_bulk([CriticalDataElementItem(name="a")])
 
+    # --- update -----------------------------------------------------------
+
+    def test_update_critical_data_element(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri(
+            "PUT",
+            "/cde-service/integration/cde/42/",
+            json={"id": 42, "name": "Renamed", "description": "new desc"},
+            status_code=200,
+        )
+
+        result = self.cde.update_critical_data_element(
+            42, CriticalDataElementItem(name="Renamed", description="new desc")
+        )
+
+        assert isinstance(result, CriticalDataElement)
+        assert result.name == "Renamed"
+        assert requests_mock.last_request.json() == {"name": "Renamed", "description": "new desc"}
+        assert requests_mock.last_request.headers.get("CDEToken") == CDE_TOKEN_STRING
+        assert requests_mock.last_request.headers.get("Token") is None
+
+    def test_update_critical_data_element_omits_status(self, requests_mock):
+        self._register_auth(requests_mock)
+        requests_mock.register_uri(
+            "PUT", "/cde-service/integration/cde/42/", json={"id": 42, "name": "X"}
+        )
+
+        # status is set on the item but must NOT be sent on an update.
+        self.cde.update_critical_data_element(
+            42, CriticalDataElementItem(name="X", status="CERTIFIED")
+        )
+
+        assert requests_mock.last_request.json() == {"name": "X"}
+
+    def test_update_critical_data_element_rejects_wrong_type(self, requests_mock):
+        self._register_auth(requests_mock)
+        with pytest.raises(UnsupportedPostBody):
+            self.cde.update_critical_data_element(42, {"name": "not an item"})
+
     # --- delete -----------------------------------------------------------
 
     def test_delete_critical_data_element(self, requests_mock):
@@ -224,3 +263,24 @@ class TestCDMCriticalDataElement:
         assert result is None
         assert delete.called
         assert requests_mock.last_request.headers.get("CDEToken") == CDE_TOKEN_STRING
+
+    def test_delete_critical_data_elements_bulk(self, requests_mock):
+        self._register_auth(requests_mock)
+        bulk_delete = requests_mock.register_uri(
+            "POST",
+            "/cde-service/integration/cde/bulk_delete/",
+            json={"detail": "Critical Data Elements deleted successfully"},
+            status_code=200,
+        )
+
+        result = self.cde.delete_critical_data_elements_bulk([1, 2, 3])
+
+        assert result is None
+        assert bulk_delete.called
+        assert requests_mock.last_request.json() == {"ids": [1, 2, 3]}
+        assert requests_mock.last_request.headers.get("CDEToken") == CDE_TOKEN_STRING
+
+    def test_delete_critical_data_elements_bulk_rejects_empty(self, requests_mock):
+        self._register_auth(requests_mock)
+        with pytest.raises(ValueError, match="at least one"):
+            self.cde.delete_critical_data_elements_bulk([])

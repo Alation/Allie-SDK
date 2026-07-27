@@ -16,6 +16,7 @@ LOGGER = logging.getLogger("allie_sdk_logger")
 
 CDE_ENDPOINT = f"{CDE_BASE}/cde/"
 CDE_BULK_ENDPOINT = f"{CDE_BASE}/cde/bulk/"
+CDE_BULK_DELETE_ENDPOINT = f"{CDE_BASE}/cde/bulk_delete/"
 
 # The CDE bulk-create endpoint accepts at most 1000 elements per request.
 CDE_BULK_MAX = 1000
@@ -183,6 +184,37 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
         )
         return CDEJob.from_api_response(terminal_job)
 
+    def update_critical_data_element(
+        self, cde_id: int, critical_data_element: CriticalDataElementItem
+    ) -> CriticalDataElement:
+        """Update an existing Critical Data Element.
+
+        Calls ``PUT /cde-service/integration/cde/{id}/`` with the fields to change. The
+        endpoint runs synchronously and returns the updated element.
+
+        Note:
+            ``status`` is not an update field (use the CDE status-transition endpoint to
+            change status); it is ignored even if set on the item.
+
+        Args:
+            cde_id (int): The Critical Data Element ID to update.
+            critical_data_element (CriticalDataElementItem): The fields to change
+                (``name`` / ``description``).
+
+        Returns:
+            CriticalDataElement: The updated Critical Data Element.
+
+        Raises:
+            UnsupportedPostBody: If the payload is not a CriticalDataElementItem.
+            requests.HTTPError: If the CDE API returns a non-success status code.
+
+        """
+        validate_rest_payload([critical_data_element], (CriticalDataElementItem,))
+        payload = critical_data_element.generate_api_put_payload()
+
+        updated = self._cde_put(f"{CDE_ENDPOINT}{cde_id}/", body=payload)
+        return CriticalDataElement.from_api_response(updated)
+
     def delete_critical_data_element(self, cde_id: int) -> None:
         """Delete a single Critical Data Element by its ID.
 
@@ -196,3 +228,22 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
 
         """
         self._cde_delete(f"{CDE_ENDPOINT}{cde_id}/")
+
+    def delete_critical_data_elements_bulk(self, cde_ids: list[int]) -> None:
+        """Delete multiple Critical Data Elements by ID in a single request.
+
+        Calls ``POST /cde-service/integration/cde/bulk_delete/`` with a body of
+        ``{"ids": [...]}``. The endpoint runs synchronously.
+
+        Args:
+            cde_ids (list[int]): The IDs of the Critical Data Elements to delete.
+
+        Raises:
+            ValueError: If ``cde_ids`` is empty.
+            requests.HTTPError: If the CDE API returns a non-success status code.
+
+        """
+        if not cde_ids:
+            raise ValueError("cde_ids must contain at least one Critical Data Element ID.")
+
+        self._cde_post(CDE_BULK_DELETE_ENDPOINT, body={"ids": list(cde_ids)})

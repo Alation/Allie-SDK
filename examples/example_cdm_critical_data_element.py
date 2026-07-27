@@ -96,6 +96,14 @@ new_cde = alation.cdm_critical_data_element.create_critical_data_element(
 )
 logging.info(f"Created CDE id={new_cde.id} name={new_cde.name!r}")
 
+# Update it (synchronous; returns the updated element). Note: `status` is not an update
+# field — use the status-transition endpoint for that.
+updated_cde = alation.cdm_critical_data_element.update_critical_data_element(
+    new_cde.id,
+    allie.CriticalDataElementItem(description="Updated by the Allie-SDK example."),
+)
+logging.info(f"Updated CDE id={updated_cde.id} description={updated_cde.description!r}")
+
 # Delete the element we just created so the example leaves no residue.
 alation.cdm_critical_data_element.delete_critical_data_element(new_cde.id)
 logging.info(f"Deleted CDE id={new_cde.id}")
@@ -114,3 +122,16 @@ job = alation.cdm_critical_data_element.create_critical_data_elements_bulk(
 )
 logging.info(f"Bulk-create job {job.key} finished with status {job.status}")
 logging.info(f"Job result: {job.result}")
+
+# ================================
+# Bulk-delete Critical Data Elements by id (synchronous)
+# ================================
+
+# Look up the elements we just created by name and delete them in one call.
+example_cdes = alation.cdm_critical_data_element.get_critical_data_elements(
+    query_params=allie.CriticalDataElementParams(search="SDK Example CDE")
+)
+ids_to_delete = [c.id for c in example_cdes if c.name.startswith("SDK Example CDE")]
+if ids_to_delete:
+    alation.cdm_critical_data_element.delete_critical_data_elements_bulk(ids_to_delete)
+    logging.info(f"Bulk-deleted {len(ids_to_delete)} example CDE(s): {ids_to_delete}")

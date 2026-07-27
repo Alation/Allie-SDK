@@ -211,6 +211,27 @@ Raises:
 * `TimeoutError`: If the job does not complete within `timeout` (when waiting).
 * `requests.HTTPError`: If the CDE API returns a non-success status code.
 
+#### update_critical_data_element
+
+```
+update_critical_data_element(cde_id: int, critical_data_element: CriticalDataElementItem) -> CriticalDataElement
+```
+
+Update an existing Critical Data Element. Calls `PUT /cde-service/integration/cde/{id}/`
+(synchronous) and returns the updated element. `status` is **not** an update field (use
+the status-transition endpoint for that) and is ignored even if set on the item.
+
+Args:
+* cde_id (int): The Critical Data Element ID to update.
+* critical_data_element (CriticalDataElementItem): The fields to change (`name` / `description`).
+
+Returns:
+* `CriticalDataElement`
+
+Raises:
+* `UnsupportedPostBody`: If the payload is not a `CriticalDataElementItem`.
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
 #### delete_critical_data_element
 
 ```
@@ -223,6 +244,22 @@ Args:
 * cde_id (int): The Critical Data Element ID.
 
 Raises:
+* `requests.HTTPError`: If the CDE API returns a non-success status code.
+
+#### delete_critical_data_elements_bulk
+
+```
+delete_critical_data_elements_bulk(cde_ids: list[int]) -> None
+```
+
+Delete multiple Critical Data Elements by ID in a single synchronous request. Calls
+`POST /cde-service/integration/cde/bulk_delete/` with a body of `{"ids": [...]}`.
+
+Args:
+* cde_ids (list[int]): The IDs of the Critical Data Elements to delete.
+
+Raises:
+* `ValueError`: If `cde_ids` is empty.
 * `requests.HTTPError`: If the CDE API returns a non-success status code.
 
 ### Job methods

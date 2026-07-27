@@ -73,6 +73,24 @@ class CriticalDataElementItem(CriticalDataElementBase):
             payload["status"] = self.status
         return payload
 
+    def generate_api_put_payload(self) -> dict:
+        """Build the request payload for updating a Critical Data Element.
+
+        Only the fields that are set are included. ``status`` is intentionally excluded:
+        it is not an update field (status changes go through the CDE status-transition
+        endpoint), so it is ignored here even if set on the item.
+
+        Returns:
+            dict: Payload containing whichever of ``name``/``description`` are set.
+
+        """
+        payload = {}
+        if self.name is not None:
+            payload["name"] = self.name
+        if self.description is not None:
+            payload["description"] = self.description
+        return payload
+
 
 @dataclass
 class CriticalDataElementParams(BaseParams):
