@@ -9,6 +9,7 @@ from .methods import (
     AlationAuthentication,
     AlationCDMAuthentication,
     AlationCDMCriticalDataElement,
+    AlationCDMJob,
     AlationBISource,
     AlationBusinessPolicy,
     AlationConnector,
@@ -128,6 +129,9 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.cdm_critical_data_element = AlationCDMCriticalDataElement(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.cdm_job = AlationCDMJob(
             access_token=self.access_token, session=session, host=host
         )
         self.bi_source = AlationBISource(

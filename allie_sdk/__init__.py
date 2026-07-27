@@ -34,6 +34,8 @@ from .models import (
     ColumnItem,
     ColumnParams,
     ColumnPatchItem,
+    CDEJob,
+    CDEJobParams,
     Connector,
     CriticalDataElement,
     CriticalDataElementItem,

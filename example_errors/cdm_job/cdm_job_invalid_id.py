@@ -1,10 +1,9 @@
 """
-Example of reading a Critical Data Element (CDM / CDE) failing because the requested
-Critical Data Element ID does not exist.
+Example of reading a Critical Data Manager (CDM / CDE) job failing because the requested
+job ID does not exist.
 
-`get_critical_data_element` calls `GET /cde-service/integration/cde/{id}/`. If the ID is
-not found, the CDE service returns a non-success status code and the SDK raises a
-`requests.HTTPError`.
+`get_cde_job` calls `GET /cde-service/integration/job/{id}/`. If the ID is not found, the
+CDE service returns a non-success status code and the SDK raises a `requests.HTTPError`.
 
 See: https://developer.alation.com/dev/reference/cde-api-overview
 
@@ -27,8 +26,8 @@ import requests
 # Set Global Variables
 # ================================
 
-# MAKE IT FAIL: Use a Critical Data Element ID that does not exist.
-INVALID_CDE_ID = 999999999
+# MAKE IT FAIL: Use a CDE job ID that does not exist.
+INVALID_JOB_ID = 999999999
 
 # ================================
 # Define Logging Config
@@ -67,25 +66,25 @@ alation = allie.Alation(
 )
 
 # ================================
-# Attempt to read a Critical Data Element that does not exist
+# Attempt to read a CDE job that does not exist
 # ================================
 
 try:
-    cde = alation.cdm_critical_data_element.get_critical_data_element(INVALID_CDE_ID)
-    print(f"Critical Data Element found: {cde.name!r}")
+    job = alation.cdm_job.get_cde_job(INVALID_JOB_ID)
+    print(f"CDE job found: id={job.id} status={job.status}")
 except requests.exceptions.HTTPError as error:
-    print("Failed to read the Critical Data Element!")
+    print("Failed to read the CDE job!")
     print(f"HTTP status code: {error.response.status_code}")
-    print("What to do next: Provide the ID of an existing Critical Data Element.")
+    print("What to do next: Provide the ID of an existing CDE job.")
 
 """
 expected response:
 
-Failed to read the Critical Data Element!
+Failed to read the CDE job!
 HTTP status code: 404
-What to do next: Provide the ID of an existing Critical Data Element.
+What to do next: Provide the ID of an existing CDE job.
 
 expected log message:
 
-... - ERROR - ERROR MESSAGE: Error submitting the CDE GET Request to: /cde-service/integration/cde/999999999/ ...
+... - ERROR - ERROR MESSAGE: Error submitting the CDE GET Request to: /cde-service/integration/job/999999999/ ...
 """
