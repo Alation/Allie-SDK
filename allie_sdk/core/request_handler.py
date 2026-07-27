@@ -118,6 +118,7 @@ class RequestHandler(object):
             query_params: dict = None,
             pagination: bool = True,
             body: any = None,
+            headers: dict = None,
     ) -> any:
         """API Get Request.
 
@@ -126,6 +127,7 @@ class RequestHandler(object):
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Fetch all API results that meet the Query Parameters.
             body (any): Optional GET Request Body.
+            headers (dict): Optional GET API Call Headers.
 
         Returns:
             any: API Response Body in JSON.
@@ -140,7 +142,7 @@ class RequestHandler(object):
             query_params['limit'] = self.page_size
 
         api_response = self._api_single_get(
-            self.host + url, params=query_params, body=body
+            self.host + url, params=query_params, body=body, headers=headers
         )
         # Check status and raise error if needed
         if api_response.status_code not in SUCCESS_CODES:
@@ -157,7 +159,7 @@ class RequestHandler(object):
         if pagination:
             while 'X-Next-Page' in api_response.headers:
                 next_url = api_response.headers.get('X-Next-Page')
-                api_response = self._api_single_get(self.host + next_url)
+                api_response = self._api_single_get(self.host + next_url, headers=headers)
                 
                 # Check status of paginated request and raise error if needed
                 if api_response.status_code not in SUCCESS_CODES:
@@ -500,7 +502,7 @@ class RequestHandler(object):
         return response_data
 
     def _api_single_get(
-            self, url: str, params: dict = None, body: any = None
+            self, url: str, params: dict = None, body: any = None, headers: dict = None
     ) -> requests.Response:
         """Run a Single REST API Get Call. Helper function for paginated results.
 
@@ -508,6 +510,7 @@ class RequestHandler(object):
             url (str): GET API Call URL.
             params (dict): GET API Call Query Parameters.
             body (any): Optional GET Request Body.
+            headers (dict): Optional GET API Call Headers.
 
         Returns:
             requests.Response: API GET Response.
@@ -519,11 +522,14 @@ class RequestHandler(object):
         if body is not None:
             body = json.dumps(body, default=str)
 
-            # Always call GET; requests can handle None for params/body
+        if headers is None:
+            headers = self.headers
+
+        # Always call GET; requests can handle None for params/body
         api_response = self.s.get(
             url,
             params=params,
-            headers=self.headers,
+            headers=headers,
             data=body
         )
 

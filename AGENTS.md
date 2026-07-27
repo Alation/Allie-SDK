@@ -25,6 +25,7 @@ pip install -r requirements-dev.txt
 
 - use Python type hints
 - use double quotes instead of single quotes were possible
+- use f-strings not old-fashioned string variable substitutions
 
 # Code Standards
 

@@ -13,6 +13,8 @@ from .methods import (
     AlationCustomField,
     AlationCustomTemplate,
     AlationDataDictionary,
+    AlationAIDataProduct,
+    AlationDataProduct,
     AlationDataflow,
     AlationDataQuality,
     AlationDatasource,
@@ -135,6 +137,12 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.dataflow = AlationDataflow(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.alation_ai_data_product = AlationAIDataProduct(
+            access_token=self.access_token, session=session, host=host
+        )
+        self.data_product = AlationDataProduct(
             access_token=self.access_token, session=session, host=host
         )
         self.data_quality = AlationDataQuality(

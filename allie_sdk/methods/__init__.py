@@ -5,6 +5,8 @@ from .connector import AlationConnector
 from .custom_field import AlationCustomField
 from .custom_template import AlationCustomTemplate
 from .data_dictionary import AlationDataDictionary
+from .alation_ai_data_product import AlationAIDataProduct
+from .data_product import AlationDataProduct
 from .data_quality import AlationDataQuality
 from .datasource import AlationDatasource
 from .dataflow import AlationDataflow

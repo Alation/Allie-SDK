@@ -5,6 +5,8 @@ from .connector_model import *
 from .custom_field_model import *
 from .custom_template_model import *
 from .data_dictionary_model import *
+from .alation_ai_data_product_model import *
+from .data_product_model import *
 from .data_quality_model import *
 from .dataflow_model import *
 from .document_hub_folder_model import *
