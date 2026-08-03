@@ -63,7 +63,7 @@ invalid_data_product_spec = allie.DataProductSpec(
     )
 )
 
-alation.data_product.create_data_product(invalid_data_product_spec)
+alation.data_product.enrich_data_product_spec(invalid_data_product_spec)
 
 """
 Expected behaviour: Fail before the API request is sent.

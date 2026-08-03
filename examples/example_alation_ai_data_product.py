@@ -99,7 +99,7 @@ creation_request = allie.AlationAIDataProductCreationInfo(
     existing_data_product=EXISTING_DATA_PRODUCT_YAML,
 )
 
-creation_task = alation.alation_ai_data_product.create_data_product(
+creation_task = alation.alation_ai_data_product.enrich_data_product_spec(
     alation_ai_data_product=creation_request,
     generate_missing_descriptions=True,
     generate_relationships=True
@@ -114,10 +114,21 @@ data_product_result = alation.alation_ai_data_product.get_data_product_task(crea
 logging.info(f"Data product YAML:\n{data_product_result}")
 
 # ================================
+# GENERATE RELATIONSHIPS FROM THE YAML SPEC
+# ================================
+
+generated_relationships = alation.alation_ai_data_product.generate_relationships(
+    allie.AlationAIGenerateRelationshipsRequest(
+        spec_yaml=data_product_result,
+    )
+)
+logging.info("Generated %s relationship(s)", len(generated_relationships.relationships))
+
+# ================================
 # VALIDATE SQL AGAINST A DATA PRODUCT
 # ================================
 
-validated_sql = alation.alation_ai_data_product.validate_data_product_sql(
+validated_sql = alation.alation_ai_data_product.validate_sql_against_data_product(
     ALATION_AI_DATA_PRODUCT_ID,
     SQL_STATEMENTS,
 )
@@ -133,7 +144,7 @@ metrics_task = alation.alation_ai_data_product.extract_data_product_metrics(
 )
 logging.info("Started metric extraction task %s", metrics_task.task_id)
 
-metrics_result = alation.alation_ai_data_product.get_data_product_metrics(metrics_task.task_id)
+metrics_result = alation.alation_ai_data_product.get_data_product_metrics_extraction_result(metrics_task.task_id)
 if isinstance(metrics_result, allie.AlationAIAsyncTask):
     logging.info("Metric extraction task %s is %s", metrics_result.id, metrics_result.status)
 else:
@@ -143,7 +154,7 @@ else:
 # CREATE OR PREVIEW A DATA PRODUCT FROM A BI DATASOURCE
 # ================================
 
-bi_datasource_preview = alation.alation_ai_data_product.create_data_product_from_bi_datasource(
+bi_datasource_preview = alation.alation_ai_data_product.create_data_product_from_bi_source(
     datasource_id=BI_DATASOURCE_ID,
     create_product=False,
 )

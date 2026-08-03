@@ -190,7 +190,7 @@ logging.info(
 # ================================
 
 if CREATE_OR_UPDATE_PRODUCT:
-    created_product = alation.data_product.create_data_product(data_product_spec)
+    created_product = alation.data_product.enrich_data_product_spec(data_product_spec)
     logging.info(
         "Created or replaced data product %s version %s.",
         created_product.product_id,

@@ -66,10 +66,67 @@ class AlationAIDataProductCreationInfo(BaseClass):
 
 
 @dataclass(kw_only=True)
+class AlationAIGenerateRelationshipsRequest(BaseClass):
+    """Payload used to generate relationships from a data product spec."""
+
+    spec_yaml: str = field(default=None)
+
+    def generate_api_post_payload(self) -> dict:
+        """Generate the API payload for relationship generation.
+
+        Returns:
+            dict: API payload containing the full data product YAML spec.
+
+        Raises:
+            InvalidPostBody: If the YAML specification is missing.
+        """
+
+        if self.spec_yaml is None:
+            raise InvalidPostBody("'spec_yaml' is a required field for Generate Relationships payload bodies")
+
+        return {"spec_yaml": self.spec_yaml}
+
+
+@dataclass(kw_only=True)
 class AlationAIDataProductTask(BaseClass):
     """Task identifier returned for asynchronous data product workflows."""
 
     task_id: str = field(default=None)
+
+
+@dataclass(kw_only=True)
+class AlationAIGeneratedRelationship(BaseClass):
+    """Generated relationship returned by the Alation AI API."""
+
+    name: str = field(default=None)
+    left_table: str = field(default=None)
+    right_table: str = field(default=None)
+    expression: str = field(default=None)
+    sql_dialect: str = field(default=None)
+    cardinality: str = field(default=None)
+    left_nullable: bool = field(default=False)
+    right_nullable: bool = field(default=False)
+    notes: str = field(default=None)
+
+
+@dataclass(kw_only=True)
+class AlationAIGenerateRelationshipsResponse(BaseClass):
+    """Response returned after generating data product relationships."""
+
+    relationships: list[AlationAIGeneratedRelationship] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Convert nested relationship payloads into SDK model instances.
+
+        Returns:
+            None: This method mutates ``self.relationships`` in place when needed.
+        """
+
+        if isinstance(self.relationships, list) and self.relationships:
+            if not isinstance(self.relationships[0], AlationAIGeneratedRelationship):
+                self.relationships = [
+                    AlationAIGeneratedRelationship.from_api_response(item) for item in self.relationships
+                ]
 
 
 @dataclass(kw_only=True)
@@ -87,7 +144,6 @@ class AlationAIDataProductToUpdate(BaseClass):
             )
 
         return {"existing_data_product": self.existing_data_product}
-
 
 @dataclass(kw_only=True)
 class AlationAIAsyncTask(BaseClass):
@@ -317,7 +373,7 @@ class AlationAIExtractMetricsFromBIParams(BaseParams):
 
 
 @dataclass(kw_only=True)
-class AlationAIGetTablesFromBIParams(BaseParams):
+class AlationAIGetUpstreamTablesFromBiObjectParams(BaseParams):
     """Required query parameters for resolving upstream tables from BI."""
 
     type: str = field(default=None)
@@ -351,7 +407,7 @@ class AlationAIDatasourceTables(BaseClass):
 
 
 @dataclass(kw_only=True)
-class AlationAIUpstreamTablesResponse(BaseClass):
+class AlationAIGetUpstreamTablesFromBiObjectResponse(BaseClass):
     """Upstream BI tables grouped by datasource."""
 
     datasources: list[AlationAIDatasourceTables] = field(default_factory=list)

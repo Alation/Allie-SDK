@@ -16,7 +16,7 @@ The Data Product methods use the Alation AI API namespace at `/ai/api/v1/data_pr
 
 ### AlationAIDataProductTableColumnInfo
 
-Python object used in `AlationAIDataProductCreationInfo` and `AlationAIUpstreamTablesResponse`.
+Python object used in `AlationAIDataProductCreationInfo` and `AlationAIGetUpstreamTablesFromBiObjectResponse`.
 
 Attributes:
 
@@ -27,7 +27,7 @@ Attributes:
 
 ### AlationAIDataProductCreationInfo
 
-Python object used to create data products with `create_alation_ai_data_product`.
+Python object used to generate data product specifications with `enrich_data_product_spec`.
 
 Attributes:
 
@@ -35,6 +35,16 @@ Attributes:
 |------|------|-------------|
 | table_column_info_list | list[`AlationAIDataProductTableColumnInfo`] | Required. Tables and columns that should be included in the generated data product. |
 | existing_data_product | string | Optional existing YAML spec used as the starting point for generation. |
+
+### AlationAIGenerateRelationshipsRequest
+
+Python object used to generate JOIN relationships with `generate_relationships`.
+
+Attributes:
+
+| Name | Type | Description |
+|------|------|-------------|
+| spec_yaml | string | Required full data product spec as a YAML string. |
 
 ### AlationAIDataProductTask
 
@@ -45,6 +55,34 @@ Attributes:
 | Name | Type | Description |
 |------|------|-------------|
 | task_id | string | Identifier of the queued AI task. |
+
+### AlationAIGeneratedRelationship
+
+Single generated relationship returned inside `AlationAIGenerateRelationshipsResponse`.
+
+Attributes:
+
+| Name | Type | Description |
+|------|------|-------------|
+| name | string | Generated relationship name. |
+| left_table | string | Name of the left-side record set. |
+| right_table | string | Name of the right-side record set. |
+| expression | string | Generated JOIN expression. |
+| sql_dialect | string | SQL dialect used for the expression. |
+| cardinality | string | Optional inferred relationship cardinality. |
+| left_nullable | bool | Whether the left-side join key can be null. |
+| right_nullable | bool | Whether the right-side join key can be null. |
+| notes | string | Optional notes describing the generated relationship. |
+
+### AlationAIGenerateRelationshipsResponse
+
+Python object returned by `generate_relationships`.
+
+Attributes:
+
+| Name | Type | Description |
+|------|------|-------------|
+| relationships | list[`AlationAIGeneratedRelationship`] | Generated relationships inferred from the supplied YAML spec. |
 
 ### AlationAIAsyncTask
 
@@ -62,19 +100,9 @@ Attributes:
 | tenant_id | string | Tenant identifier. |
 | user_id | string | User identifier. |
 
-### AlationAIDataProductToUpdate
-
-Python object used to update a data product description with `update_alation_ai_data_product_description`.
-
-Attributes:
-
-| Name | Type | Description |
-|------|------|-------------|
-| existing_data_product | string | Required YAML spec to update. |
-
 ### AlationAIReviseDataProductRequest
 
-Python object used to start a revise workflow with `revise_alation_ai_data_product`.
+Python object used to start a revise workflow with `revise_data_product`.
 
 Attributes:
 
@@ -95,7 +123,7 @@ Attributes:
 
 ### AlationAIReviseDataProductJobsParams
 
-Optional query parameters used with `get_alation_ai_data_product_revision_jobs`.
+Optional query parameters used with `get_data_product_revision_jobs`.
 
 Attributes:
 
@@ -124,7 +152,7 @@ Attributes:
 
 ### AlationAIReviseDataProductResultsPage
 
-Paginated page returned by `get_alation_ai_data_product_revision_jobs`.
+Paginated page returned by `get_data_product_revision_jobs`.
 
 Attributes:
 
@@ -135,7 +163,7 @@ Attributes:
 
 ### AlationAIReviseDataProductResultDetail
 
-Detailed object returned by `get_alation_ai_data_product_revision_result`.
+Detailed object returned by `get_data_product_revision_result`.
 
 Attributes:
 
@@ -154,7 +182,7 @@ Attributes:
 
 ### AlationAISqlWithValidation
 
-Python object returned by `validate_alation_ai_data_product_sql`.
+Python object returned by `validate_sql_against_data_product`.
 
 Attributes:
 
@@ -166,7 +194,7 @@ Attributes:
 
 ### AlationAIMetricWithErrors
 
-Nested metric object returned by `get_alation_ai_data_product_metrics`.
+Nested metric object returned by `get_data_product_metrics_extraction_result`.
 
 Attributes:
 
@@ -181,7 +209,7 @@ Attributes:
 
 ### AlationAISqlMetricResult
 
-Python object returned by `get_alation_ai_data_product_metrics` when extraction has completed.
+Python object returned by `get_data_product_metrics_extraction_result` when extraction has completed.
 
 Attributes:
 
@@ -194,7 +222,7 @@ Attributes:
 
 ### AlationAIMetricSource
 
-Nested source metadata returned by `get_alation_ai_data_product_metrics_with_source`.
+Nested source metadata returned by `get_data_product_metrics_extraction_result_with_source`.
 
 Attributes:
 
@@ -209,7 +237,7 @@ Attributes:
 
 ### AlationAIMetricWithSource
 
-Nested metric object returned by `get_alation_ai_data_product_metrics_with_source`.
+Nested metric object returned by `get_data_product_metrics_extraction_result_with_source`.
 
 Attributes:
 
@@ -227,7 +255,7 @@ Attributes:
 
 ### AlationAIMetricResultWithSource
 
-Python object returned by `get_alation_ai_data_product_metrics_with_source` when extraction has completed.
+Python object returned by `get_data_product_metrics_extraction_result_with_source` when extraction has completed.
 
 Attributes:
 
@@ -239,7 +267,7 @@ Attributes:
 
 ### AlationAIExtractMetricsFromBIParams
 
-Optional query parameters used with `extract_alation_ai_data_product_metrics_from_bi`.
+Optional query parameters used with `extract_data_product_metrics_from_bi`.
 
 Attributes:
 
@@ -248,9 +276,9 @@ Attributes:
 | dashboard_ids | list[integer] | Optional dashboard identifiers to restrict extraction. |
 | lookml_model_folder_ids | list[integer] | Optional LookML model folder identifiers to restrict extraction. |
 
-### AlationAIGetTablesFromBIParams
+### AlationAIGetUpstreamTablesFromBiObjectParams
 
-Required query parameters used with `get_alation_ai_data_product_tables_from_bi`.
+Required query parameters used with `get_upstream_tables_from_bi_object`.
 
 Attributes:
 
@@ -261,7 +289,7 @@ Attributes:
 
 ### AlationAIDatasourceTables
 
-Nested datasource grouping returned inside `AlationAIUpstreamTablesResponse`.
+Nested datasource grouping returned inside `AlationAIGetUpstreamTablesFromBiObjectResponse`.
 
 Attributes:
 
@@ -270,9 +298,9 @@ Attributes:
 | datasource_id | integer | Datasource identifier. |
 | tables | list[`AlationAIDataProductTableColumnInfo`] | Upstream tables and column identifiers. |
 
-### AlationAIUpstreamTablesResponse
+### AlationAIGetUpstreamTablesFromBiObjectResponse
 
-Python object returned by `get_alation_ai_data_product_tables_from_bi`.
+Python object returned by `get_upstream_tables_from_bi_object`.
 
 Attributes:
 
@@ -282,26 +310,28 @@ Attributes:
 
 ## Methods
 
-### create_alation_ai_data_product
+### enrich_data_product_spec
 
 ```
-create_alation_ai_data_product(
+enrich_data_product_spec(
     self,
     alation_ai_data_product: AlationAIDataProductCreationInfo,
-    generate_missing_descriptions: bool = True
+    generate_missing_descriptions: bool = True,
+    generate_relationships: bool = True
 ) -> AlationAIDataProductTask
 ```
 
-Create a data product from table and column metadata.
+Generate an enriched data product specification from table and column metadata.
 
 Notes:
 * Pass `existing_data_product` on `AlationAIDataProductCreationInfo` when you want the AI API to
   start from an existing YAML spec instead of creating one from scratch.
+* This wraps the `/ai/api/v1/data_product/enrich_data_product_spec` endpoint.
 
-### get_alation_ai_data_product
+### get_data_product_task
 
 ```
-get_alation_ai_data_product(self, task_id: str, poll_interval_seconds: float = 3) -> str
+get_data_product_task(self, task_id: str, poll_interval_seconds: float = 3) -> str
 ```
 
 Poll a data product task every few seconds until the final YAML is returned.
@@ -310,34 +340,39 @@ Notes:
 * While the backend reports a non-terminal status such as `pending` or `running`, the SDK waits
   `poll_interval_seconds` before polling again.
 * If the backend reports `status="failed"`, the SDK raises `requests.exceptions.HTTPError`.
+* This polls the `/ai/api/v1/data_product/get_data_product_result/{task_id}` endpoint.
 
-### update_alation_ai_data_product_description
+### generate_relationships
 
 ```
-update_alation_ai_data_product_description(
+generate_relationships(
     self,
-    alation_ai_data_product: AlationAIDataProductToUpdate
-) -> str
+    generate_relationships_request: AlationAIGenerateRelationshipsRequest
+) -> AlationAIGenerateRelationshipsResponse
 ```
 
-Update a data product description from YAML content.
+Generate JOIN relationships between record sets in a data product specification.
 
-### revise_alation_ai_data_product
+Notes:
+* Pass the full YAML string in `spec_yaml`, typically the output returned by `get_data_product_task`.
+* This wraps the `/ai/api/v1/data_product/generate_relationships` endpoint.
+
+### revise_data_product
 
 ```
-revise_alation_ai_data_product(
+revise_data_product(
     self,
-    alation_ai_data_product_id: str,
+    data_product_id: str,
     revise_request: AlationAIReviseDataProductRequest = None
 ) -> AlationAIReviseDataProductResponse
 ```
 
 Start a revise data product workflow.
 
-### get_alation_ai_data_product_revision_jobs
+### get_data_product_revision_jobs
 
 ```
-get_alation_ai_data_product_revision_jobs(
+get_data_product_revision_jobs(
     self,
     query_params: AlationAIReviseDataProductJobsParams = None
 ) -> AlationAIReviseDataProductResultsPage
@@ -345,10 +380,10 @@ get_alation_ai_data_product_revision_jobs(
 
 Browse revise data product jobs.
 
-### get_alation_ai_data_product_revision_result
+### get_data_product_revision_result
 
 ```
-get_alation_ai_data_product_revision_result(
+get_data_product_revision_result(
     self,
     result_id: str
 ) -> AlationAIReviseDataProductResultDetail
@@ -356,81 +391,84 @@ get_alation_ai_data_product_revision_result(
 
 Fetch a single revise data product result.
 
-### validate_alation_ai_data_product_sql
+### validate_sql_against_data_product
 
 ```
-validate_alation_ai_data_product_sql(
+validate_sql_against_data_product(
     self,
-    alation_ai_data_product_id: str,
+    data_product_id: str,
     sql_statements: list[str]
 ) -> list[AlationAISqlWithValidation]
 ```
 
 Validate one or more SQL statements against a data product.
 
-### extract_alation_ai_data_product_metrics
+### extract_data_product_metrics
 
 ```
-extract_alation_ai_data_product_metrics(
+extract_data_product_metrics(
     self,
-    alation_ai_data_product_id: str,
+    data_product_id: str,
     sql_statements: list[str]
 ) -> AlationAIDataProductTask
 ```
 
 Start metric extraction from one or more SQL statements.
 
-### extract_alation_ai_data_product_metrics_from_sample_queries
+### extract_data_product_metrics_from_sample_queries
 
 ```
-extract_alation_ai_data_product_metrics_from_sample_queries(
+extract_data_product_metrics_from_sample_queries(
     self,
-    alation_ai_data_product_id: str
+    data_product_id: str
 ) -> AlationAIDataProductTask
 ```
 
 Start metric extraction from the sample queries stored on a data product.
 
-### extract_alation_ai_data_product_metrics_from_bi
+### extract_data_product_metrics_from_bi
 
 ```
-extract_alation_ai_data_product_metrics_from_bi(
+extract_data_product_metrics_from_bi(
     self,
-    alation_ai_data_product_id: str,
+    data_product_id: str,
     query_params: AlationAIExtractMetricsFromBIParams = None
 ) -> AlationAIDataProductTask
 ```
 
 Start metric extraction from downstream BI assets.
 
-### get_alation_ai_data_product_metrics
+### get_data_product_metrics_extraction_result
 
 ```
-get_alation_ai_data_product_metrics(self, task_id: str) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]
+get_data_product_metrics_extraction_result(self, task_id: str) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]
 ```
 
 Fetch the current task status or completed SQL metric extraction results.
 
-### get_alation_ai_data_product_metrics_with_source
+### get_data_product_metrics_extraction_result_with_source
 
 ```
-get_alation_ai_data_product_metrics_with_source(self, task_id: str) -> AlationAIAsyncTask | list[AlationAIMetricResultWithSource]
+get_data_product_metrics_extraction_result_with_source(self, task_id: str) -> AlationAIAsyncTask | list[AlationAIMetricResultWithSource]
 ```
 
 Fetch the current task status or completed metric extraction results with source metadata.
 
-### get_alation_ai_data_product_tables_from_bi
+### get_upstream_tables_from_bi_object
 
 ```
-get_alation_ai_data_product_tables_from_bi(self, query_params: AlationAIGetTablesFromBIParams) -> AlationAIUpstreamTablesResponse
+get_upstream_tables_from_bi_object(
+    self,
+    query_params: AlationAIGetUpstreamTablesFromBiObjectParams
+) -> AlationAIGetUpstreamTablesFromBiObjectResponse
 ```
 
 Resolve upstream tables for a BI dashboard or LookML model folder.
 
-### create_alation_ai_data_product_from_bi_datasource
+### create_data_product_from_bi_source
 
 ```
-create_alation_ai_data_product_from_bi_datasource(
+create_data_product_from_bi_source(
     self,
     datasource_id: int,
     create_product: bool = True

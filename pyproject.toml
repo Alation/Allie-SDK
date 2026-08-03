@@ -32,8 +32,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.1",
+    "deptry>=0.23.1",
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
     "requests-mock>=1.12.1",
+    "ruff>=0.14.3",
 ]
 
 [project.urls]
@@ -42,8 +45,6 @@ Issues = "https://github.com/Alation/Allie-SDK/issues"
 Documentation = "https://alation.github.io/Allie-SDK/"
 
 [build-system]
-# requires = ["hatchling"]
-# build-backend = "hatchling.build"
 requires = ["uv_build>=0.9.10,<0.10.0"]
 build-backend = "uv_build"
 
@@ -54,3 +55,31 @@ package = false
 [tool.uv.build-backend]
 module-name = "allie_sdk"
 module-root = ""
+
+[tool.deptry]
+extend_exclude = ["data_source_migration/updateFlag\\.py"]
+[tool.ruff]
+line-length = 180
+indent-width = 4
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "F",   # pyflakes
+    "E",   # pycodestyle
+    "I",   # isort
+    "ANN", # flake8 type annotations
+    "RUF", # ruff-specific rules
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+disallow_untyped_defs = true

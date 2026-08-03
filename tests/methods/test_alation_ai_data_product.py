@@ -11,10 +11,12 @@ from allie_sdk.methods.alation_ai_data_product import AlationAIDataProduct
 from allie_sdk.models.alation_ai_data_product_model import (
     AlationAIDataProductCreationInfo,
     AlationAIDataProductTask,
-    AlationAIDataProductToUpdate,
     AlationAIDatasourceTables,
     AlationAIExtractMetricsFromBIParams,
-    AlationAIGetTablesFromBIParams,
+    AlationAIGenerateRelationshipsRequest,
+    AlationAIGenerateRelationshipsResponse,
+    AlationAIGeneratedRelationship,
+    AlationAIGetUpstreamTablesFromBiObjectParams,
     AlationAIMetricResultWithSource,
     AlationAIMetricSource,
     AlationAIMetricWithErrors,
@@ -27,7 +29,7 @@ from allie_sdk.models.alation_ai_data_product_model import (
     AlationAISqlMetricResult,
     AlationAISqlWithValidation,
     AlationAIDataProductTableColumnInfo,
-    AlationAIUpstreamTablesResponse,
+    AlationAIGetUpstreamTablesFromBiObjectResponse,
 )
 
 
@@ -39,15 +41,15 @@ class TestAlationAIDataProduct:
             host="https://test.com",
         )
 
-    def test_create_alation_ai_data_product(self, requests_mock):
+    def test_enrich_data_product_spec(self, requests_mock):
         requests_mock.register_uri(
-            method="POST",
-            url="/ai/api/v1/data_product/create_data_product",
+            method="PUT",
+            url="/ai/api/v1/data_product/enrich_data_product_spec",
             json={"task_id": "task-1"},
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.create_data_product(
+        result = self.mock_alation_ai_data_product.enrich_data_product_spec(
             AlationAIDataProductCreationInfo(
                 table_column_info_list=[
                     AlationAIDataProductTableColumnInfo(table_id=1, column_ids=[11, 12]),
@@ -60,15 +62,15 @@ class TestAlationAIDataProduct:
         assert request.headers["Token"] == "test-token"
         assert request.qs["generate_missing_descriptions"] == ["true"]
 
-    def test_create_alation_ai_data_product_with_existing_data_product(self, requests_mock):
+    def test_enrich_data_product_spec_with_existing_data_product(self, requests_mock):
         requests_mock.register_uri(
-            method="POST",
-            url="/ai/api/v1/data_product/create_data_product",
+            method="PUT",
+            url="/ai/api/v1/data_product/enrich_data_product_spec",
             json={"task_id": "task-2"},
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.create_data_product(
+        result = self.mock_alation_ai_data_product.enrich_data_product_spec(
             AlationAIDataProductCreationInfo(
                 table_column_info_list=[
                     AlationAIDataProductTableColumnInfo(table_id=1, column_ids=[11, 12]),
@@ -88,10 +90,10 @@ class TestAlationAIDataProduct:
             }
         ]
 
-    def test_get_alation_ai_data_product_polls_until_yaml(self, requests_mock):
+    def test_get_data_product_task_polls_until_yaml(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
-            url="/ai/api/v1/data_product/get_data_product/task-1",
+            url="/ai/api/v1/data_product/get_data_product_result/task-1",
             response_list=[
                 {
                     "json": {
@@ -124,10 +126,10 @@ class TestAlationAIDataProduct:
         assert request.headers["Token"] == "test-token"
         assert len(requests_mock.request_history) == 2
 
-    def test_get_alation_ai_data_product_raises_when_task_fails(self, requests_mock):
+    def test_get_data_product_task_raises_when_task_fails(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
-            url="/ai/api/v1/data_product/get_data_product/task-2",
+            url="/ai/api/v1/data_product/get_data_product_result/task-2",
             json={
                 "name": "create_data_product",
                 "parameters": {"task_id": "task-2"},
@@ -143,10 +145,10 @@ class TestAlationAIDataProduct:
         with pytest.raises(requests.exceptions.HTTPError, match="Generation failed."):
             self.mock_alation_ai_data_product.get_data_product_task("task-2")
 
-    def test_get_alation_ai_data_product_returns_yaml(self, requests_mock):
+    def test_get_data_product_task_returns_yaml(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
-            url="/ai/api/v1/data_product/get_data_product/task-3",
+            url="/ai/api/v1/data_product/get_data_product_result/task-3",
             text="version: 1\nname: Sales Metrics",
             status_code=200,
         )
@@ -155,21 +157,54 @@ class TestAlationAIDataProduct:
 
         assert result == "version: 1\nname: Sales Metrics"
 
-    def test_update_alation_ai_data_product_description(self, requests_mock):
+    def test_generate_relationships(self, requests_mock):
         requests_mock.register_uri(
-            method="PUT",
-            url="/ai/api/v1/data_product/update_data_product_description",
-            text="updated",
+            method="POST",
+            url="/ai/api/v1/data_product/generate_relationships",
+            json={
+                "relationships": [
+                    {
+                        "name": "orders_to_customers",
+                        "left_table": "orders",
+                        "right_table": "customers",
+                        "expression": "orders.customer_id = customers.id",
+                        "sql_dialect": "postgres",
+                        "cardinality": "many_to_one",
+                        "left_nullable": False,
+                        "right_nullable": False,
+                        "notes": "Generated from primary key inference.",
+                    }
+                ]
+            },
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.update_data_product_description(
-            AlationAIDataProductToUpdate(existing_data_product="version: 1")
+        result = self.mock_alation_ai_data_product.generate_relationships(
+            AlationAIGenerateRelationshipsRequest(spec_yaml="version: 1\nname: Sales Metrics")
         )
 
-        assert result == "updated"
+        assert result == AlationAIGenerateRelationshipsResponse(
+            relationships=[
+                AlationAIGeneratedRelationship(
+                    name="orders_to_customers",
+                    left_table="orders",
+                    right_table="customers",
+                    expression="orders.customer_id = customers.id",
+                    sql_dialect="postgres",
+                    cardinality="many_to_one",
+                    left_nullable=False,
+                    right_nullable=False,
+                    notes="Generated from primary key inference.",
+                )
+            ]
+        )
+        request = requests_mock.request_history[0]
+        assert request.headers["Token"] == "test-token"
+        assert json.loads(request.text) == {
+            "spec_yaml": "version: 1\nname: Sales Metrics",
+        }
 
-    def test_revise_alation_ai_data_product(self, requests_mock):
+    def test_revise_data_product(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/dp-1/revise_data_product",
@@ -190,7 +225,7 @@ class TestAlationAIDataProduct:
             chat_id="chat-1",
         )
 
-    def test_get_alation_ai_data_product_revision_jobs(self, requests_mock):
+    def test_get_data_product_revision_jobs(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
             url="/ai/api/v1/data_product/revise_data_product_jobs",
@@ -236,7 +271,7 @@ class TestAlationAIDataProduct:
         assert request.qs["limit"] == ["50"]
         assert request.qs["offset"] == ["0"]
 
-    def test_get_alation_ai_data_product_revision_result(self, requests_mock):
+    def test_get_data_product_revision_result(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
             url="/ai/api/v1/data_product/revise_data_product_jobs/result-1",
@@ -262,7 +297,7 @@ class TestAlationAIDataProduct:
         assert result.result_id == "result-1"
         assert result.summary == "Updated several metric descriptions."
 
-    def test_validate_alation_ai_data_product_sql(self, requests_mock):
+    def test_validate_sql_against_data_product(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/dp-1/validate_sql",
@@ -276,7 +311,7 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.validate_data_product_sql(
+        result = self.mock_alation_ai_data_product.validate_sql_against_data_product(
             "dp-1",
             ["SELECT 1"],
         )
@@ -289,7 +324,7 @@ class TestAlationAIDataProduct:
             )
         ]
 
-    def test_extract_alation_ai_data_product_metrics(self, requests_mock):
+    def test_extract_data_product_metrics(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/dp-1/extract_metrics",
@@ -304,7 +339,7 @@ class TestAlationAIDataProduct:
 
         assert result == AlationAIDataProductTask(task_id="metrics-task-1")
 
-    def test_extract_alation_ai_data_product_metrics_from_sample_queries(self, requests_mock):
+    def test_extract_data_product_metrics_from_sample_queries(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/dp-1/extract_metrics_from_sample_queries",
@@ -318,7 +353,7 @@ class TestAlationAIDataProduct:
 
         assert result == AlationAIDataProductTask(task_id="metrics-task-2")
 
-    def test_extract_alation_ai_data_product_metrics_from_bi(self, requests_mock):
+    def test_extract_data_product_metrics_from_bi(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/dp-1/extract_metrics_from_bi",
@@ -339,7 +374,7 @@ class TestAlationAIDataProduct:
         assert request.qs["dashboard_ids"] == ["1", "2"]
         assert request.qs["lookml_model_folder_ids"] == ["3"]
 
-    def test_get_alation_ai_data_product_metrics(self, requests_mock):
+    def test_get_data_product_metrics_extraction_result(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
             url="/ai/api/v1/data_product/get_metrics/task-3",
@@ -361,7 +396,7 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.get_data_product_metrics("task-3")
+        result = self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result("task-3")
 
         assert result == [
             AlationAISqlMetricResult(
@@ -379,7 +414,7 @@ class TestAlationAIDataProduct:
             )
         ]
 
-    def test_get_alation_ai_data_product_metrics_with_source(self, requests_mock):
+    def test_get_data_product_metrics_extraction_result_with_source(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
             url="/ai/api/v1/data_product/get_metrics_with_source/task-4",
@@ -408,7 +443,7 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.get_data_product_metrics_with_source(
+        result = self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result_with_source(
             "task-4"
         )
 
@@ -435,7 +470,7 @@ class TestAlationAIDataProduct:
             )
         ]
 
-    def test_get_alation_ai_data_product_tables_from_bi(self, requests_mock):
+    def test_get_upstream_tables_from_bi_object(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
             url="/ai/api/v1/data_product/get_tables_from_bi",
@@ -455,11 +490,11 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.get_data_product_tables_from_bi(
-            AlationAIGetTablesFromBIParams(type="dashboard", id=99)
+        result = self.mock_alation_ai_data_product.get_upstream_tables_from_bi_object(
+            AlationAIGetUpstreamTablesFromBiObjectParams(type="dashboard", id=99)
         )
 
-        assert result == AlationAIUpstreamTablesResponse(
+        assert result == AlationAIGetUpstreamTablesFromBiObjectResponse(
             datasources=[
                 AlationAIDatasourceTables(
                     datasource_id=1,
@@ -476,7 +511,7 @@ class TestAlationAIDataProduct:
         assert request.qs["type"] == ["dashboard"]
         assert request.qs["id"] == ["99"]
 
-    def test_create_alation_ai_data_product_from_bi_datasource(self, requests_mock):
+    def test_create_data_product_from_bi_source(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/create_from_bi_datasource",
@@ -484,7 +519,7 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.create_data_product_from_bi_datasource(
+        result = self.mock_alation_ai_data_product.create_data_product_from_bi_source(
             datasource_id=5,
             create_product=False,
         )

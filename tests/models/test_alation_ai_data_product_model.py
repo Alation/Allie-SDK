@@ -47,6 +47,52 @@ class TestAlationAIDataProductModel:
             ],
         }
 
+    def test_generate_relationships_request_generates_payload(self):
+        generate_request = AlationAIGenerateRelationshipsRequest(spec_yaml="version: 1")
+
+        assert generate_request.generate_api_post_payload() == {
+            "spec_yaml": "version: 1",
+        }
+
+    def test_generate_relationships_request_requires_spec_yaml(self):
+        with pytest.raises(InvalidPostBody):
+            AlationAIGenerateRelationshipsRequest(spec_yaml=None).generate_api_post_payload()
+
+    def test_generate_relationships_response_maps_nested_relationships(self):
+        api_response = {
+            "relationships": [
+                {
+                    "name": "orders_to_customers",
+                    "left_table": "orders",
+                    "right_table": "customers",
+                    "expression": "orders.customer_id = customers.id",
+                    "sql_dialect": "postgres",
+                    "cardinality": "many_to_one",
+                    "left_nullable": False,
+                    "right_nullable": False,
+                    "notes": "Generated from primary key inference.",
+                }
+            ]
+        }
+
+        result = AlationAIGenerateRelationshipsResponse.from_api_response(api_response)
+
+        assert result == AlationAIGenerateRelationshipsResponse(
+            relationships=[
+                AlationAIGeneratedRelationship(
+                    name="orders_to_customers",
+                    left_table="orders",
+                    right_table="customers",
+                    expression="orders.customer_id = customers.id",
+                    sql_dialect="postgres",
+                    cardinality="many_to_one",
+                    left_nullable=False,
+                    right_nullable=False,
+                    notes="Generated from primary key inference.",
+                )
+            ]
+        )
+
     def test_data_product_to_update_requires_existing_yaml(self):
         with pytest.raises(InvalidPostBody):
             AlationAIDataProductToUpdate(existing_data_product=None).generate_api_put_payload()
@@ -177,7 +223,7 @@ class TestAlationAIDataProductModel:
 
     def test_get_tables_from_bi_params_requires_values(self):
         with pytest.raises(InvalidPostBody):
-            AlationAIGetTablesFromBIParams(type=None, id=1).generate_params_dict()
+            AlationAIGetUpstreamTablesFromBiObjectParams(type=None, id=1).generate_params_dict()
 
         with pytest.raises(InvalidPostBody):
-            AlationAIGetTablesFromBIParams(type="dashboard", id=None).generate_params_dict()
+            AlationAIGetUpstreamTablesFromBiObjectParams(type="dashboard", id=None).generate_params_dict()

@@ -55,8 +55,8 @@ alation = allie.Alation(
 # FETCH TABLES FROM BI
 # ================================
 
-tables = alation.alation_ai_data_product.get_data_product_tables_from_bi(
-    allie.AlationAIGetTablesFromBIParams(
+tables = alation.alation_ai_data_product.get_upstream_tables_from_bi_object(
+    allie.AlationAIGetUpstreamTablesFromBiObjectParams(
         type=BI_OBJECT_TYPE,
         id=INVALID_BI_OBJECT_ID,
     )
