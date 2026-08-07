@@ -43,7 +43,7 @@ class TestAlationAIDataProduct:
 
     def test_enrich_data_product_spec(self, requests_mock):
         requests_mock.register_uri(
-            method="PUT",
+            method="POST",
             url="/ai/api/v1/data_product/enrich_data_product_spec",
             json={"task_id": "task-1"},
             status_code=200,
@@ -64,7 +64,7 @@ class TestAlationAIDataProduct:
 
     def test_enrich_data_product_spec_with_existing_data_product(self, requests_mock):
         requests_mock.register_uri(
-            method="PUT",
+            method="POST",
             url="/ai/api/v1/data_product/enrich_data_product_spec",
             json={"task_id": "task-2"},
             status_code=200,
@@ -97,18 +97,18 @@ class TestAlationAIDataProduct:
             response_list=[
                 {
                     "json": {
-                        "name": "create_data_product",
-                        "parameters": {"task_id": "task-1"},
-                        "id": "task-1",
-                        "tenant_id": "tenant-1",
-                        "user_id": "user-1",
-                        "context": {"retry_count": 0},
                         "status": "pending",
+                        "data": None,
+                        "error": None,
                     },
                     "status_code": 200,
                 },
                 {
-                    "text": "version: 1\nname: Sales Metrics",
+                    "json": {
+                        "status": "completed",
+                        "data": "version: 1\nname: Sales Metrics",
+                        "error": None,
+                    },
                     "status_code": 200,
                 },
             ],
@@ -131,13 +131,9 @@ class TestAlationAIDataProduct:
             method="GET",
             url="/ai/api/v1/data_product/get_data_product_result/task-2",
             json={
-                "name": "create_data_product",
-                "parameters": {"task_id": "task-2"},
-                "id": "task-2",
-                "tenant_id": "tenant-1",
-                "user_id": "user-1",
-                "context": {"message": "Generation failed."},
                 "status": "failed",
+                "data": None,
+                "error": "Generation failed.",
             },
             status_code=200,
         )
@@ -145,7 +141,7 @@ class TestAlationAIDataProduct:
         with pytest.raises(requests.exceptions.HTTPError, match="Generation failed."):
             self.mock_alation_ai_data_product.get_data_product_task("task-2")
 
-    def test_get_data_product_task_returns_yaml(self, requests_mock):
+    def test_get_data_product_task_raises_for_legacy_string_response(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
             url="/ai/api/v1/data_product/get_data_product_result/task-3",
@@ -153,9 +149,23 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.get_data_product_task("task-3")
+        with pytest.raises(ValueError, match="unsupported response type 'str'"):
+            self.mock_alation_ai_data_product.get_data_product_task("task-3")
 
-        assert result == "version: 1\nname: Sales Metrics"
+    def test_get_data_product_task_raises_when_completed_result_has_no_yaml(self, requests_mock):
+        requests_mock.register_uri(
+            method="GET",
+            url="/ai/api/v1/data_product/get_data_product_result/task-4",
+            json={
+                "status": "completed",
+                "data": None,
+                "error": None,
+            },
+            status_code=200,
+        )
+
+        with pytest.raises(ValueError, match="completed without returning YAML data"):
+            self.mock_alation_ai_data_product.get_data_product_task("task-4")
 
     def test_generate_relationships(self, requests_mock):
         requests_mock.register_uri(
@@ -180,7 +190,7 @@ class TestAlationAIDataProduct:
         )
 
         result = self.mock_alation_ai_data_product.generate_relationships(
-            AlationAIGenerateRelationshipsRequest(spec_yaml="version: 1\nname: Sales Metrics")
+            AlationAIGenerateRelationshipsRequest(data_product_spec_yaml="version: 1\nname: Sales Metrics")
         )
 
         assert result == AlationAIGenerateRelationshipsResponse(
@@ -311,7 +321,7 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.validate_sql_against_data_product(
+        result = self.mock_alation_ai_data_product.validate_sql(
             "dp-1",
             ["SELECT 1"],
         )
@@ -324,7 +334,7 @@ class TestAlationAIDataProduct:
             )
         ]
 
-    def test_extract_data_product_metrics(self, requests_mock):
+    def test_extract_metrics_from_sql_statements(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/dp-1/extract_metrics",
@@ -332,7 +342,7 @@ class TestAlationAIDataProduct:
             status_code=200,
         )
 
-        result = self.mock_alation_ai_data_product.extract_data_product_metrics(
+        result = self.mock_alation_ai_data_product.extract_metrics_from_sql_statements(
             "dp-1",
             ["SELECT SUM(revenue) FROM sales"],
         )

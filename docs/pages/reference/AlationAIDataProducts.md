@@ -182,7 +182,7 @@ Attributes:
 
 ### AlationAISqlWithValidation
 
-Python object returned by `validate_sql_against_data_product`.
+Python object returned by `validate_sql`.
 
 Attributes:
 
@@ -354,7 +354,7 @@ generate_relationships(
 Generate JOIN relationships between record sets in a data product specification.
 
 Notes:
-* Pass the full YAML string in `spec_yaml`, typically the output returned by `get_data_product_task`.
+* Pass the full YAML string in `data_product_spec_yaml`, typically the output returned by `get_data_product_task`.
 * This wraps the `/ai/api/v1/data_product/generate_relationships` endpoint.
 
 ### revise_data_product

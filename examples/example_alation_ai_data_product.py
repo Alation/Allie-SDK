@@ -20,11 +20,11 @@ import allie_sdk as allie
 
 TABLE_A_ID = 311
 TABLE_B_ID = 312
-ALATION_AI_DATA_PRODUCT_ID = "replace with created data product name"
+PUBLISHED_DATA_PRODUCT_ID = "customer-orders-redshift-provisioned"
 EXISTING_DATA_PRODUCT_YAML = None
-BI_DATASOURCE_ID = 5
+BI_DATASOURCE_ID = 1
 SQL_STATEMENTS = [
-    "SELECT SUM(revenue) AS total_revenue FROM sales.orders",
+    "SELECT COUNT(*) AS cnt_customers FROM customersx",
 ]
 
 # ================================
@@ -101,8 +101,8 @@ creation_request = allie.AlationAIDataProductCreationInfo(
 
 creation_task = alation.alation_ai_data_product.enrich_data_product_spec(
     alation_ai_data_product=creation_request,
-    generate_missing_descriptions=True,
-    generate_relationships=True
+    generate_missing_descriptions=False,
+    generate_relationships=False
 )
 logging.info(f"Started data product creation task {creation_task.task_id}")
 
@@ -119,7 +119,7 @@ logging.info(f"Data product YAML:\n{data_product_result}")
 
 generated_relationships = alation.alation_ai_data_product.generate_relationships(
     allie.AlationAIGenerateRelationshipsRequest(
-        spec_yaml=data_product_result,
+        data_product_spec_yaml=data_product_result,
     )
 )
 logging.info("Generated %s relationship(s)", len(generated_relationships.relationships))
@@ -128,18 +128,18 @@ logging.info("Generated %s relationship(s)", len(generated_relationships.relatio
 # VALIDATE SQL AGAINST A DATA PRODUCT
 # ================================
 
-validated_sql = alation.alation_ai_data_product.validate_sql_against_data_product(
-    ALATION_AI_DATA_PRODUCT_ID,
+validated_sql = alation.alation_ai_data_product.validate_sql(
+    PUBLISHED_DATA_PRODUCT_ID,
     SQL_STATEMENTS,
 )
 logging.info(f"Validated {len(validated_sql)} SQL statement(s)")
 
 # ================================
-# EXTRACT METRICS FROM SQL
+# EXTRACT METRICS FROM SQL STATEMENTS
 # ================================
 
-metrics_task = alation.alation_ai_data_product.extract_data_product_metrics(
-    ALATION_AI_DATA_PRODUCT_ID,
+metrics_task = alation.alation_ai_data_product.extract_metrics_from_sql_statements(
+    PUBLISHED_DATA_PRODUCT_ID,
     SQL_STATEMENTS,
 )
 logging.info("Started metric extraction task %s", metrics_task.task_id)

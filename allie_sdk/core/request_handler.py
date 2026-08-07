@@ -39,7 +39,9 @@ class RequestHandler(object):
         self.headers = {"Content-Type": "application/json; charset=utf-8"}
         self.access_token = access_token
         if access_token:
-            self.headers['Token'] = access_token
+            # TODO: We need to send the Authorization header when using OAUTH 2.0 only
+            # self.headers['Token'] = access_token
+            self.headers["Authorization"] = f"Bearer {access_token}"
 
     def delete(
         self,

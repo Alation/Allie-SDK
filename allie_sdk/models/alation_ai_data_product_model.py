@@ -69,7 +69,7 @@ class AlationAIDataProductCreationInfo(BaseClass):
 class AlationAIGenerateRelationshipsRequest(BaseClass):
     """Payload used to generate relationships from a data product spec."""
 
-    spec_yaml: str = field(default=None)
+    data_product_spec_yaml: str = field(default=None)
 
     def generate_api_post_payload(self) -> dict:
         """Generate the API payload for relationship generation.
@@ -81,10 +81,10 @@ class AlationAIGenerateRelationshipsRequest(BaseClass):
             InvalidPostBody: If the YAML specification is missing.
         """
 
-        if self.spec_yaml is None:
+        if self.data_product_spec_yaml is None:
             raise InvalidPostBody("'spec_yaml' is a required field for Generate Relationships payload bodies")
 
-        return {"spec_yaml": self.spec_yaml}
+        return {"spec_yaml": self.data_product_spec_yaml}
 
 
 @dataclass(kw_only=True)
@@ -92,6 +92,15 @@ class AlationAIDataProductTask(BaseClass):
     """Task identifier returned for asynchronous data product workflows."""
 
     task_id: str = field(default=None)
+
+
+@dataclass(kw_only=True)
+class AlationAIDataProductJobResult(BaseClass):
+    """Result returned when polling a data product creation task."""
+
+    status: str = field(default=None)
+    data: str | None = field(default=None)
+    error: str | None = field(default=None)
 
 
 @dataclass(kw_only=True)

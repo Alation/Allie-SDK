@@ -48,7 +48,7 @@ class TestAlationAIDataProductModel:
         }
 
     def test_generate_relationships_request_generates_payload(self):
-        generate_request = AlationAIGenerateRelationshipsRequest(spec_yaml="version: 1")
+        generate_request = AlationAIGenerateRelationshipsRequest(data_product_spec_yaml="version: 1")
 
         assert generate_request.generate_api_post_payload() == {
             "spec_yaml": "version: 1",
@@ -56,7 +56,22 @@ class TestAlationAIDataProductModel:
 
     def test_generate_relationships_request_requires_spec_yaml(self):
         with pytest.raises(InvalidPostBody):
-            AlationAIGenerateRelationshipsRequest(spec_yaml=None).generate_api_post_payload()
+            AlationAIGenerateRelationshipsRequest(data_product_spec_yaml=None).generate_api_post_payload()
+
+    def test_data_product_job_result_maps_fields(self):
+        api_response = {
+            "status": "completed",
+            "data": "version: 1\nname: Sales Metrics",
+            "error": None,
+        }
+
+        result = AlationAIDataProductJobResult.from_api_response(api_response)
+
+        assert result == AlationAIDataProductJobResult(
+            status="completed",
+            data="version: 1\nname: Sales Metrics",
+            error=None,
+        )
 
     def test_generate_relationships_response_maps_nested_relationships(self):
         api_response = {

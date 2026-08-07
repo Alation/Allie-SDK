@@ -13,6 +13,7 @@ from ..core.custom_exceptions import (
 from ..core.request_handler import RequestHandler
 from ..models.alation_ai_data_product_model import (
     AlationAIDataProductCreationInfo,
+    AlationAIDataProductJobResult,
     AlationAIDataProductTask,
     AlationAIExtractMetricsFromBIParams,
     AlationAIGenerateRelationshipsRequest,
@@ -81,23 +82,20 @@ class AlationAIDataProduct(RequestHandler):
         validate_rest_payload(sql_statements, (str,))
 
     @staticmethod
-    def _raise_failed_data_product_task(task: AlationAIAsyncTask):
-        """Raise an HTTP error for a failed asynchronous data product task.
+    def _raise_failed_data_product_job_result(task_id: str, job_result: AlationAIDataProductJobResult):
+        """Raise an HTTP error for a failed data product creation result.
 
         Args:
-            task (AlationAIAsyncTask): Failed task returned by the Alation AI API.
+            task_id (str): Identifier of the task that failed.
+            job_result (AlationAIDataProductJobResult): Failed job result payload.
 
         Raises:
-            requests.exceptions.HTTPError: Always raised with the task failure details.
+            requests.exceptions.HTTPError: Always raised with the job failure details.
         """
 
-        error_message = f"Data product task '{task.id}' failed."
-        if task.context:
-            for key in ("error", "message", "detail", "details"):
-                value = task.context.get(key)
-                if value:
-                    error_message = f"{error_message} {value}"
-                    break
+        error_message = f"Data product task '{task_id}' failed."
+        if job_result.error:
+            error_message = f"{error_message} {job_result.error}"
 
         LOGGER.error(error_message)
         error_response = requests.Response()
@@ -149,7 +147,7 @@ class AlationAIDataProduct(RequestHandler):
             "Creating data product with %s table definition(s).",
             len(alation_ai_data_product.table_column_info_list),
         )
-        response = self.put(
+        response = self.post(
             url="/ai/api/v1/data_product/enrich_data_product_spec",
             body=payload,
             query_params={
@@ -160,7 +158,11 @@ class AlationAIDataProduct(RequestHandler):
 
         return AlationAIDataProductTask.from_api_response(response)
 
-    def get_data_product_task(self, task_id: str, poll_interval_seconds: float = 3) -> str:
+    def get_data_product_task(
+            self,
+            task_id: str,
+            poll_interval_seconds: float = 3
+    ) -> str:
         """Poll a data product task until final YAML is available.
 
         Args:
@@ -187,25 +189,41 @@ class AlationAIDataProduct(RequestHandler):
 
         attempt = 1
         while True:
-            LOGGER.info("Fetching data product task %s (attempt %s).", task_id, attempt)
+            LOGGER.info(f"Fetching data product task {task_id} (attempt {attempt}).")
             response = self.get(
                 url=f"/ai/api/v1/data_product/get_data_product_result/{task_id}",
                 pagination=False,
             )
 
             if not isinstance(response, dict):
-                LOGGER.info("Data product task %s completed and returned YAML.", task_id)
-                return response
+                error_message = (
+                    f"Data product task '{task_id}' returned unsupported response type "
+                    f"'{type(response).__name__}' from '/ai/api/v1/data_product/get_data_product_result/{{task_id}}'."
+                )
+                LOGGER.error(error_message)
+                raise ValueError(error_message)
 
-            task = AlationAIAsyncTask.from_api_response(response)
-            task_status = (task.status or "").lower()
+            job_result = AlationAIDataProductJobResult.from_api_response(response)
+            task_status = (job_result.status or "").lower()
+
+            if task_status == "completed":
+                if job_result.data is None:
+                    error_message = (
+                        f"Data product task '{task_id}' completed without returning YAML data."
+                    )
+                    LOGGER.error(error_message)
+                    raise ValueError(error_message)
+
+                LOGGER.info("Data product task %s completed and returned YAML.", task_id)
+                return job_result.data
 
             if task_status == "failed":
-                self._raise_failed_data_product_task(task)
+                self._raise_failed_data_product_job_result(task_id, job_result)
 
             if task_status not in {"pending", "running"}:
                 error_message = (
-                    f"Data product task '{task_id}' returned unexpected status '{task.status}'."
+                    f"Data product task '{task_id}' returned unexpected status "
+                    f"'{response.get('status')}'."
                 )
                 LOGGER.error(error_message)
                 raise ValueError(error_message)
@@ -369,16 +387,20 @@ class AlationAIDataProduct(RequestHandler):
 
         return AlationAIReviseDataProductResultDetail.from_api_response(response)
 
-    def validate_sql_against_data_product(
+    def validate_sql(
         self,
         data_product_id: str,
         sql_statements: list[str],
     ) -> list[AlationAISqlWithValidation]:
-        """Validate SQL statements against a data product.
+        """
+        Validate SQL statements against a data product.
+        Note: This function just validates the query syntactically, it doesn't check whether the columns
+        or tables exist. Use extract_metrics_from_sql_statements instead if your goal is to check whether the
+        columns or tables exist in the data product.
 
         Args:
             data_product_id (str): Identifier of the data product to validate
-                against.
+                against. This is required to detect the SQL dialect.
             sql_statements (list[str]): SQL statements to validate.
 
         Returns:
@@ -410,12 +432,14 @@ class AlationAIDataProduct(RequestHandler):
             return [AlationAISqlWithValidation.from_api_response(item) for item in response]
         return []
 
-    def extract_data_product_metrics(
+    def extract_metrics_from_sql_statements(
         self,
         data_product_id: str,
         sql_statements: list[str],
     ) -> AlationAIDataProductTask:
-        """Start extracting metrics from SQL statements for a data product.
+        """Extract metrics from SQL statements for a data product.
+
+        Note: This function also checks whether the columns or tables exist in the data product.
 
         Args:
             data_product_id (str): Identifier of the data product to analyze.
