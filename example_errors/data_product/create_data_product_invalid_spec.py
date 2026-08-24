@@ -57,7 +57,7 @@ invalid_data_product_spec = allie.DataProductSpec(
         version="1.0.0",
         contactEmail="data-products@example.com",
         contactName="Finance Team",
-        en=allie.DataProductLanguage(
+        en=allie.DataProductDescription(
             name="Broken Product Example",
         ),
     )

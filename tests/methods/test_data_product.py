@@ -13,7 +13,7 @@ from allie_sdk.models.data_product_model import (
     DataMarketplaceLanguage,
     DataProductCheck,
     DataProductCheckStandard,
-    DataProductLanguage,
+    DataProductDescription,
     DataProductParams,
     DataProductPermission,
     DataProductPermissionParams,
@@ -40,7 +40,7 @@ def build_data_product_spec() -> DataProductSpec:
             version="1.0.0",
             contactEmail="ann@example.com",
             contactName="Ann",
-            en=DataProductLanguage(
+            en=DataProductDescription(
                 name="Last Quarter Sales",
                 description="Data about last quarter sales",
             ),
@@ -95,13 +95,18 @@ class TestDataProductMethods:
         requests_mock.register_uri(
             method="GET",
             url="/dps/integration/data-products/v1/data-product/",
-            json=[
-                {
-                    "product_id": "finance:last_quarter_sales",
-                    "version_id": "1.0.0",
-                    "status": "draft",
-                }
-            ],
+            json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "product_id": "finance:last_quarter_sales",
+                        "version_id": "1.0.0",
+                        "status": "draft",
+                    }
+                ],
+            },
             status_code=200,
         )
 
@@ -116,7 +121,7 @@ class TestDataProductMethods:
 
         assert result[0].product_id == "finance:last_quarter_sales"
         request = requests_mock.request_history[0]
-        assert request.headers["Token"] == "test-token"
+        assert request.headers["Authorization"] == "Bearer test-token"
         assert request.qs["limit"] == ["50"]
         assert request.qs["skip"] == ["5"]
         assert request.qs["product_ids"] == ["finance:last_quarter_sales"]

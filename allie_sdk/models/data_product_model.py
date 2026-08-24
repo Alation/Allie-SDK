@@ -110,7 +110,7 @@ def _map_dict_values(items: dict[str, Any] | None, model_class: type[BaseClass])
 
 
 @dataclass(kw_only=True)
-class DataProductLanguage(BaseClass):
+class DataProductDescription(BaseClass):
     """Localized data product properties."""
 
     name: str = field(default=None)
@@ -485,7 +485,7 @@ class DataProductSpecDefinition(BaseClass):
     version: str = field(default=None)
     contactEmail: str = field(default=None)
     contactName: str = field(default=None)
-    en: DataProductLanguage = field(default=None)
+    en: DataProductDescription = field(default=None)
     deliverySystems: dict[str, DataProductDeliverySystem] = field(default_factory=dict)
     recordSets: dict[str, DataProductRecordSet] = field(default_factory=dict)
     metadata: DataProductMetadata = field(default=None)
@@ -493,7 +493,7 @@ class DataProductSpecDefinition(BaseClass):
 
     def __post_init__(self):
         if isinstance(self.en, dict):
-            self.en = DataProductLanguage.from_api_response(self.en)
+            self.en = DataProductDescription.from_api_response(self.en)
         self.deliverySystems = _map_dict_values(self.deliverySystems, DataProductDeliverySystem)
         self.recordSets = _map_dict_values(self.recordSets, DataProductRecordSet)
         if isinstance(self.metadata, dict):

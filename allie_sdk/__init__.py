@@ -81,7 +81,7 @@ from .models import (
     DataProductCheckStandard,
     DataProductDataAccess,
     DataProductDeliverySystem,
-    DataProductLanguage,
+    DataProductDescription,
     DataProductMarketplaceAssociation,
     DataProductMarketplaceAssociationMarketplace,
     DataProductMarketplaceAssociationState,

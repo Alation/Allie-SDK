@@ -4,6 +4,7 @@ Example of working with the Data Products API.
 Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
+- Adjust the data product spec in the "Build a Typed Data Product Spec" section.
 - The marketplace and product IDs used below already exist in Alation when you run the read-only sections.
 - If you enable the create or publish sections, your user must have the required marketplace and data product permissions.
 """
@@ -19,12 +20,12 @@ import allie_sdk as allie
 # Set Global Variables
 # ================================
 
-DATA_PRODUCT_ID = "finance:last_quarter_sales"
+DATA_PRODUCT_ID = "last-quarter-sales-3"
 DATA_PRODUCT_VERSION = "1.0.0"
-MARKETPLACE_ID = "finance:public"
+MARKETPLACE_ID = "marketplace_id_example"
 
-CREATE_OR_UPDATE_PRODUCT = False
-PUBLISH_PRODUCT_TO_MARKETPLACE = False
+CREATE_DATA_PRODUCT = False
+PUBLISH_PRODUCT_TO_MARKETPLACE = True
 
 
 # ================================
@@ -86,7 +87,7 @@ data_product_spec = allie.DataProductSpec(
         version=DATA_PRODUCT_VERSION,
         contactEmail="data-products@example.com",
         contactName="Finance Data Products Team",
-        en=allie.DataProductLanguage(
+        en=allie.DataProductDescription(
             name="Last Quarter Sales",
             shortDescription="Regional sales for the last completed quarter",
             description=(
@@ -97,7 +98,7 @@ data_product_spec = allie.DataProductSpec(
         deliverySystems={
             "snowflake": allie.DataProductDeliverySystem(
                 type="sql",
-                uri="snowflake://acme.analytics/FINANCE/SALES",
+                uri="snowflake://alation-alationproserv.snowflakecomputing.com:443/?warehouse=PS_COMPUTE_WH&db=SUPERSTORE",
                 accessRequestInstruction=allie.DataProductAccessRequestInstruction(
                     type="manual",
                     instruction="Request the FINANCE_ANALYST role from the data platform team.",
@@ -107,38 +108,38 @@ data_product_spec = allie.DataProductSpec(
         },
         recordSets={
             "quarterly_sales": allie.DataProductRecordSet(
-                name="quarterly_sales",
+                name="SUPERSTORE_REPORTING",
                 displayName="Quarterly Sales",
                 description="Each row represents total sales for a region and product family.",
                 schema=[
                     allie.DataProductRecordSetField(
-                        name="quarter",
+                        name="ORDER_DATE",
                         type="date",
-                        description="Quarter start date.",
+                        description="Order Date",
                     ),
                     allie.DataProductRecordSetField(
-                        name="region",
+                        name="COUNTRY",
                         type="string",
-                        description="Commercial region.",
+                        description="Commercial country",
                     ),
                     allie.DataProductRecordSetField(
-                        name="booked_revenue",
+                        name="SALES",
                         type="number",
-                        description="Revenue booked for the quarter.",
+                        description="Money generated",
                     ),
                 ],
                 sample=allie.DataProductRecordSetSample(
                     type="mock",
-                    data="quarter,region,booked_revenue\n2024-01-01,NA,1250000",
+                    data="ORDER_DATE,COUNTRY,SALES\n2024-01-01,USA,1250000",
                 ),
                 dataAccess=[
                     allie.DataProductDataAccess(
                         type="SQL",
-                        documentationUrl="https://example.com/docs/quarterly-sales",
+                        documentationUrl="snowflake://alation-alationproserv.snowflakecomputing.com:443/?warehouse=PS_COMPUTE_WH&db=SUPERSTORE",
                         qualifiedName=allie.DataProductQualifiedName(
-                            database="FINANCE",
-                            schema="SALES",
-                            table="QUARTERLY_SALES",
+                            database="SUPERSTORE",
+                            schema="Public",
+                            table="SUPERSTORE_REPORTING",
                         ),
                     )
                 ],
@@ -149,15 +150,57 @@ data_product_spec = allie.DataProductSpec(
                 "totalRevenue": allie.DataProductMetric(
                     displayName="Total Revenue",
                     description="Total booked revenue in the record set.",
-                    expression="SUM(booked_revenue)",
+                    expression="SUM(SALES)",
                     type="numeric",
-                    columns=["booked_revenue"],
+                    columns=["SALES"],
                 )
             }
         ),
     )
 )
 
+# ================================
+# CREATE DATA PRODUCT
+# ================================
+
+if CREATE_DATA_PRODUCT:
+
+    created_data_product = alation.data_product.create_data_product(
+        data_product_spec = data_product_spec
+    )
+
+# ================================
+# CHECK DATA PRODUCT
+# ================================
+
+checked_product = alation.data_product.check_data_product(
+    allie.DataProductCheck(
+        product_spec=data_product_spec,
+        standards=[
+            allie.DataProductCheckStandard(
+                type="static",
+                check="Ensure the product has a contact email.",
+                key="product.contactEmail",
+            )
+        ],
+    )
+)
+logging.info("Standards check returned %s result(s).", len(checked_product))
+
+
+# ================================
+# FETCH A SINGLE DATA PRODUCT
+# ================================
+
+data_product = alation.data_product.get_data_product(
+    data_product_id = DATA_PRODUCT_ID
+)
+logging.info(
+    "Fetched data product %s version %s with status %s.",
+    data_product.product_id,
+    data_product.version_id,
+    data_product.status,
+)
 
 # ================================
 # LIST DATA PRODUCTS
@@ -171,45 +214,15 @@ data_products = alation.data_product.get_data_products(
 )
 logging.info("Fetched %s data product row(s).", len(data_products))
 
-
 # ================================
-# FETCH A SINGLE DATA PRODUCT
+# UPDATE DATA PRODUCT
 # ================================
 
-data_product = alation.data_product.get_data_product(DATA_PRODUCT_ID)
-logging.info(
-    "Fetched data product %s version %s with status %s.",
-    data_product.product_id,
-    data_product.version_id,
-    data_product.status,
+updated_data_product = alation.data_product.update_data_product(
+    data_product_spec = data_product_spec
 )
 
 
-# ================================
-# OPTIONALLY CREATE OR UPDATE THE PRODUCT
-# ================================
-
-if CREATE_OR_UPDATE_PRODUCT:
-    created_product = alation.data_product.enrich_data_product_spec(data_product_spec)
-    logging.info(
-        "Created or replaced data product %s version %s.",
-        created_product.product_id,
-        created_product.version_id,
-    )
-
-    checked_product = alation.data_product.check_data_product(
-        allie.DataProductCheck(
-            product_spec=data_product_spec,
-            standards=[
-                allie.DataProductCheckStandard(
-                    type="static",
-                    check="Ensure the product has a contact email.",
-                    key="product.contactEmail",
-                )
-            ],
-        )
-    )
-    logging.info("Standards check returned %s result(s).", len(checked_product))
 
 
 # ================================

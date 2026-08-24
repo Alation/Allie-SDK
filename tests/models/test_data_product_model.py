@@ -14,7 +14,7 @@ from allie_sdk.models.data_product_model import (
     DataProduct,
     DataProductCheck,
     DataProductCheckStandard,
-    DataProductLanguage,
+    DataProductDescription,
     DataProductMetric,
     DataProductParams,
     DataProductPermission,
@@ -42,7 +42,7 @@ class TestDataProductModels:
                 version="1.0.0",
                 contactEmail="data-products@example.com",
                 contactName="Jane Doe",
-                en=DataProductLanguage(
+                en=DataProductDescription(
                     name="ARR, Sales, and Churn",
                     shortDescription="Financial KPIs",
                 ),
@@ -232,7 +232,7 @@ class TestDataProductModels:
                     version="1.0.0",
                     contactEmail="ann@example.com",
                     contactName="Ann",
-                    en=DataProductLanguage(
+                    en=DataProductDescription(
                         name="Last Quarter Sales",
                         description="Data about last quarter sales",
                     ),
@@ -395,7 +395,7 @@ class TestDataProductModels:
                     version="1.0.0",
                     contactEmail="ann@example.com",
                     contactName="Ann",
-                    en=DataProductLanguage(name="Last Quarter Sales"),
+                    en=DataProductDescription(name="Last Quarter Sales"),
                 )
             ),
             standards=[

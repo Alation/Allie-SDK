@@ -32,7 +32,7 @@ Core product spec models:
 |------|------|
 | `DataProductSpec` | Wrapper for the top-level `product` block. |
 | `DataProductSpecDefinition` | Main product definition including `productId`, `version`, owners, delivery systems, record sets, and metadata. |
-| `DataProductLanguage` | Localized product text such as `name`, `description`, and `shortDescription`. |
+| `DataProductDescription` | Localized product text such as `name`, `description`, and `shortDescription`. |
 | `DataProductDeliverySystem` | Delivery system entry keyed inside `deliverySystems`. |
 | `DataProductAccessRequestInstruction` | Manual or external access request instructions for a delivery system. |
 | `DataProductRecordSet` | Record-set definition keyed inside `recordSets`. |

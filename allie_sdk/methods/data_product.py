@@ -1,5 +1,5 @@
 """Alation Data Products API methods."""
-
+import json
 import logging
 from typing import Any
 
@@ -102,7 +102,7 @@ class AlationDataProduct(RequestHandler):
         paginate = self._paginate_when_unbounded(query_params)
 
         LOGGER.info("Fetching data products.")
-        response = self.get(
+        response = self.get_nested_results(
             url="/dps/integration/data-products/v1/data-product/",
             query_params=params,
             pagination=paginate,
@@ -115,7 +115,7 @@ class AlationDataProduct(RequestHandler):
     def create_data_product(
         self,
         data_product_spec: DataProductSpec | dict[str, Any] | str,
-    ) -> DataProduct:
+    ) -> JobDetails:
         """Create a data product from a typed spec, raw dict, or YAML string."""
 
         payload, headers = self._prepare_spec_payload(
@@ -130,7 +130,13 @@ class AlationDataProduct(RequestHandler):
             body=payload,
             headers=headers,
         )
-        return DataProduct.from_api_response(response)
+        if response:
+
+            mapped_response = self._map_request_success_to_job_details(
+                response_data=response
+            )
+            LOGGER.info("Data product created")
+            return JobDetails.from_api_response(mapped_response)
 
     def update_data_product(
         self,
@@ -152,14 +158,14 @@ class AlationDataProduct(RequestHandler):
         )
         return DataProduct.from_api_response(response)
 
-    def get_data_product(self, product_id: str) -> DataProduct:
+    def get_data_product(self, data_product_id: str) -> DataProduct:
         """Retrieve a single data product."""
 
-        self._validate_identifier(product_id, "product_id")
+        self._validate_identifier(data_product_id, "product_id")
 
-        LOGGER.info("Fetching data product '%s'.", product_id)
+        LOGGER.info("Fetching data product '%s'.", data_product_id)
         response = self.get(
-            url=f"/dps/integration/data-products/v1/data-product/{product_id}/",
+            url=f"/dps/integration/data-products/v1/data-product/{data_product_id}/",
             pagination=False,
         )
         return DataProduct.from_api_response(response)
@@ -500,7 +506,14 @@ class AlationDataProduct(RequestHandler):
         )
 
         if response:
-            return [DataProductCheckResultItem.from_api_response(item) for item in response]
+            evaluation = response.get("evaluation")
+            if isinstance(evaluation, str):
+                evaluation_converted = json.loads(evaluation)
+                result = [DataProductCheckResultItem.from_api_response(item) for item in evaluation_converted]
+            elif isinstance(response, list):
+                result = [DataProductCheckResultItem.from_api_response(item) for item in evaluation]
+
+            return result
         return []
 
     def get_report_results(

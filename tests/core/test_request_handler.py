@@ -19,7 +19,7 @@ class TestRequestHandler:
         assert result == {'msg': '',
          'result': {'message': 'Deleted successfully'},
          'status': 'successful'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_delete_error(self, requests_mock):
@@ -33,7 +33,7 @@ class TestRequestHandler:
         requests_mock.get('https://test.alation.com/test/get', json=[{'id': 1, 'name': 'Test'}])
         result = self.handler.get('/test/get')
         assert result == [{'id': 1, 'name': 'Test'}]
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_get_empty_response(self, requests_mock):
@@ -67,12 +67,58 @@ class TestRequestHandler:
             self.handler.get('/test/get')
         assert context.value.response.status_code == 500
 
+    def test_get_nested_results(self, requests_mock):
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get',
+            json={
+                'count': 2,
+                'next': '/test/nested-get?limit=1&offset=1',
+                'previous': None,
+                'results': [{'id': 1, 'name': 'Test 1'}],
+            },
+        )
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get?limit=1&offset=1',
+            json={
+                'count': 2,
+                'next': None,
+                'previous': '/test/nested-get?limit=1&offset=0',
+                'results': [{'id': 2, 'name': 'Test 2'}],
+            },
+        )
+
+        result = self.handler.get_nested_results('/test/nested-get')
+
+        assert result == [{'id': 1, 'name': 'Test 1'}, {'id': 2, 'name': 'Test 2'}]
+        assert requests_mock.call_count == 2
+
+    def test_get_nested_results_error(self, requests_mock):
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get',
+            json={
+                'count': 2,
+                'next': '/test/nested-get?limit=1&offset=1',
+                'previous': None,
+                'results': [{'id': 1, 'name': 'Test 1'}],
+            },
+        )
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get?limit=1&offset=1',
+            json={'error': 'Server error'},
+            status_code=500,
+        )
+
+        with pytest.raises(HTTPError) as context:
+            self.handler.get_nested_results('/test/nested-get')
+
+        assert context.value.response.status_code == 500
+
     
     def test_patch(self, requests_mock):
         requests_mock.patch('https://test.alation.com/test/patch', json={'id': 1, 'name': 'Updated Test'})
         result = self.handler.patch('/test/patch', {'name': 'Updated Test'})
         assert result == {'id': 1, 'name': 'Updated Test'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_patch_error(self, requests_mock):
@@ -86,7 +132,7 @@ class TestRequestHandler:
         requests_mock.post('https://test.alation.com/test/post', json={'id': 2, 'name': 'New Test'})
         result = self.handler.post('/test/post', {'name': 'New Test'})
         assert result == {'id': 2, 'name': 'New Test'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     def test_post_paginated(self, requests_mock):
         requests_mock.post(
@@ -135,7 +181,7 @@ class TestRequestHandler:
         requests_mock.put('https://test.alation.com/test/put', json={'id': 3, 'name': 'Put Test'})
         result = self.handler.put('/test/put', {'name': 'Put Test'})
         assert result == {'id': 3, 'name': 'Put Test'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_put_error(self, requests_mock):

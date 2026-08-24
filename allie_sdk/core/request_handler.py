@@ -172,6 +172,95 @@ class RequestHandler(object):
 
         return returned_items
 
+    def get_nested_results(
+            self,
+            url: str,
+            query_params: dict = None,
+            pagination: bool = True,
+            body: any = None,
+            headers: dict = None,
+    ) -> list:
+        """API GET request for paginated responses wrapped in a results envelope.
+
+        This supports response bodies shaped like::
+
+            {
+                "count": 2,
+                "next": "/path/?limit=1&offset=1",
+                "previous": None,
+                "results": [...]
+            }
+
+        This is DRF-style pagination with `next` and `results`, not the header-based list pagination.
+        DRF = Django REST Framework.
+
+        Args:
+            url (str): GET API Call URL.
+            query_params (dict): GET API Call Query Parameters.
+            pagination (bool): Follow the ``next`` URL until every result is fetched.
+            body (any): Optional GET Request Body.
+            headers (dict): Optional GET API Call Headers.
+
+        Returns:
+            list: Flattened list of items from the ``results`` property.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+            ValueError: If the API response does not contain a ``results`` list.
+        """
+        returned_items = []
+        if query_params is None:
+            query_params = {}
+        else:
+            query_params = query_params.copy()
+
+        if pagination and "limit" not in query_params:
+            query_params["limit"] = self.page_size
+
+        api_response = self._api_single_get(
+            self.host + url, params=query_params, body=body, headers=headers
+        )
+        if api_response.status_code not in SUCCESS_CODES:
+            api_response.raise_for_status()
+
+        try:
+            response_data = api_response.json()
+        except requests.exceptions.JSONDecodeError:
+            try:
+                response_data = api_response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                response_data = api_response.content
+
+        if not isinstance(response_data, dict) or not isinstance(response_data.get("results"), list):
+            raise ValueError("Nested GET requests must return a dictionary containing a 'results' list.")
+
+        returned_items.extend(response_data["results"])
+
+        next_url = response_data.get("next") if pagination else None
+        while next_url:
+            parsed_next_url = urlparse(next_url)
+            request_url = next_url if parsed_next_url.scheme else self.host + next_url
+            api_response = self._api_single_get(request_url, body=body, headers=headers)
+
+            if api_response.status_code not in SUCCESS_CODES:
+                api_response.raise_for_status()
+
+            try:
+                response_data = api_response.json()
+            except requests.exceptions.JSONDecodeError:
+                try:
+                    response_data = api_response.content.decode("utf-8")
+                except UnicodeDecodeError:
+                    response_data = api_response.content
+
+            if not isinstance(response_data, dict) or not isinstance(response_data.get("results"), list):
+                raise ValueError("Nested GET requests must return a dictionary containing a 'results' list.")
+
+            returned_items.extend(response_data["results"])
+            next_url = response_data.get("next")
+
+        return returned_items
+
     def patch(self, url: str, body: any, query_params: dict = None, headers: dict = None) -> dict:
         """API Patch Request.
 
