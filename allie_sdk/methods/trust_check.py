@@ -64,16 +64,10 @@ class AlationTrustChecks(RequestHandler):
             trust_check_response = self.post('/integration/flag/', body=payload)
 
             if trust_check_response:
-                # check whether it was a success or failure
-                status = trust_check_response.get("status")
-                if status:
-                    if status == "failed":
-                        return JobDetails.from_api_response(trust_check_response)
-                else:
-                    mapped_trust_check = self._map_request_success_to_job_details(
-                        response_data = TrustCheckFlag.from_api_response(trust_check_response)
-                    )
-                    return JobDetails.from_api_response(mapped_trust_check)
+                mapped_trust_check = self._map_request_success_to_job_details(
+                    response_data = TrustCheckFlag.from_api_response(trust_check_response)
+                )
+                return JobDetails.from_api_response(mapped_trust_check)
         except requests.exceptions.HTTPError as e:
             # For test compatibility, handle HTTP errors specially
             if e.response.status_code >= 400:
@@ -103,16 +97,11 @@ class AlationTrustChecks(RequestHandler):
             updated_trust_check = self.put(f'/integration/flag/{trust_check.id}/', body=payload)
 
             if updated_trust_check:
-                # check whether it was a success or failure
-                status = updated_trust_check.get("status")
-                if status:
-                    if status == "failed":
-                        return JobDetails.from_api_response(updated_trust_check)
-                else:
-                    mapped_updated_trust_check = self._map_request_success_to_job_details(
-                        response_data = TrustCheckFlag.from_api_response(updated_trust_check)
-                    )
-                    return JobDetails.from_api_response(mapped_updated_trust_check)
+
+                mapped_updated_trust_check = self._map_request_success_to_job_details(
+                    response_data = TrustCheckFlag.from_api_response(updated_trust_check)
+                )
+                return JobDetails.from_api_response(mapped_updated_trust_check)
         except requests.exceptions.HTTPError as e:
             # For test compatibility, handle HTTP errors specially
             if e.response.status_code >= 400:
