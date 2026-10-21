@@ -817,12 +817,15 @@ class RequestHandler(object):
         return error_data
 
     @staticmethod
-    def _map_request_success_to_job_details(response_data=None) -> dict:
+    def _map_request_success_to_job_details(
+        msg:str=None,
+        response_data=None
+    ) -> dict:
         # some API endpoints don't return any response content (e.g. for business policies)
         # hence we made the reponse_data argument optional here
         success_data = dict(
             status = "successful"
-            , msg = ""
+            , msg = msg
             , result = response_data
         )
 

@@ -3,10 +3,12 @@ Example of working with the Data Products API.
 
 Prerequisites:
 
-- You adjusted the "config.ini" file with your settings.
+- Adjust the "config.ini" file with your settings.
+- Adjust the "Set Global Variables" section (in this file).
+    - The marketplace and product IDs used below already exist in Alation when you run the read-only sections.
+    - If you enable the create or publish sections, your user must have the required marketplace and data product permissions.
 - Adjust the data product spec in the "Build a Typed Data Product Spec" section.
-- The marketplace and product IDs used below already exist in Alation when you run the read-only sections.
-- If you enable the create or publish sections, your user must have the required marketplace and data product permissions.
+
 """
 
 import configparser
@@ -20,12 +22,22 @@ import allie_sdk as allie
 # Set Global Variables
 # ================================
 
-DATA_PRODUCT_ID = "last-quarter-sales-3"
+DATA_PRODUCT_ID = "last-quarter-sales"
 DATA_PRODUCT_VERSION = "1.0.0"
-MARKETPLACE_ID = "marketplace_id_example"
+MARKETPLACE_ID = "acme-market-1"
 
+# switches
 CREATE_DATA_PRODUCT = False
+CHECK_DATA_PRODUCT = False
+FETCH_A_SINGLE_DATA_PRODUCT = False
+LIST_DATA_PRODUCTS = False
+UPDATE_DATA_PRODUCT = True
+FETCH_MARKETPLACE_DETAILS = False
+SEARCH_PRODUCTS_INSIDE_A_MARKETPLACE = True
 PUBLISH_PRODUCT_TO_MARKETPLACE = True
+VIEW_EFFECTIVE_PERMISSIONS = True
+
+
 
 
 # ================================
@@ -173,54 +185,63 @@ if CREATE_DATA_PRODUCT:
 # CHECK DATA PRODUCT
 # ================================
 
-checked_product = alation.data_product.check_data_product(
-    allie.DataProductCheck(
-        product_spec=data_product_spec,
-        standards=[
-            allie.DataProductCheckStandard(
-                type="static",
-                check="Ensure the product has a contact email.",
-                key="product.contactEmail",
-            )
-        ],
+if CHECK_DATA_PRODUCT:
+    checked_product = alation.data_product.check_data_product(
+        allie.DataProductCheck(
+            product_spec=data_product_spec,
+            standards=[
+                allie.DataProductCheckStandard(
+                    type="static",
+                    check="Ensure the product has a contact email.",
+                    key="product.contactEmail",
+                )
+            ],
+        )
     )
-)
-logging.info("Standards check returned %s result(s).", len(checked_product))
+    logging.info("Standards check returned %s result(s).", len(checked_product))
 
 
 # ================================
 # FETCH A SINGLE DATA PRODUCT
 # ================================
 
-data_product = alation.data_product.get_data_product(
-    data_product_id = DATA_PRODUCT_ID
-)
-logging.info(
-    "Fetched data product %s version %s with status %s.",
-    data_product.product_id,
-    data_product.version_id,
-    data_product.status,
-)
+if FETCH_A_SINGLE_DATA_PRODUCT:
+
+    data_product = alation.data_product.get_data_product(
+        data_product_id = DATA_PRODUCT_ID
+    )
+    logging.info(
+        "Fetched data product %s version %s with status %s.",
+        data_product.product_id,
+        data_product.version_id,
+        data_product.status,
+    )
 
 # ================================
 # LIST DATA PRODUCTS
 # ================================
 
-data_products = alation.data_product.get_data_products(
-    allie.DataProductParams(
-        limit=25,
-        group_by_product=True,
+if LIST_DATA_PRODUCTS:
+
+    data_products = alation.data_product.get_data_products(
+        allie.DataProductParams(
+            limit=25,
+            group_by_product=True,
+        )
     )
-)
-logging.info("Fetched %s data product row(s).", len(data_products))
+    logging.info("Fetched %s data product row(s).", len(data_products))
 
 # ================================
 # UPDATE DATA PRODUCT
 # ================================
 
-updated_data_product = alation.data_product.update_data_product(
-    data_product_spec = data_product_spec
-)
+if UPDATE_DATA_PRODUCT:
+    # update spec
+    data_product_spec.product.contactEmail = "dd@example.com"
+
+    updated_data_product = alation.data_product.update_data_product(
+        data_product_spec = data_product_spec
+    )
 
 
 
@@ -229,25 +250,32 @@ updated_data_product = alation.data_product.update_data_product(
 # FETCH MARKETPLACE DETAILS
 # ================================
 
-marketplace = alation.data_product.get_data_marketplace(MARKETPLACE_ID)
-logging.info(
-    "Fetched marketplace %s with %s published product(s).",
-    marketplace.external_marketplace_id,
-    marketplace.products_total,
-)
+if FETCH_MARKETPLACE_DETAILS:
+
+    marketplace = alation.data_product.get_data_marketplace(
+        marketplace_id=MARKETPLACE_ID
+    )
+    logging.info(
+        "Fetched marketplace %s with %s published product(s).",
+        marketplace.external_marketplace_id,
+        marketplace.products_total,
+    )
 
 
 # ================================
 # SEARCH PRODUCTS INSIDE A MARKETPLACE
 # ================================
 
-search_results = alation.data_product.search_data_products_in_marketplace(
-    MARKETPLACE_ID,
-    allie.DataProductSearchQuery(
-        user_query="Which data products contain recent sales information?",
-    ),
-)
-logging.info("Marketplace search returned %s product(s).", len(search_results))
+
+if SEARCH_PRODUCTS_INSIDE_A_MARKETPLACE:
+
+    search_results = alation.data_product.search_data_products_in_marketplace(
+        marketplace_id = MARKETPLACE_ID,
+        search_query = allie.DataProductSearchQuery(
+            user_query = "Which data products contain recent sales information?",
+        ),
+    )
+    logging.info("Marketplace search returned %s product(s).", len(search_results))
 
 
 # ================================
@@ -272,5 +300,6 @@ if PUBLISH_PRODUCT_TO_MARKETPLACE:
 # VIEW EFFECTIVE PERMISSIONS
 # ================================
 
-permissions = alation.data_product.get_user_permissions()
-logging.info("Authenticated user has %s data product permission assignment(s).", len(permissions))
+if VIEW_EFFECTIVE_PERMISSIONS:
+    permissions = alation.data_product.get_user_permissions()
+    logging.info("Authenticated user has %s data product permission assignment(s).", len(permissions))

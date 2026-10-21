@@ -156,7 +156,14 @@ class AlationDataProduct(RequestHandler):
             body=payload,
             headers=headers,
         )
-        return DataProduct.from_api_response(response)
+
+        if response:
+            response_message = response.get("message")
+            mapped_response = self._map_request_success_to_job_details(
+                msg = response_message
+            )
+
+            return JobDetails.from_api_response(mapped_response)
 
     def get_data_product(self, data_product_id: str) -> DataProduct:
         """Retrieve a single data product."""
