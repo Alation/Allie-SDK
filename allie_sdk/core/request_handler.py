@@ -818,15 +818,21 @@ class RequestHandler(object):
 
     @staticmethod
     def _map_request_success_to_job_details(
-        msg:str=None,
-        response_data=None
-    ) -> dict:
-        # some API endpoints don't return any response content (e.g. for business policies)
-        # hence we made the reponse_data argument optional here
-        success_data = dict(
-            status = "successful"
-            , msg = msg
-            , result = response_data
-        )
+        response_data: object = None,
+        *,
+        msg: str | None = "",
+    ) -> dict[str, object]:
+        """Map a successful API response to the JobDetails structure.
 
-        return success_data
+        Args:
+            response_data (object): API response payload stored in result. Defaults
+                to None for endpoints that return no response content. May be
+                passed positionally or by keyword for backward compatibility.
+            msg (str | None): Optional success message, supplied by keyword.
+                Defaults to an empty string; explicit None values are preserved.
+
+        Returns:
+            dict[str, object]: Successful status, message, and original payload.
+        """
+        API_LOGGER.debug("Mapping successful API response to job details.")
+        return {"status": "successful", "msg": msg, "result": response_data}

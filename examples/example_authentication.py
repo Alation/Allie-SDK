@@ -32,10 +32,8 @@ logging.basicConfig(
 # ================================
 # Source Global Config
 # ================================
-config_path = pathlib.Path(__file__).parent / "config.ini"
 config = configparser.ConfigParser()
-with open(config_path, 'r') as f:
-    config.read_file(f)
+config.read("config.ini")
 
 ALATION_USER_ID = config.get(section = "api", option = "ALATION_USER_ID")
 ALATION_BASE_URL = config.get(section = "api", option = "ALATION_BASE_URL")

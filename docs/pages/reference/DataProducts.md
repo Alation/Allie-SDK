@@ -14,9 +14,8 @@ The Data Products methods use the `/dps/integration/data-products/v1/` API names
 - Data product CRUD
 - Data product version management
 - Marketplace CRUD
-- Publishing and bulk publishing
+- Publishing
 - Standards checks
-- Report result logging
 - Marketplace search
 - Permission management
 
@@ -75,14 +74,6 @@ Use `DataMarketplaceSpec` when creating or updating a marketplace.
 | `PublishedDataProductParams` | Optional query parameters for `get_published_data_products`. |
 | `DataProductPublishParams` | Optional `version` query parameter for publish/update-published calls. |
 | `DataProductVersionUpdate` | Request body for `update_data_product_version`. |
-| `PublishInfo` | Product/version identifier for bulk publish operations. |
-| `BulkPublishInfo` | Request body for `bulk_publish_data_products`. |
-| `ProductReportResult` | Report payload for a single product. |
-| `ProductReportResultRead` | Product-specific report result returned by the API. |
-| `ReportResult` | Cross-product report payload. |
-| `ReportResultRead` | Cross-product report result returned by the API. |
-| `DataProductReportResultsParams` | Optional filter for product-specific report retrieval. |
-| `ReportResultsParams` | Optional filters for cross-product report retrieval. |
 | `DataProductCheck` | Request body for `check_data_product`. |
 | `DataProductCheckStandard` | Standard entry used inside `DataProductCheck`. |
 | `DataProductCheckResultItem` | Result row returned by `check_data_product`. |
@@ -112,19 +103,6 @@ update_data_product_version(
     data_product_version: DataProductVersionUpdate,
 ) -> DataProduct
 delete_data_product_version(product_id: str, version_id: str) -> JobDetails
-```
-
-### Product Reports
-
-```python
-get_data_product_report_results(
-    product_id: str,
-    query_params: DataProductReportResultsParams = None,
-) -> list[ProductReportResultRead]
-log_data_product_report_results(
-    product_id: str,
-    report_results: list[ProductReportResult],
-) -> JobDetails
 ```
 
 ### Marketplaces
@@ -172,12 +150,6 @@ bulk_publish_data_products(
 
 ```python
 check_data_product(data_product_check: DataProductCheck) -> list[DataProductCheckResultItem]
-get_report_results(query_params: ReportResultsParams = None) -> list[ReportResultRead]
-log_report_results(report_results: list[ReportResult]) -> JobDetails
-search_data_products_in_marketplace(
-    marketplace_id: str,
-    search_query: DataProductSearchQuery,
-) -> list[DataProductWithMarketplaceInfo]
 get_permissions(query_params: DataProductPermissionParams = None) -> list[DataProductPermission]
 create_permission(permission: DataProductPermission) -> JobDetails
 update_permission(permission: DataProductPermission) -> JobDetails

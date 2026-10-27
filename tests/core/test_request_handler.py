@@ -189,3 +189,77 @@ class TestRequestHandler:
         with pytest.raises(HTTPError) as context:
             self.handler.put('/test/put', {'name': 'Put Test'})
         assert context.value.response.status_code == 404
+
+
+class TestRequestSuccessMapping:
+    @pytest.mark.parametrize("use_keyword_argument", [False, True], ids=["positional", "keyword"])
+    @pytest.mark.parametrize(
+        "response_data",
+        [
+            pytest.param({"id": 1}, id="dictionary"),
+            pytest.param([{"id": 1}], id="list"),
+            pytest.param("Completed", id="text"),
+            pytest.param(None, id="none"),
+            pytest.param({}, id="empty-dictionary"),
+            pytest.param([], id="empty-list"),
+            pytest.param("", id="empty-text"),
+        ],
+    )
+    def test_response_remains_in_result(self, response_data: object, use_keyword_argument: bool) -> None:
+        """Preserve response payloads and the default empty success message.
+
+        Args:
+            response_data (object): API response payload to preserve.
+            use_keyword_argument (bool): Whether to pass the payload by name.
+
+        Returns:
+            None: Asserts the success mapping retains the existing contract.
+        """
+        if use_keyword_argument:
+            result = RequestHandler._map_request_success_to_job_details(response_data=response_data)
+        else:
+            result = RequestHandler._map_request_success_to_job_details(response_data)
+
+        assert result == {"status": "successful", "msg": "", "result": response_data}
+
+    def test_success_without_response(self) -> None:
+        """Support successful endpoints that return no response content.
+
+        Args:
+            None.
+
+        Returns:
+            None: Asserts an omitted payload maps to a successful empty result.
+        """
+        result = RequestHandler._map_request_success_to_job_details()
+
+        assert result == {"status": "successful", "msg": "", "result": None}
+
+    @pytest.mark.parametrize("message", ["Data product updated", None])
+    def test_success_with_message_only(self, message: str | None) -> None:
+        """Preserve explicit messages when no response payload is supplied.
+
+        Args:
+            message (str | None): Message supplied by the API, including None.
+
+        Returns:
+            None: Asserts message-only calls retain the supplied message.
+        """
+        result = RequestHandler._map_request_success_to_job_details(msg=message)
+
+        assert result == {"status": "successful", "msg": message, "result": None}
+
+    def test_success_with_response_and_message(self) -> None:
+        """Keep the response payload and explicit success message separate.
+
+        Args:
+            None.
+
+        Returns:
+            None: Asserts a positional payload supports a keyword message.
+        """
+        response_data = {"product_id": "finance:sales"}
+
+        result = RequestHandler._map_request_success_to_job_details(response_data, msg="Data product updated")
+
+        assert result == {"status": "successful", "msg": "Data product updated", "result": response_data}

@@ -970,40 +970,6 @@ class PublishInfo(BaseClass):
 
 
 @dataclass(kw_only=True)
-class BulkPublishInfo(BaseClass):
-    """Payload used for bulk publish, update, and unpublish operations."""
-
-    publish: list[PublishInfo] = field(default_factory=list)
-    update: list[PublishInfo] = field(default_factory=list)
-    unpublish: list[PublishInfo] = field(default_factory=list)
-
-    def __post_init__(self):
-        self.publish = _map_list(self.publish, PublishInfo)
-        self.update = _map_list(self.update, PublishInfo)
-        self.unpublish = _map_list(self.unpublish, PublishInfo)
-
-    def generate_api_payload(self) -> dict[str, Any]:
-        """Generate the API payload for bulk publish operations."""
-
-        payload = {}
-        if self.publish:
-            validate_rest_payload(self.publish, (PublishInfo,))
-            payload["publish"] = [item.generate_api_payload() for item in self.publish]
-        if self.update:
-            validate_rest_payload(self.update, (PublishInfo,))
-            payload["update"] = [item.generate_api_payload() for item in self.update]
-        if self.unpublish:
-            validate_rest_payload(self.unpublish, (PublishInfo,))
-            payload["unpublish"] = [item.generate_api_payload() for item in self.unpublish]
-
-        if not payload:
-            raise InvalidPostBody(
-                "At least one of 'publish', 'update', or 'unpublish' is required for bulk publish payload bodies"
-            )
-        return payload
-
-
-@dataclass(kw_only=True)
 class ProductReportResult(BaseClass):
     """Report result payload for a single data product."""
 
@@ -1034,82 +1000,6 @@ class ProductReportResult(BaseClass):
         if self.extra_fields:
             payload.update(self.extra_fields)
         return payload
-
-
-@dataclass(kw_only=True)
-class ProductReportResultRead(ProductReportResult):
-    """Report result returned when reading a single product's report results."""
-
-
-@dataclass(kw_only=True)
-class ReportResult(ProductReportResult):
-    """Report result payload spanning multiple data products."""
-
-    product_id: str = field(default=None)
-
-    @classmethod
-    def from_api_response(cls, body_params: dict):
-        body = dict(body_params)
-        product_id = body.pop("product_id", None)
-        report_key = body.pop("report_key", None)
-        value = body.pop("value", None)
-        extra_fields = body.pop("extra_fields", {}) or {}
-        if body:
-            extra_fields = {**body, **extra_fields}
-        return cls(
-            product_id=product_id,
-            report_key=report_key,
-            value=value,
-            extra_fields=extra_fields,
-        )
-
-    def generate_api_payload(self) -> dict[str, Any]:
-        """Generate the API payload for a multi-product report result."""
-
-        if self.product_id is None:
-            raise InvalidPostBody("'product_id' is a required field for Report Result payload bodies")
-
-        payload = super().generate_api_payload()
-        payload["product_id"] = self.product_id
-        return payload
-
-
-@dataclass(kw_only=True)
-class ReportResultRead(ReportResult):
-    """Report result returned by the global report results endpoint."""
-
-
-@dataclass(kw_only=True)
-class DataProductReportResultsParams(BaseParams):
-    """Optional query parameters for data product report results."""
-
-    report_key: str = field(default=None)
-
-    def generate_params_dict(self) -> dict[str, Any]:
-        """Generate query parameters for product-specific report retrieval."""
-
-        params = {}
-        if self.report_key is not None:
-            params["report_key"] = self.report_key
-        return params
-
-
-@dataclass(kw_only=True)
-class ReportResultsParams(BaseParams):
-    """Optional query parameters for the global report results endpoint."""
-
-    product_id: str = field(default=None)
-    report_key: str = field(default=None)
-
-    def generate_params_dict(self) -> dict[str, Any]:
-        """Generate query parameters for global report retrieval."""
-
-        params = {}
-        if self.product_id is not None:
-            params["product_id"] = self.product_id
-        if self.report_key is not None:
-            params["report_key"] = self.report_key
-        return params
 
 
 @dataclass(kw_only=True)

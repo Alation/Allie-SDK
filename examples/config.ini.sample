@@ -1,4 +1,4 @@
-# IMPORTANT: DO NOT USE QUOTATION MARKS HERE FOR VALUES!
+# IMPORTANT: DO NOT USE QUOTATION MARKS FOR [api] VALUES!
 [api]
 ALATION_USER_ID=
 ALATION_BASE_URL=
@@ -6,3 +6,135 @@ ALATION_API_REFRESH_TOKEN=
 # OAuth Client Credentials (optional - for OAuth authentication)
 ALATION_OAUTH_CLIENT_ID=
 ALATION_OAUTH_CLIENT_SECRET=
+
+# Data Products example inputs. JSON values may span indented lines.
+[data_product]
+DATA_PRODUCT_ID=last-quarter-sales
+DATA_PRODUCT_VERSION=1.0.0
+MARKETPLACE_ID=acme-market-1
+VERSION_STATUS=ready
+UPDATED_CONTACT_EMAIL=dd@example.com
+UPDATED_MARKETPLACE_DESCRIPTION=Updated marketplace for curated sales and finance products.
+LIST_LIMIT=25
+GROUP_BY_PRODUCT=True
+REPORT_KEY=quality_score
+REPORT_VALUE=98.5
+SEARCH_QUERY=Which data products contain recent sales information?
+PERMISSION_SUBJECT_TYPE=user
+PERMISSION_SUBJECT_ID=42
+PERMISSION_ROLE=product_admin
+UPDATED_PERMISSION_ROLE=product_viewer
+CHECK_STANDARDS=[{"type": "static", "check": "Ensure the product has a contact email.", "key": "product.contactEmail"}]
+PRODUCT_DEFINITION={
+      "contactEmail": "data-products@example.com",
+      "contactName": "Finance Data Products Team",
+      "en": {
+        "name": "Last Quarter Sales",
+        "description": "This data product contains last-quarter sales measures by region and product line. Use it for quarterly performance reviews and marketplace demos.",
+        "shortDescription": "Regional sales for the last completed quarter"
+      },
+      "deliverySystems": {
+        "snowflake": {
+          "type": "sql",
+          "uri": "snowflake://alation-alationproserv.snowflakecomputing.com:443/?warehouse=PS_COMPUTE_WH&db=SUPERSTORE",
+          "accessRequestInstruction": {
+            "type": "manual",
+            "instruction": "Request the FINANCE_ANALYST role from the data platform team.",
+            "request": "https://example.com/access-request"
+          }
+        }
+      },
+      "recordSets": {
+        "quarterly_sales": {
+          "name": "SUPERSTORE_REPORTING",
+          "displayName": "Quarterly Sales",
+          "description": "Each row represents total sales for a region and product family.",
+          "schema": [
+            {
+              "name": "ORDER_DATE",
+              "type": "date",
+              "description": "Order Date"
+            },
+            {
+              "name": "COUNTRY",
+              "type": "string",
+              "description": "Commercial country"
+            },
+            {
+              "name": "SALES",
+              "type": "number",
+              "description": "Money generated"
+            }
+          ],
+          "sample": {
+            "type": "mock",
+            "data": "ORDER_DATE,COUNTRY,SALES\n2024-01-01,USA,1250000"
+          },
+          "dataAccess": [
+            {
+              "type": "SQL",
+              "qualifiedName": {
+                "schema": "Public",
+                "table": "SUPERSTORE_REPORTING",
+                "database": "SUPERSTORE"
+              },
+              "documentationUrl": "snowflake://alation-alationproserv.snowflakecomputing.com:443/?warehouse=PS_COMPUTE_WH&db=SUPERSTORE"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "metrics": {
+          "totalRevenue": {
+            "displayName": "Total Revenue",
+            "description": "Total booked revenue in the record set.",
+            "expression": "SUM(SALES)",
+            "type": "numeric",
+            "columns": [
+              "SALES"
+            ]
+          }
+        }
+      }
+    }
+MARKETPLACE_DEFINITION={
+      "contactName": "Finance Data Products Team",
+      "contactEmail": "data-products@example.com",
+      "en": {
+        "name": "Acme Data Marketplace",
+        "description": "Curated data products for sales and finance."
+      }
+    }
+
+# Enable only the examples you want to run. Cleanup executes last.
+[data_product_examples]
+CREATE_DATA_PRODUCT=False
+CHECK_DATA_PRODUCT=False
+FETCH_A_SINGLE_DATA_PRODUCT=False
+LIST_DATA_PRODUCTS=False
+UPDATE_DATA_PRODUCT=False
+FETCH_DATA_PRODUCT_VERSION=False
+UPDATE_DATA_PRODUCT_VERSION=False
+LOG_DATA_PRODUCT_REPORT_RESULTS=False
+FETCH_DATA_PRODUCT_REPORT_RESULTS=False
+LOG_REPORT_RESULTS=False
+FETCH_REPORT_RESULTS=False
+CREATE_DATA_MARKETPLACE=False
+FETCH_MARKETPLACE_DETAILS=False
+LIST_DATA_MARKETPLACES=False
+UPDATE_DATA_MARKETPLACE=False
+PUBLISH_PRODUCT_TO_MARKETPLACE=False
+LIST_PUBLISHED_DATA_PRODUCTS=False
+FETCH_PUBLISHED_DATA_PRODUCT=False
+UPDATE_PUBLISHED_DATA_PRODUCT=False
+BULK_PUBLISH_DATA_PRODUCTS=False
+SEARCH_PRODUCTS_INSIDE_A_MARKETPLACE=False
+CREATE_PERMISSION=False
+FETCH_PERMISSIONS=False
+UPDATE_PERMISSION=False
+VIEW_EFFECTIVE_PERMISSIONS=False
+UNPUBLISH_PRODUCT_FROM_MARKETPLACE=False
+DELETE_PERMISSION=False
+DELETE_DATA_PRODUCT_VERSION=False
+DELETE_DATA_PRODUCT=False
+DELETE_DATA_MARKETPLACE=False

@@ -6,7 +6,6 @@ import pytest
 
 from allie_sdk.core.custom_exceptions import InvalidPostBody
 from allie_sdk.models.data_product_model import (
-    BulkPublishInfo,
     DataMarketplace,
     DataMarketplaceDefinition,
     DataMarketplaceLanguage,
@@ -15,7 +14,6 @@ from allie_sdk.models.data_product_model import (
     DataProductCheck,
     DataProductCheckStandard,
     DataProductDescription,
-    DataProductMetric,
     DataProductParams,
     DataProductPermission,
     DataProductPermissionParams,
@@ -28,9 +26,6 @@ from allie_sdk.models.data_product_model import (
     DataProductStandard,
     DataProductStandardDisplayName,
     DataProductVersionUpdate,
-    ProductReportResultRead,
-    PublishInfo,
-    ReportResultRead,
 )
 
 
@@ -306,39 +301,6 @@ class TestDataProductModels:
             ],
             products_total=1,
         )
-
-    def test_bulk_publish_info_generates_payload(self):
-        payload = BulkPublishInfo(
-            publish=[PublishInfo(product_id="new:product1", version_id="1.0.0")],
-            update=[PublishInfo(product_id="existing:product", version_id="2.0.0")],
-            unpublish=[PublishInfo(product_id="old:product")],
-        ).generate_api_payload()
-
-        assert payload == {
-            "publish": [{"product_id": "new:product1", "version_id": "1.0.0"}],
-            "update": [{"product_id": "existing:product", "version_id": "2.0.0"}],
-            "unpublish": [{"product_id": "old:product"}],
-        }
-
-    def test_report_result_read_collects_extra_fields(self):
-        product_result = ProductReportResultRead.from_api_response(
-            {
-                "report_key": "pii_found",
-                "value": False,
-                "extra_fields": {"severity": "low"},
-            }
-        )
-        multi_result = ReportResultRead.from_api_response(
-            {
-                "product_id": "finance:last_quarter_sales",
-                "report_key": "pii_found",
-                "value": False,
-                "severity": "low",
-            }
-        )
-
-        assert product_result.extra_fields == {"severity": "low"}
-        assert multi_result.extra_fields == {"severity": "low"}
 
     def test_permission_params_require_complete_pairs(self):
         with pytest.raises(InvalidPostBody):

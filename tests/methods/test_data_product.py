@@ -6,7 +6,6 @@ import requests
 
 from allie_sdk.methods.data_product import AlationDataProduct
 from allie_sdk.models.data_product_model import (
-    BulkPublishInfo,
     DataMarketplaceParams,
     DataMarketplaceSpec,
     DataMarketplaceDefinition,
@@ -24,12 +23,7 @@ from allie_sdk.models.data_product_model import (
     DataProductSpec,
     DataProductSpecDefinition,
     DataProductVersionUpdate,
-    ProductReportResult,
-    ProductReportResultRead,
-    PublishInfo,
     PublishedDataProductParams,
-    ReportResult,
-    ReportResultsParams,
 )
 
 
@@ -187,57 +181,6 @@ class TestDataProductMethods:
         assert result.status == "ready"
         assert json.loads(requests_mock.request_history[0].text) == {"status": "ready"}
 
-    def test_get_and_log_data_product_report_results(self, requests_mock):
-        requests_mock.register_uri(
-            method="GET",
-            url="/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/report-results/",
-            json=[
-                {
-                    "report_key": "pii_found",
-                    "value": False,
-                    "extra_fields": {"severity": "low"},
-                }
-            ],
-            status_code=200,
-        )
-        requests_mock.register_uri(
-            method="POST",
-            url="/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/report-results/",
-            text="",
-            status_code=201,
-        )
-
-        results = self.mock_data_product.get_data_product_report_results(
-            "finance:last_quarter_sales",
-            query_params=None,
-        )
-        job = self.mock_data_product.log_data_product_report_results(
-            "finance:last_quarter_sales",
-            [
-                ProductReportResult(
-                    report_key="pii_found",
-                    value=False,
-                    extra_fields={"severity": "low"},
-                )
-            ],
-        )
-
-        assert results == [
-            ProductReportResultRead(
-                report_key="pii_found",
-                value=False,
-                extra_fields={"severity": "low"},
-            )
-        ]
-        assert job.status == "successful"
-        assert json.loads(requests_mock.request_history[1].text) == [
-            {
-                "report_key": "pii_found",
-                "value": False,
-                "severity": "low",
-            }
-        ]
-
     def test_get_create_and_delete_marketplace(self, requests_mock):
         requests_mock.register_uri(
             method="GET",
@@ -344,32 +287,6 @@ class TestDataProductMethods:
         assert requests_mock.request_history[1].qs["version"] == ["1.0.0"]
         assert requests_mock.request_history[2].qs["version"] == ["2.0.0"]
 
-    def test_bulk_publish_data_products(self, requests_mock):
-        requests_mock.register_uri(
-            method="POST",
-            url="/dps/integration/data-products/v1/marketplace/finance:public/bulk-publish/",
-            json=[
-                {
-                    "product_id": "finance:last_quarter_sales",
-                    "version_id": "1.0.0",
-                    "status": "ready",
-                }
-            ],
-            status_code=200,
-        )
-
-        result = self.mock_data_product.bulk_publish_data_products(
-            "finance:public",
-            BulkPublishInfo(
-                publish=[PublishInfo(product_id="finance:last_quarter_sales", version_id="1.0.0")]
-            ),
-        )
-
-        assert result[0].product_id == "finance:last_quarter_sales"
-        assert json.loads(requests_mock.request_history[0].text) == {
-            "publish": [{"product_id": "finance:last_quarter_sales", "version_id": "1.0.0"}]
-        }
-
     def test_check_and_search_data_products(self, requests_mock):
         requests_mock.register_uri(
             method="POST",
@@ -420,57 +337,6 @@ class TestDataProductMethods:
         assert json.loads(requests_mock.request_history[1].text) == {
             "user_query": "Which products have recent sales information?"
         }
-
-    def test_get_and_log_global_report_results(self, requests_mock):
-        requests_mock.register_uri(
-            method="GET",
-            url="/dps/integration/data-products/v1/report-results/",
-            json=[
-                {
-                    "product_id": "finance:last_quarter_sales",
-                    "report_key": "pii_found",
-                    "value": False,
-                    "extra_fields": {"severity": "low"},
-                }
-            ],
-            status_code=200,
-        )
-        requests_mock.register_uri(
-            method="POST",
-            url="/dps/integration/data-products/v1/report-results/",
-            text="",
-            status_code=201,
-        )
-
-        results = self.mock_data_product.get_report_results(
-            ReportResultsParams(
-                product_id="finance:last_quarter_sales",
-                report_key="pii_found",
-            )
-        )
-        job = self.mock_data_product.log_report_results(
-            [
-                ReportResult(
-                    product_id="finance:last_quarter_sales",
-                    report_key="pii_found",
-                    value=False,
-                    extra_fields={"severity": "low"},
-                )
-            ]
-        )
-
-        assert results[0].product_id == "finance:last_quarter_sales"
-        assert results[0].extra_fields == {"severity": "low"}
-        assert job.status == "successful"
-        assert requests_mock.request_history[0].qs["product_id"] == ["finance:last_quarter_sales"]
-        assert json.loads(requests_mock.request_history[1].text) == [
-            {
-                "report_key": "pii_found",
-                "value": False,
-                "severity": "low",
-                "product_id": "finance:last_quarter_sales",
-            }
-        ]
 
     def test_permission_endpoints(self, requests_mock):
         requests_mock.register_uri(

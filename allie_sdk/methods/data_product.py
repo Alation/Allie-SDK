@@ -13,7 +13,6 @@ from ..core.custom_exceptions import (
 )
 from ..core.request_handler import RequestHandler
 from ..models.data_product_model import (
-    BulkPublishInfo,
     DataMarketplace,
     DataMarketplaceParams,
     DataMarketplaceSpec,
@@ -24,17 +23,11 @@ from ..models.data_product_model import (
     DataProductPermission,
     DataProductPermissionParams,
     DataProductPublishParams,
-    DataProductReportResultsParams,
     DataProductSearchQuery,
     DataProductSpec,
     DataProductVersionUpdate,
     DataProductWithMarketplaceInfo,
-    ProductReportResult,
-    ProductReportResultRead,
     PublishedDataProductParams,
-    ReportResult,
-    ReportResultRead,
-    ReportResultsParams,
 )
 from ..models.job_model import JobDetails
 
@@ -44,15 +37,34 @@ LOGGER = logging.getLogger("allie_sdk_logger")
 class AlationDataProduct(RequestHandler):
     """Interact with the Alation Data Products API endpoints."""
 
-    def __init__(self, access_token: str, session: requests.Session, host: str):
-        """Create an instance of the Data Products methods wrapper."""
+    def __init__(self, access_token: str, session: requests.Session, host: str) -> None:
+        """Initialize a client for the Alation Data Products API.
 
+        Args:
+            access_token (str): Alation REST API access token used to authenticate
+                requests.
+            session (requests.Session): Shared HTTP session used for API calls.
+            host (str): Base URL of the Alation server.
+
+        Returns:
+            None: Initializes the client's connection and authentication settings.
+        """
         super().__init__(session=session, host=host, access_token=access_token)
 
     @staticmethod
-    def _validate_identifier(value: str, field_name: str):
-        """Validate required string identifiers used in path parameters."""
+    def _validate_identifier(value: str, field_name: str) -> None:
+        """Ensure a required identifier is present before building a request URL.
 
+        Args:
+            value (str): Identifier to validate; must not be None or an empty string.
+            field_name (str): Parameter name to include in the validation error.
+
+        Returns:
+            None: Returns without a value when the identifier is present.
+
+        Raises:
+            InvalidPostBody: If the identifier is None or an empty string.
+        """
         if value is None or value == "":
             raise InvalidPostBody(f"'{field_name}' must be provided for the Data Products request.")
 
@@ -62,8 +74,30 @@ class AlationDataProduct(RequestHandler):
         expected_type: type[DataProductSpec] | type[DataMarketplaceSpec],
         payload_name: str,
     ) -> tuple[dict[str, Any] | str, dict[str, str] | None]:
-        """Normalize JSON or YAML spec payloads for create and update requests."""
+        """Prepare a product or marketplace specification for an API request.
 
+        Dictionaries are converted to the expected model and validated alongside
+        model instances. YAML strings are passed through without local validation.
+
+        Args:
+            spec_payload (DataProductSpec | DataMarketplaceSpec | dict[str, Any] | str):
+                Specification as a model, dictionary, or YAML string.
+            expected_type (type[DataProductSpec] | type[DataMarketplaceSpec]): Model
+                class required by the endpoint and used to convert dictionaries.
+            payload_name (str): Argument name to include in validation errors.
+
+        Returns:
+            tuple[dict[str, Any] | str, dict[str, str] | None]: Request body and
+            optional headers. YAML bodies have an application/x-yaml Content-Type
+            header; model and dictionary bodies are serialized to dictionaries
+            with no header override.
+
+        Raises:
+            InvalidPostBody: If the specification is missing or its model fields
+                fail payload validation.
+            UnsupportedPostBody: If the payload is not the expected model, a
+                dictionary, or a string.
+        """
         if spec_payload is None:
             raise InvalidPostBody(f"'{payload_name}' is required for the Data Products request.")
 
@@ -85,18 +119,38 @@ class AlationDataProduct(RequestHandler):
 
     @staticmethod
     def _paginate_when_unbounded(query_params: DataProductParams | DataMarketplaceParams | PublishedDataProductParams | None) -> bool:
-        """Only auto-paginate when the caller did not request explicit pagination bounds."""
+        """Determine whether a list request should automatically fetch more pages.
 
+        Args:
+            query_params (DataProductParams | DataMarketplaceParams | PublishedDataProductParams | None):
+                Optional query parameters whose limit and offset control pagination.
+
+        Returns:
+            bool: True when no parameters are supplied or both limit and offset
+            are None; False when either pagination bound is explicitly set.
+        """
         if query_params is None:
             return True
         return getattr(query_params, "limit", None) is None and getattr(query_params, "offset", None) is None
 
     def get_data_products(
         self,
-        query_params: DataProductParams = None,
+        query_params: DataProductParams | None = None,
     ) -> list[DataProduct]:
-        """Retrieve data products."""
+        """List data products with optional filtering, ordering, and grouping.
 
+        All result pages are fetched unless query_params explicitly sets a limit
+        or offset.
+
+        Args:
+            query_params (DataProductParams, optional): Product IDs, role and action
+                filters, sort order, grouping, and pagination bounds. Defaults to
+                None to use the API defaults and fetch all pages.
+
+        Returns:
+            list[DataProduct]: Matching products, including version summaries when
+            grouping is requested. Returns an empty list if no products are found.
+        """
         validate_query_params(query_params, DataProductParams)
         params = query_params.generate_params_dict() if query_params else None
         paginate = self._paginate_when_unbounded(query_params)
@@ -115,9 +169,19 @@ class AlationDataProduct(RequestHandler):
     def create_data_product(
         self,
         data_product_spec: DataProductSpec | dict[str, Any] | str,
-    ) -> JobDetails:
-        """Create a data product from a typed spec, raw dict, or YAML string."""
+    ) -> JobDetails | None:
+        """Create a data product from its specification.
 
+        Args:
+            data_product_spec (DataProductSpec | dict[str, Any] | str): Complete
+                product specification as a typed model, a dictionary containing
+                the product definition, or a YAML string. Models and dictionaries
+                are validated locally; YAML is sent directly to the API.
+
+        Returns:
+            JobDetails | None: Operation status with the API response stored in
+            result, or None if the API response is empty.
+        """
         payload, headers = self._prepare_spec_payload(
             spec_payload=data_product_spec,
             expected_type=DataProductSpec,
@@ -137,13 +201,25 @@ class AlationDataProduct(RequestHandler):
             )
             LOGGER.info("Data product created")
             return JobDetails.from_api_response(mapped_response)
+        else:
+            return None
 
     def update_data_product(
         self,
         data_product_spec: DataProductSpec | dict[str, Any] | str,
-    ) -> DataProduct:
-        """Update a data product from a typed spec, raw dict, or YAML string."""
+    ) -> JobDetails | None:
+        """Update a data product using the identifiers in its specification.
 
+        Args:
+            data_product_spec (DataProductSpec | dict[str, Any] | str): Complete
+                replacement specification as a typed model, a dictionary containing
+                the product definition, or a YAML string. Models and dictionaries
+                are validated locally; YAML is sent directly to the API.
+
+        Returns:
+            JobDetails | None: Operation status with the API's message stored in
+            msg, or None if the API response is empty.
+        """
         payload, headers = self._prepare_spec_payload(
             spec_payload=data_product_spec,
             expected_type=DataProductSpec,
@@ -164,10 +240,19 @@ class AlationDataProduct(RequestHandler):
             )
 
             return JobDetails.from_api_response(mapped_response)
+        else:
+            return None
 
     def get_data_product(self, data_product_id: str) -> DataProduct:
-        """Retrieve a single data product."""
+        """Retrieve a data product by its product identifier.
 
+        Args:
+            data_product_id (str): Non-empty identifier of the product to retrieve.
+
+        Returns:
+            DataProduct: Product details, including identifiers, status, and any
+            specifications or marketplace associations supplied by the API.
+        """
         self._validate_identifier(data_product_id, "product_id")
 
         LOGGER.info("Fetching data product '%s'.", data_product_id)
@@ -178,8 +263,14 @@ class AlationDataProduct(RequestHandler):
         return DataProduct.from_api_response(response)
 
     def delete_data_product(self, product_id: str) -> JobDetails:
-        """Delete a single data product."""
+        """Delete a data product by its product identifier.
 
+        Args:
+            product_id (str): Non-empty identifier of the product to delete.
+
+        Returns:
+            JobDetails: Deletion status and any response message from the API.
+        """
         self._validate_identifier(product_id, "product_id")
 
         LOGGER.info("Deleting data product '%s'.", product_id)
@@ -189,8 +280,16 @@ class AlationDataProduct(RequestHandler):
         return JobDetails.from_api_response(response)
 
     def get_data_product_version(self, product_id: str, version_id: str) -> DataProduct:
-        """Retrieve a specific data product version."""
+        """Retrieve the details and specification of a particular product version.
 
+        Args:
+            product_id (str): Non-empty identifier of the data product.
+            version_id (str): Non-empty identifier of the version to retrieve.
+
+        Returns:
+            DataProduct: Product details for the requested version, including its
+            status and any specification supplied by the API.
+        """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
 
@@ -207,8 +306,17 @@ class AlationDataProduct(RequestHandler):
         version_id: str,
         data_product_version: DataProductVersionUpdate,
     ) -> DataProduct:
-        """Update a specific data product version status."""
+        """Change the status of a particular data product version.
 
+        Args:
+            product_id (str): Non-empty identifier of the data product.
+            version_id (str): Non-empty identifier of the version to update.
+            data_product_version (DataProductVersionUpdate): Status update payload.
+                Its status must be "draft" or "ready".
+
+        Returns:
+            DataProduct: Updated product version returned by the API.
+        """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
         if data_product_version is None:
@@ -225,8 +333,16 @@ class AlationDataProduct(RequestHandler):
         return DataProduct.from_api_response(response)
 
     def delete_data_product_version(self, product_id: str, version_id: str) -> JobDetails:
-        """Delete a specific data product version."""
+        """Delete a particular version of a data product.
 
+        Args:
+            product_id (str): Non-empty identifier of the data product.
+            version_id (str): Non-empty identifier of the version to delete.
+
+        Returns:
+            JobDetails: Version deletion status and any response message from
+            the API.
+        """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
 
@@ -236,56 +352,22 @@ class AlationDataProduct(RequestHandler):
         )
         return JobDetails.from_api_response(response)
 
-    def get_data_product_report_results(
-        self,
-        product_id: str,
-        query_params: DataProductReportResultsParams = None,
-    ) -> list[ProductReportResultRead]:
-        """Retrieve report results for a single data product."""
-
-        self._validate_identifier(product_id, "product_id")
-        validate_query_params(query_params, DataProductReportResultsParams)
-        params = query_params.generate_params_dict() if query_params else None
-
-        LOGGER.info("Fetching report results for data product '%s'.", product_id)
-        response = self.get(
-            url=f"/dps/integration/data-products/v1/data-product/{product_id}/report-results/",
-            query_params=params,
-            pagination=False,
-        )
-
-        if response:
-            return [ProductReportResultRead.from_api_response(item) for item in response]
-        return []
-
-    def log_data_product_report_results(
-        self,
-        product_id: str,
-        report_results: list[ProductReportResult],
-    ) -> JobDetails:
-        """Log report results for a single data product."""
-
-        self._validate_identifier(product_id, "product_id")
-        if not report_results:
-            raise InvalidPostBody("'report_results' is required for the Data Products request.")
-
-        validate_rest_payload(payload=report_results, expected_types=(ProductReportResult,))
-        payload = [item.generate_api_payload() for item in report_results]
-
-        LOGGER.info("Logging %s report result(s) for data product '%s'.", len(report_results), product_id)
-        response = self.post(
-            url=f"/dps/integration/data-products/v1/data-product/{product_id}/report-results/",
-            body=payload,
-        )
-        mapped_response = self._map_request_success_to_job_details(response if response else None)
-        return JobDetails.from_api_response(mapped_response)
-
     def get_data_marketplaces(
         self,
-        query_params: DataMarketplaceParams = None,
+        query_params: DataMarketplaceParams | None = None,
     ) -> list[DataMarketplace]:
-        """Retrieve data marketplaces."""
+        """List data marketplaces, fetching all pages unless bounds are supplied.
 
+        Args:
+            query_params (DataMarketplaceParams, optional): Limit and offset for
+                the request. Defaults to None. Automatic pagination is enabled
+                when neither bound is set.
+
+        Returns:
+            list[DataMarketplace]: Marketplaces returned by the API, including
+            any specifications and product summaries. Returns an empty list if
+            no marketplaces are found.
+        """
         validate_query_params(query_params, DataMarketplaceParams)
         params = query_params.generate_params_dict() if query_params else None
         paginate = self._paginate_when_unbounded(query_params)
@@ -305,8 +387,18 @@ class AlationDataProduct(RequestHandler):
         self,
         marketplace_spec: DataMarketplaceSpec | dict[str, Any] | str,
     ) -> DataMarketplace:
-        """Create a data marketplace from a typed spec, raw dict, or YAML string."""
+        """Create a data marketplace from its specification.
 
+        Args:
+            marketplace_spec (DataMarketplaceSpec | dict[str, Any] | str): Complete
+                marketplace specification as a typed model, a dictionary containing
+                the marketplace definition, or a YAML string. Models and dictionaries
+                are validated locally; YAML is sent directly to the API.
+
+        Returns:
+            DataMarketplace: Created marketplace, including any specification and
+            product information supplied by the API.
+        """
         payload, headers = self._prepare_spec_payload(
             spec_payload=marketplace_spec,
             expected_type=DataMarketplaceSpec,
@@ -325,8 +417,18 @@ class AlationDataProduct(RequestHandler):
         self,
         marketplace_spec: DataMarketplaceSpec | dict[str, Any] | str,
     ) -> DataMarketplace:
-        """Update a data marketplace from a typed spec, raw dict, or YAML string."""
+        """Update a data marketplace using the identifier in its specification.
 
+        Args:
+            marketplace_spec (DataMarketplaceSpec | dict[str, Any] | str): Complete
+                replacement specification as a typed model, a dictionary containing
+                the marketplace definition, or a YAML string. Models and dictionaries
+                are validated locally; YAML is sent directly to the API.
+
+        Returns:
+            DataMarketplace: Updated marketplace, including any specification and
+            product information supplied by the API.
+        """
         payload, headers = self._prepare_spec_payload(
             spec_payload=marketplace_spec,
             expected_type=DataMarketplaceSpec,
@@ -344,10 +446,20 @@ class AlationDataProduct(RequestHandler):
     def get_data_marketplace(
         self,
         marketplace_id: str,
-        query_params: DataMarketplaceParams = None,
+        query_params: DataMarketplaceParams | None = None,
     ) -> DataMarketplace:
-        """Retrieve a specific data marketplace."""
+        """Retrieve a marketplace and any product information supplied by the API.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace to retrieve.
+            query_params (DataMarketplaceParams, optional): Limit and offset to send
+                with the detail request. Defaults to None. This method does not
+                automatically fetch additional pages.
+
+        Returns:
+            DataMarketplace: Marketplace details, including its specification,
+            products, and product count when provided by the API.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         validate_query_params(query_params, DataMarketplaceParams)
         params = query_params.generate_params_dict() if query_params else None
@@ -361,8 +473,15 @@ class AlationDataProduct(RequestHandler):
         return DataMarketplace.from_api_response(response)
 
     def delete_data_marketplace(self, marketplace_id: str) -> JobDetails:
-        """Delete a specific data marketplace."""
+        """Delete a data marketplace by its identifier.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace to delete.
+
+        Returns:
+            JobDetails: Marketplace deletion status and any response message from
+            the API.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
 
         LOGGER.info("Deleting data marketplace '%s'.", marketplace_id)
@@ -374,10 +493,23 @@ class AlationDataProduct(RequestHandler):
     def get_published_data_products(
         self,
         marketplace_id: str,
-        query_params: PublishedDataProductParams = None,
+        query_params: PublishedDataProductParams | None = None,
     ) -> list[DataProductWithMarketplaceInfo]:
-        """Retrieve data products published in a marketplace."""
+        """List the data products published in a particular marketplace.
 
+        All result pages are fetched unless query_params explicitly sets a limit
+        or offset.
+
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace to browse.
+            query_params (PublishedDataProductParams, optional): Limit and offset
+                for the request. Defaults to None to fetch all pages.
+
+        Returns:
+            list[DataProductWithMarketplaceInfo]: Published products with any
+            marketplace context, such as badges, supplied by the API. Returns an
+            empty list if no products are found.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         validate_query_params(query_params, PublishedDataProductParams)
         params = query_params.generate_params_dict() if query_params else None
@@ -399,8 +531,17 @@ class AlationDataProduct(RequestHandler):
         marketplace_id: str,
         product_id: str,
     ) -> DataProductWithMarketplaceInfo:
-        """Retrieve a specific published data product from a marketplace."""
+        """Retrieve a published product and its context within a marketplace.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace containing
+                the published product.
+            product_id (str): Non-empty identifier of the published data product.
+
+        Returns:
+            DataProductWithMarketplaceInfo: Published product details with any
+            marketplace context, such as badges, supplied by the API.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
 
@@ -419,10 +560,19 @@ class AlationDataProduct(RequestHandler):
         self,
         marketplace_id: str,
         product_id: str,
-        query_params: DataProductPublishParams = None,
+        query_params: DataProductPublishParams | None = None,
     ) -> DataProduct:
-        """Publish a data product into a marketplace."""
+        """Publish a data product in a particular marketplace.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the target marketplace.
+            product_id (str): Non-empty identifier of the product to publish.
+            query_params (DataProductPublishParams, optional): Version to publish.
+                Defaults to None to let the API choose the version.
+
+        Returns:
+            DataProduct: Product details returned by the API after publication.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
         validate_query_params(query_params, DataProductPublishParams)
@@ -440,10 +590,21 @@ class AlationDataProduct(RequestHandler):
         self,
         marketplace_id: str,
         product_id: str,
-        query_params: DataProductPublishParams = None,
+        query_params: DataProductPublishParams | None = None,
     ) -> DataProduct:
-        """Update the published version of a data product in a marketplace."""
+        """Update which version of a product is published in a marketplace.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace containing
+                the published product.
+            product_id (str): Non-empty identifier of the product to update.
+            query_params (DataProductPublishParams, optional): Version to publish
+                in place of the current version. Defaults to None to let the API
+                choose the version.
+
+        Returns:
+            DataProduct: Product details returned after updating the publication.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
         validate_query_params(query_params, DataProductPublishParams)
@@ -462,8 +623,16 @@ class AlationDataProduct(RequestHandler):
         return DataProduct.from_api_response(response)
 
     def unpublish_data_product(self, marketplace_id: str, product_id: str) -> JobDetails:
-        """Remove a data product from a marketplace."""
+        """Remove a product's publication from a particular marketplace.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace from
+                which to remove the product.
+            product_id (str): Non-empty identifier of the product to unpublish.
+
+        Returns:
+            JobDetails: Unpublish status and any response message from the API.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
 
@@ -473,33 +642,19 @@ class AlationDataProduct(RequestHandler):
         )
         return JobDetails.from_api_response(response)
 
-    def bulk_publish_data_products(
-        self,
-        marketplace_id: str,
-        bulk_publish_info: BulkPublishInfo,
-    ) -> list[DataProduct]:
-        """Bulk publish, update, or unpublish data products for a marketplace."""
-
-        self._validate_identifier(marketplace_id, "marketplace_id")
-        if bulk_publish_info is None:
-            raise InvalidPostBody("'bulk_publish_info' is required for the Data Products request.")
-
-        validate_rest_payload(payload=[bulk_publish_info], expected_types=(BulkPublishInfo,))
-        payload = bulk_publish_info.generate_api_payload()
-
-        LOGGER.info("Submitting bulk publish request for marketplace '%s'.", marketplace_id)
-        response = self.post(
-            url=f"/dps/integration/data-products/v1/marketplace/{marketplace_id}/bulk-publish/",
-            body=payload,
-        )
-
-        if response:
-            return [DataProduct.from_api_response(item) for item in response]
-        return []
-
     def check_data_product(self, data_product_check: DataProductCheck) -> list[DataProductCheckResultItem]:
-        """Check a data product spec against a list of standards."""
+        """Evaluate a data product specification against supplied standards.
 
+        Args:
+            data_product_check (DataProductCheck): Product specification and a
+                non-empty list of standards to evaluate. Each standard defines
+                its type, check, and key.
+
+        Returns:
+            list[DataProductCheckResultItem]: Parsed evaluation results containing
+            each standard's key, check, type, pass status, and explanation. Returns
+            an empty list if the API response is empty.
+        """
         if data_product_check is None:
             raise InvalidPostBody("'data_product_check' is required for the Data Products request.")
 
@@ -523,50 +678,23 @@ class AlationDataProduct(RequestHandler):
             return result
         return []
 
-    def get_report_results(
-        self,
-        query_params: ReportResultsParams = None,
-    ) -> list[ReportResultRead]:
-        """Retrieve report results across all data products."""
-
-        validate_query_params(query_params, ReportResultsParams)
-        params = query_params.generate_params_dict() if query_params else None
-
-        LOGGER.info("Fetching report results across data products.")
-        response = self.get(
-            url="/dps/integration/data-products/v1/report-results/",
-            query_params=params,
-            pagination=False,
-        )
-
-        if response:
-            return [ReportResultRead.from_api_response(item) for item in response]
-        return []
-
-    def log_report_results(self, report_results: list[ReportResult]) -> JobDetails:
-        """Log report results across multiple data products."""
-
-        if not report_results:
-            raise InvalidPostBody("'report_results' is required for the Data Products request.")
-
-        validate_rest_payload(payload=report_results, expected_types=(ReportResult,))
-        payload = [item.generate_api_payload() for item in report_results]
-
-        LOGGER.info("Logging %s cross-product report result(s).", len(report_results))
-        response = self.post(
-            url="/dps/integration/data-products/v1/report-results/",
-            body=payload,
-        )
-        mapped_response = self._map_request_success_to_job_details(response if response else None)
-        return JobDetails.from_api_response(mapped_response)
-
     def search_data_products_in_marketplace(
         self,
         marketplace_id: str,
         search_query: DataProductSearchQuery,
     ) -> list[DataProductWithMarketplaceInfo]:
-        """Search data products inside a marketplace using a natural-language query."""
+        """Find data products in a marketplace using a natural-language query.
 
+        Args:
+            marketplace_id (str): Non-empty identifier of the marketplace to search.
+            search_query (DataProductSearchQuery): Search payload whose user_query
+                contains the natural-language description of the desired products.
+
+        Returns:
+            list[DataProductWithMarketplaceInfo]: Matching products with any
+            marketplace context, such as badges, supplied by the API. Returns an
+            empty list if no products are found.
+        """
         self._validate_identifier(marketplace_id, "marketplace_id")
         if search_query is None:
             raise InvalidPostBody("'search_query' is required for the Data Products request.")
@@ -586,10 +714,21 @@ class AlationDataProduct(RequestHandler):
 
     def get_permissions(
         self,
-        query_params: DataProductPermissionParams = None,
+        query_params: DataProductPermissionParams | None = None,
     ) -> list[DataProductPermission]:
-        """Retrieve permissions configured for the Data Products application."""
+        """List configured Data Products permissions with optional subject and object filters.
 
+        Args:
+            query_params (DataProductPermissionParams, optional): Filters for
+                subject type and ID, object type and ID, and role. Subject type
+                and ID must be supplied together, as must object type and ID.
+                Defaults to None to retrieve permissions without these filters.
+
+        Returns:
+            list[DataProductPermission]: Matching permission assignments, each
+            identifying a subject, object, and role. Returns an empty list if no
+            permissions are found.
+        """
         validate_query_params(query_params, DataProductPermissionParams)
         params = query_params.generate_params_dict() if query_params else None
 
@@ -605,8 +744,15 @@ class AlationDataProduct(RequestHandler):
         return []
 
     def create_permission(self, permission: DataProductPermission) -> JobDetails:
-        """Create a data products permission."""
+        """Assign a Data Products role to a subject for a particular object.
 
+        Args:
+            permission (DataProductPermission): Permission assignment containing
+                subject_type, subject_id, object_type, object_id, and role.
+
+        Returns:
+            JobDetails: Creation status with any API response stored in result.
+        """
         if permission is None:
             raise InvalidPostBody("'permission' is required for the Data Products request.")
 
@@ -622,8 +768,16 @@ class AlationDataProduct(RequestHandler):
         return JobDetails.from_api_response(mapped_response)
 
     def update_permission(self, permission: DataProductPermission) -> JobDetails:
-        """Update a data products permission."""
+        """Update a Data Products permission assignment for a subject and object.
 
+        Args:
+            permission (DataProductPermission): Permission assignment containing
+                subject_type, subject_id, object_type, object_id, and the role
+                to submit for the update.
+
+        Returns:
+            JobDetails: Update status with any API response stored in result.
+        """
         if permission is None:
             raise InvalidPostBody("'permission' is required for the Data Products request.")
 
@@ -639,8 +793,15 @@ class AlationDataProduct(RequestHandler):
         return JobDetails.from_api_response(mapped_response)
 
     def delete_permission(self, permission: DataProductPermission) -> JobDetails:
-        """Delete a data products permission."""
+        """Remove a Data Products permission assignment from a subject.
 
+        Args:
+            permission (DataProductPermission): Assignment to remove, identified
+                by subject_type, subject_id, object_type, object_id, and role.
+
+        Returns:
+            JobDetails: Deletion status and any response message from the API.
+        """
         if permission is None:
             raise InvalidPostBody("'permission' is required for the Data Products request.")
 
@@ -655,8 +816,15 @@ class AlationDataProduct(RequestHandler):
         return JobDetails.from_api_response(response)
 
     def get_user_permissions(self) -> list[DataProductPermission]:
-        """Retrieve effective permissions for the authenticated user."""
+        """Retrieve the authenticated user's effective Data Products permissions.
 
+        Args:
+            None: Uses the access token configured on this client.
+
+        Returns:
+            list[DataProductPermission]: Effective permission assignments for the
+            authenticated user. Returns an empty list if no permissions are found.
+        """
         LOGGER.info("Fetching effective data product permissions for the authenticated user.")
         response = self.get(
             url="/dps/integration/data-products/v1/data-products/check-permissions/",
