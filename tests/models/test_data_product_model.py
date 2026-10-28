@@ -25,7 +25,7 @@ from allie_sdk.models.data_product_model import (
     DataProductSpecDefinition,
     DataProductStandard,
     DataProductStandardDisplayName,
-    DataProductVersionUpdate,
+    DataProductVersionStatusUpdate,
 )
 
 
@@ -331,7 +331,7 @@ class TestDataProductModels:
 
     def test_version_update_and_permission_validate_allowed_values(self):
         with pytest.raises(InvalidPostBody):
-            DataProductVersionUpdate(status="archived").generate_api_payload()
+            DataProductVersionStatusUpdate(status="archived").generate_api_payload()
 
         with pytest.raises(InvalidPostBody):
             DataProductPermission(
@@ -342,7 +342,7 @@ class TestDataProductModels:
                 role="product_viewer",
             ).generate_api_payload()
 
-        assert DataProductVersionUpdate(status="ready").generate_api_payload() == {"status": "ready"}
+        assert DataProductVersionStatusUpdate(status="ready").generate_api_payload() == {"status": "ready"}
         assert DataProductParams(limit=25, offset=10, group_by_product=False).generate_params_dict() == {
             "limit": 25,
             "skip": 10,

@@ -102,7 +102,7 @@ from .models import (
     DataProductStandard,
     DataProductStandardDisplayName,
     DataProductVersionSummary,
-    DataProductVersionUpdate,
+    DataProductVersionStatusUpdate,
     DataProductWithMarketplaceInfo,
     DataQualityField,
     DataQualityFieldItem,

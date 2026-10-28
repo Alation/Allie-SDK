@@ -2,14 +2,17 @@
 
 import json
 
+import pytest
 import requests
+from requests_mock import Mocker
 
 from allie_sdk.methods.data_product import AlationDataProduct
 from allie_sdk.models.data_product_model import (
-    DataMarketplaceParams,
-    DataMarketplaceSpec,
+    DataMarketplace,
     DataMarketplaceDefinition,
     DataMarketplaceLanguage,
+    DataMarketplaceParams,
+    DataMarketplaceSpec,
     DataProductCheck,
     DataProductCheckStandard,
     DataProductDescription,
@@ -22,9 +25,10 @@ from allie_sdk.models.data_product_model import (
     DataProductSearchQuery,
     DataProductSpec,
     DataProductSpecDefinition,
-    DataProductVersionUpdate,
+    DataProductVersionStatusUpdate,
     PublishedDataProductParams,
 )
+from allie_sdk.models.job_model import JobDetails
 
 
 def build_data_product_spec() -> DataProductSpec:
@@ -172,16 +176,24 @@ class TestDataProductMethods:
             status_code=201,
         )
 
-        result = self.mock_data_product.update_data_product_version(
+        result = self.mock_data_product.update_data_product_version_status(
             "finance:last_quarter_sales",
             "1.0.0",
-            DataProductVersionUpdate(status="ready"),
+            DataProductVersionStatusUpdate(status="ready"),
         )
 
         assert result.status == "ready"
         assert json.loads(requests_mock.request_history[0].text) == {"status": "ready"}
 
-    def test_get_create_and_delete_marketplace(self, requests_mock):
+    def test_get_and_delete_marketplace(self, requests_mock: Mocker) -> None:
+        """Verify marketplace listing and deletion.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the returned models and query parameters.
+        """
         requests_mock.register_uri(
             method="GET",
             url="/dps/integration/data-products/v1/marketplace/",
@@ -194,15 +206,6 @@ class TestDataProductMethods:
             status_code=200,
         )
         requests_mock.register_uri(
-            method="POST",
-            url="/dps/integration/data-products/v1/marketplace/",
-            json={
-                "external_marketplace_id": "finance:public",
-                "products_total": 0,
-            },
-            status_code=201,
-        )
-        requests_mock.register_uri(
             method="DELETE",
             url="/dps/integration/data-products/v1/marketplace/finance:public/",
             text="",
@@ -212,14 +215,248 @@ class TestDataProductMethods:
         marketplaces = self.mock_data_product.get_data_marketplaces(
             DataMarketplaceParams(limit=20, offset=0)
         )
-        created = self.mock_data_product.create_data_marketplace(build_marketplace_spec())
         deleted = self.mock_data_product.delete_data_marketplace("finance:public")
 
         assert marketplaces[0].external_marketplace_id == "finance:public"
-        assert created.external_marketplace_id == "finance:public"
         assert deleted.status == "successful"
         assert requests_mock.request_history[0].qs["skip"] == ["0"]
-        assert json.loads(requests_mock.request_history[1].text)["marketplace"]["marketplaceId"] == "finance:public"
+
+    @pytest.mark.parametrize(
+        "query_params",
+        [None, DataMarketplaceParams(), DataMarketplaceParams(limit=20), DataMarketplaceParams(offset=0)],
+    )
+    def test_get_data_marketplaces_with_data_envelope(
+        self, requests_mock: Mocker, query_params: DataMarketplaceParams | None
+    ) -> None:
+        """Verify marketplace envelopes are converted into a list of models.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            query_params (DataMarketplaceParams | None): Optional pagination bounds.
+
+        Returns:
+            None: Assertions verify marketplace details and request parameters.
+        """
+        marketplace_spec = build_marketplace_spec().generate_api_payload()
+        specification_yaml = "marketplace:\n  marketplaceId: finance:public\n"
+        requests_mock.get(
+            "/dps/integration/data-products/v1/marketplace/",
+            json={
+                "data": [
+                    {
+                        "id": "bad823ca-e618-4b54-8a1a-c201c2aeb4e3",
+                        "defaultMarketplaceTemplate": "mp-tpl-default",
+                        "external_marketplace_id": "finance:public",
+                        "products": [{"product_id": "finance:last_quarter_sales"}],
+                        "products_total": 1,
+                        "spec": marketplace_spec,
+                        "spec_yaml": specification_yaml,
+                    },
+                    {"external_marketplace_id": "sales:public", "products": [], "products_total": 0},
+                ],
+                "total": 2,
+            },
+        )
+
+        marketplaces = self.mock_data_product.get_data_marketplaces(query_params)
+
+        assert len(marketplaces) == 2
+        assert all(isinstance(marketplace, DataMarketplace) for marketplace in marketplaces)
+        assert marketplaces[0].external_marketplace_id == "finance:public"
+        assert marketplaces[0].spec.marketplace.en.name == "Finance Marketplace"
+        assert marketplaces[0].spec_yaml == specification_yaml
+        assert marketplaces[0].products[0].product_id == "finance:last_quarter_sales"
+        assert marketplaces[0].products_total == 1
+        assert marketplaces[1].external_marketplace_id == "sales:public"
+        assert marketplaces[1].products == []
+        assert requests_mock.call_count == 1
+        request = requests_mock.request_history[0]
+        assert request.headers["Authorization"] == "Bearer test-token"
+        if query_params is not None and query_params.offset is not None:
+            assert request.qs == {"skip": ["0"]}
+        else:
+            expected_limit = query_params.limit if query_params is not None and query_params.limit is not None else self.mock_data_product.page_size
+            assert request.qs == {"limit": [str(expected_limit)]}
+
+    def test_get_data_marketplaces_paginates_data_envelopes(self, requests_mock: Mocker) -> None:
+        """Verify unbounded listings fetch all marketplaces using total and skip.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify all pages are mapped and pagination advances.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/marketplace/",
+            [
+                {"json": {"data": [{"external_marketplace_id": "finance:public"}], "total": 2}},
+                {"json": {"data": [{"external_marketplace_id": "sales:public"}], "total": 2}},
+            ],
+        )
+
+        marketplaces = self.mock_data_product.get_data_marketplaces()
+
+        assert [marketplace.external_marketplace_id for marketplace in marketplaces] == ["finance:public", "sales:public"]
+        assert requests_mock.call_count == 2
+        assert requests_mock.request_history[0].qs == {"limit": [str(self.mock_data_product.page_size)]}
+        assert requests_mock.request_history[1].qs == {"limit": [str(self.mock_data_product.page_size)], "skip": ["1"]}
+
+    def test_get_data_marketplaces_with_bounds_fetches_one_page(self, requests_mock: Mocker) -> None:
+        """Verify explicit pagination bounds prevent automatic page requests.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify only the requested page is fetched.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/marketplace/",
+            json={"data": [{"external_marketplace_id": "finance:public"}], "total": 10},
+        )
+
+        marketplaces = self.mock_data_product.get_data_marketplaces(DataMarketplaceParams(limit=1, offset=5))
+
+        assert marketplaces[0].external_marketplace_id == "finance:public"
+        assert requests_mock.call_count == 1
+        assert requests_mock.request_history[0].qs == {"limit": ["1"], "skip": ["5"]}
+
+    def test_get_data_marketplaces_with_empty_data_envelope(self, requests_mock: Mocker) -> None:
+        """Verify an empty marketplace envelope returns an empty list.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the empty result requires only one request.
+        """
+        requests_mock.get("/dps/integration/data-products/v1/marketplace/", json={"data": [], "total": 0})
+
+        assert self.mock_data_product.get_data_marketplaces() == []
+        assert requests_mock.call_count == 1
+
+    @pytest.mark.parametrize(
+        "response",
+        [
+            {},
+            {"data": None, "total": 0},
+            {"data": {}, "total": 0},
+            {"data": ["finance:public"], "total": 1},
+            {"data": [], "total": "0"},
+            {"data": [], "total": False},
+            {"data": [], "total": -1},
+        ],
+    )
+    def test_get_data_marketplaces_rejects_invalid_responses(self, requests_mock: Mocker, response: dict[str, object]) -> None:
+        """Verify malformed responses raise a clear validation error.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            response (dict[str, object]): Invalid marketplace response to return.
+
+        Returns:
+            None: Assertions verify malformed responses are rejected immediately.
+        """
+        requests_mock.get("/dps/integration/data-products/v1/marketplace/", json=response)
+
+        with pytest.raises(ValueError, match="Marketplace response"):
+            self.mock_data_product.get_data_marketplaces()
+
+        assert requests_mock.call_count == 1
+
+    @pytest.mark.parametrize(
+        "second_page, expected_error",
+        [
+            ({"json": {"data": [], "total": 2}}, ValueError),
+            ({"json": {"detail": "Forbidden"}, "status_code": 403}, requests.HTTPError),
+        ],
+    )
+    def test_get_data_marketplaces_raises_on_incomplete_pagination(
+        self, requests_mock: Mocker, second_page: dict[str, object], expected_error: type[Exception]
+    ) -> None:
+        """Verify failed pagination raises instead of returning incomplete data.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            second_page (dict[str, object]): Empty or failed second-page response.
+            expected_error (type[Exception]): Error expected from the second page.
+
+        Returns:
+            None: Assertions verify errors propagate without further requests.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/marketplace/",
+            [
+                {"json": {"data": [{"external_marketplace_id": "finance:public"}], "total": 2}},
+                second_page,
+            ],
+        )
+
+        with pytest.raises(expected_error):
+            self.mock_data_product.get_data_marketplaces()
+
+        assert requests_mock.call_count == 2
+
+    @pytest.mark.parametrize("payload_format", ["model", "dict", "yaml"])
+    def test_create_data_marketplace_returns_message(self, requests_mock: Mocker, payload_format: str) -> None:
+        """Verify marketplace creation returns the API message for each spec format.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            payload_format (str): Model, dictionary, or YAML request format.
+
+        Returns:
+            None: Assertions verify the success message and submitted specification.
+        """
+        message = "Marketplace with ID: finance:public successfully created."
+        requests_mock.register_uri(
+            method="POST",
+            url="/dps/integration/data-products/v1/marketplace/",
+            json={"message": message},
+            status_code=201,
+        )
+        marketplace_spec: DataMarketplaceSpec | dict[str, object] | str = build_marketplace_spec()
+        if payload_format == "dict":
+            marketplace_spec = build_marketplace_spec().generate_api_payload()
+        elif payload_format == "yaml":
+            marketplace_spec = (
+                "marketplace:\n"
+                "  marketplaceId: finance:public\n"
+                "  contactName: Allie\n"
+                "  contactEmail: allie@example.com\n"
+                "  en:\n"
+                "    name: Finance Marketplace\n"
+                "    description: Products for finance.\n"
+            )
+
+        result = self.mock_data_product.create_data_marketplace(marketplace_spec)
+
+        assert result == JobDetails(status="successful", msg=message)
+        request = requests_mock.request_history[0]
+        if payload_format == "yaml":
+            assert request.headers["Content-Type"] == "application/x-yaml; charset=utf-8"
+            assert request.text == marketplace_spec
+        else:
+            assert json.loads(request.text) == build_marketplace_spec().generate_api_payload()
+
+    def test_create_data_marketplace_with_empty_response(self, requests_mock: Mocker) -> None:
+        """Verify marketplace creation handles an empty successful response.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: An assertion verifies the method returns None without a body.
+        """
+        requests_mock.register_uri(
+            method="POST",
+            url="/dps/integration/data-products/v1/marketplace/",
+            text="",
+            status_code=201,
+        )
+
+        assert self.mock_data_product.create_data_marketplace(build_marketplace_spec()) is None
 
     def test_get_and_publish_marketplace_products(self, requests_mock):
         requests_mock.register_uri(

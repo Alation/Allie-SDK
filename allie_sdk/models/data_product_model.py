@@ -933,7 +933,7 @@ class DataProductPublishParams(BaseParams):
 
 
 @dataclass(kw_only=True)
-class DataProductVersionUpdate(BaseClass):
+class DataProductVersionStatusUpdate(BaseClass):
     """Payload used to update a data product version status."""
 
     status: str = field(default=None)

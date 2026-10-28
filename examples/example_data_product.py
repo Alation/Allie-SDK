@@ -81,7 +81,7 @@ data_product_spec = allie.DataProductSpec(
     product=allie.DataProductSpecDefinition(
         productId=DATA_PRODUCT_ID,
         version=DATA_PRODUCT_VERSION,
-        **json.loads(data_product_settings["PRODUCT_DEFINITION"]),
+        **json.loads(data_product_settings["DATA_PRODUCT_DEFINITION"]),
     )
 )
 
@@ -158,11 +158,11 @@ if example_switches.getboolean("FETCH_DATA_PRODUCT_VERSION"):
 # UPDATE DATA PRODUCT VERSION STATUS
 # ================================
 
-if example_switches.getboolean("UPDATE_DATA_PRODUCT_VERSION"):
-    updated_version = alation.data_product.update_data_product_version(
+if example_switches.getboolean("UPDATE_DATA_PRODUCT_VERSION_STATUS"):
+    updated_version = alation.data_product.update_data_product_version_status(
         product_id=DATA_PRODUCT_ID,
         version_id=DATA_PRODUCT_VERSION,
-        data_product_version=allie.DataProductVersionUpdate(status=data_product_settings["VERSION_STATUS"]),
+        data_product_version=allie.DataProductVersionStatusUpdate(status=data_product_settings["VERSION_STATUS"]),
     )
     logging.info(f"Updated version {updated_version.version_id} to status {updated_version.status}.")
 
@@ -171,8 +171,11 @@ if example_switches.getboolean("UPDATE_DATA_PRODUCT_VERSION"):
 # ================================
 
 if example_switches.getboolean("CREATE_DATA_MARKETPLACE"):
-    created_marketplace = alation.data_product.create_data_marketplace(marketplace_spec=marketplace_spec)
-    logging.info(f"Created marketplace {created_marketplace.external_marketplace_id}.")
+    create_marketplace_result = alation.data_product.create_data_marketplace(marketplace_spec=marketplace_spec)
+    if create_marketplace_result is not None:
+        logging.info(f"Create marketplace status: {create_marketplace_result.status}. Message: {create_marketplace_result.msg}")
+    else:
+        logging.info("Create marketplace request succeeded with an empty response.")
 
 # ================================
 # FETCH MARKETPLACE DETAILS
@@ -212,6 +215,21 @@ if example_switches.getboolean("PUBLISH_PRODUCT_TO_MARKETPLACE"):
         query_params=allie.DataProductPublishParams(version=DATA_PRODUCT_VERSION),
     )
     logging.info(f"Published product {published_product.product_id} version {published_product.version_id} to marketplace {MARKETPLACE_ID}.")
+
+# ================================
+# GET WORKFLOW REQUESTS
+# ================================
+
+# After a data product gets published, an approval workflow is automatically triggered.
+# We have to fetch the approval workflow id.
+# TODO: Support for this will be implemented at a later stage. Out of scope for this change request.
+
+# ================================
+# APPROVE WORKFLOW REQUESTS
+# ================================
+
+# Once we have the approval workflow id we can approve the request ...
+# TODO: Support for this will be implemented at a later stage. Out of scope for this change request.
 
 # ================================
 # LIST AND FETCH PUBLISHED DATA PRODUCTS

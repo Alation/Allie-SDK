@@ -25,7 +25,7 @@ from ..models.data_product_model import (
     DataProductPublishParams,
     DataProductSearchQuery,
     DataProductSpec,
-    DataProductVersionUpdate,
+    DataProductVersionStatusUpdate,
     DataProductWithMarketplaceInfo,
     PublishedDataProductParams,
 )
@@ -137,7 +137,7 @@ class AlationDataProduct(RequestHandler):
         self,
         query_params: DataProductParams | None = None,
     ) -> list[DataProduct]:
-        """List data products with optional filtering, ordering, and grouping.
+        """List data products (latest version) with optional filtering, ordering, and grouping.
 
         All result pages are fetched unless query_params explicitly sets a limit
         or offset.
@@ -150,6 +150,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             list[DataProduct]: Matching products, including version summaries when
             grouping is requested. Returns an empty list if no products are found.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/list_data_products
         """
         validate_query_params(query_params, DataProductParams)
         params = query_params.generate_params_dict() if query_params else None
@@ -181,6 +183,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             JobDetails | None: Operation status with the API response stored in
             result, or None if the API response is empty.
+
+        Offical documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/create_data_product
         """
         payload, headers = self._prepare_spec_payload(
             spec_payload=data_product_spec,
@@ -219,6 +223,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             JobDetails | None: Operation status with the API's message stored in
             msg, or None if the API response is empty.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/update_data_product
         """
         payload, headers = self._prepare_spec_payload(
             spec_payload=data_product_spec,
@@ -270,6 +276,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             JobDetails: Deletion status and any response message from the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/delete_data_product
         """
         self._validate_identifier(product_id, "product_id")
 
@@ -289,6 +297,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             DataProduct: Product details for the requested version, including its
             status and any specification supplied by the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/get_data_product_version
         """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
@@ -300,29 +310,31 @@ class AlationDataProduct(RequestHandler):
         )
         return DataProduct.from_api_response(response)
 
-    def update_data_product_version(
+    def update_data_product_version_status(
         self,
         product_id: str,
         version_id: str,
-        data_product_version: DataProductVersionUpdate,
+        data_product_version: DataProductVersionStatusUpdate,
     ) -> DataProduct:
         """Change the status of a particular data product version.
 
         Args:
             product_id (str): Non-empty identifier of the data product.
             version_id (str): Non-empty identifier of the version to update.
-            data_product_version (DataProductVersionUpdate): Status update payload.
+            data_product_version (DataProductVersionStatusUpdate): Status update payload.
                 Its status must be "draft" or "ready".
 
         Returns:
             DataProduct: Updated product version returned by the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/update_data_product_version#update-a-data-product-version-status
         """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
         if data_product_version is None:
             raise InvalidPostBody("'data_product_version' is required for the Data Products request.")
 
-        validate_rest_payload(payload=[data_product_version], expected_types=(DataProductVersionUpdate,))
+        validate_rest_payload(payload=[data_product_version], expected_types=(DataProductVersionStatusUpdate,))
         payload = data_product_version.generate_api_payload()
 
         LOGGER.info("Updating data product '%s' version '%s'.", product_id, version_id)
@@ -342,6 +354,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             JobDetails: Version deletion status and any response message from
             the API.
+
+        Offical documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/delete_data_product_version_endpoint
         """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
@@ -358,6 +372,9 @@ class AlationDataProduct(RequestHandler):
     ) -> list[DataMarketplace]:
         """List data marketplaces, fetching all pages unless bounds are supplied.
 
+        The API's ``data`` list is unwrapped into marketplace models. Its
+        ``total`` count controls automatic pagination using ``limit`` and ``skip``.
+
         Args:
             query_params (DataMarketplaceParams, optional): Limit and offset for
                 the request. Defaults to None. Automatic pagination is enabled
@@ -367,27 +384,55 @@ class AlationDataProduct(RequestHandler):
             list[DataMarketplace]: Marketplaces returned by the API, including
             any specifications and product summaries. Returns an empty list if
             no marketplaces are found.
+
+        Raises:
+            ValueError: If a response contains invalid marketplace data or a
+                pagination count, or pagination stops before the total is reached.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-marketplaces/list_data_marketplaces
         """
         validate_query_params(query_params, DataMarketplaceParams)
-        params = query_params.generate_params_dict() if query_params else None
+        params = query_params.generate_params_dict() if query_params else {}
         paginate = self._paginate_when_unbounded(query_params)
+        if paginate:
+            params["limit"] = self.page_size
 
         LOGGER.info("Fetching data marketplaces.")
-        response = self.get(
-            url="/dps/integration/data-products/v1/marketplace/",
-            query_params=params,
-            pagination=paginate,
-        )
+        marketplaces: list[DataMarketplace] = []
+        while True:
+            response = self.get(
+                url="/dps/integration/data-products/v1/marketplace/",
+                query_params=params,
+                pagination=False,
+            )
+            marketplace_data = response.get("data") if isinstance(response, dict) else response
+            total = response.get("total") if isinstance(response, dict) else None
 
-        if response:
-            return [DataMarketplace.from_api_response(item) for item in response]
-        return []
+            if not isinstance(marketplace_data, list) or any(not isinstance(item, dict) for item in marketplace_data):
+                message = "Marketplace responses must be a list of objects or a dictionary containing a 'data' list of objects."
+                LOGGER.error(message)
+                raise ValueError(message)
+            if total is not None and (isinstance(total, bool) or not isinstance(total, int) or total < 0):
+                message = "Marketplace response 'total' must be a non-negative integer."
+                LOGGER.error(message)
+                raise ValueError(message)
+
+            marketplaces.extend(DataMarketplace.from_api_response(item) for item in marketplace_data)
+            if not paginate or total is None or len(marketplaces) >= total:
+                return marketplaces
+            if not marketplace_data:
+                message = "Marketplace pagination returned an empty page before reaching 'total'."
+                LOGGER.error(message)
+                raise ValueError(message)
+
+            params["skip"] = len(marketplaces)
+            LOGGER.debug("Fetching more data marketplaces at offset %s.", params["skip"])
 
     def create_data_marketplace(
         self,
         marketplace_spec: DataMarketplaceSpec | dict[str, Any] | str,
-    ) -> DataMarketplace:
-        """Create a data marketplace from its specification.
+    ) -> JobDetails | None:
+        """Create a new data marketplace from its specification.
 
         Args:
             marketplace_spec (DataMarketplaceSpec | dict[str, Any] | str): Complete
@@ -396,8 +441,10 @@ class AlationDataProduct(RequestHandler):
                 are validated locally; YAML is sent directly to the API.
 
         Returns:
-            DataMarketplace: Created marketplace, including any specification and
-            product information supplied by the API.
+            JobDetails | None: Operation status with the API's message stored in
+            msg, or None if the API response is empty.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-marketplaces/create_data_marketplace
         """
         payload, headers = self._prepare_spec_payload(
             spec_payload=marketplace_spec,
@@ -411,7 +458,10 @@ class AlationDataProduct(RequestHandler):
             body=payload,
             headers=headers,
         )
-        return DataMarketplace.from_api_response(response)
+        if response:
+            mapped_response = self._map_request_success_to_job_details(msg=response.get("message"))
+            return JobDetails.from_api_response(mapped_response)
+        return None
 
     def update_data_marketplace(
         self,
@@ -428,6 +478,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             DataMarketplace: Updated marketplace, including any specification and
             product information supplied by the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-marketplaces/update_data_marketplace
         """
         payload, headers = self._prepare_spec_payload(
             spec_payload=marketplace_spec,
@@ -459,6 +511,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             DataMarketplace: Marketplace details, including its specification,
             products, and product count when provided by the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-marketplaces/get_data_marketplace
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         validate_query_params(query_params, DataMarketplaceParams)
@@ -481,6 +535,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             JobDetails: Marketplace deletion status and any response message from
             the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-marketplaces/delete_data_marketplace
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
 
@@ -509,6 +565,8 @@ class AlationDataProduct(RequestHandler):
             list[DataProductWithMarketplaceInfo]: Published products with any
             marketplace context, such as badges, supplied by the API. Returns an
             empty list if no products are found.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/list_published_data_products
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         validate_query_params(query_params, PublishedDataProductParams)
@@ -541,6 +599,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             DataProductWithMarketplaceInfo: Published product details with any
             marketplace context, such as badges, supplied by the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/get_published_data_product
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
@@ -572,6 +632,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             DataProduct: Product details returned by the API after publication.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/publish_data_product
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
@@ -604,6 +666,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             DataProduct: Product details returned after updating the publication.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/update_published_data_product
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
@@ -632,6 +696,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             JobDetails: Unpublish status and any response message from the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/unpublish_data_product
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
@@ -654,6 +720,8 @@ class AlationDataProduct(RequestHandler):
             list[DataProductCheckResultItem]: Parsed evaluation results containing
             each standard's key, check, type, pass status, and explanation. Returns
             an empty list if the API response is empty.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/check_data_product#check-a-data-product-against-standards
         """
         if data_product_check is None:
             raise InvalidPostBody("'data_product_check' is required for the Data Products request.")
@@ -694,6 +762,8 @@ class AlationDataProduct(RequestHandler):
             list[DataProductWithMarketplaceInfo]: Matching products with any
             marketplace context, such as badges, supplied by the API. Returns an
             empty list if no products are found.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/search/data_product_marketplace_search#search-for-data-products-in-a-marketplace
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         if search_query is None:
@@ -728,6 +798,8 @@ class AlationDataProduct(RequestHandler):
             list[DataProductPermission]: Matching permission assignments, each
             identifying a subject, object, and role. Returns an empty list if no
             permissions are found.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/permissions/list_permissions
         """
         validate_query_params(query_params, DataProductPermissionParams)
         params = query_params.generate_params_dict() if query_params else None
@@ -752,6 +824,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             JobDetails: Creation status with any API response stored in result.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/permissions/create_permission
         """
         if permission is None:
             raise InvalidPostBody("'permission' is required for the Data Products request.")
@@ -777,6 +851,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             JobDetails: Update status with any API response stored in result.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/permissions/update_permission
         """
         if permission is None:
             raise InvalidPostBody("'permission' is required for the Data Products request.")
@@ -801,6 +877,8 @@ class AlationDataProduct(RequestHandler):
 
         Returns:
             JobDetails: Deletion status and any response message from the API.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/permissions/delete_permission
         """
         if permission is None:
             raise InvalidPostBody("'permission' is required for the Data Products request.")
@@ -824,6 +902,8 @@ class AlationDataProduct(RequestHandler):
         Returns:
             list[DataProductPermission]: Effective permission assignments for the
             authenticated user. Returns an empty list if no permissions are found.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/permissions/get_user_permissions
         """
         LOGGER.info("Fetching effective data product permissions for the authenticated user.")
         response = self.get(

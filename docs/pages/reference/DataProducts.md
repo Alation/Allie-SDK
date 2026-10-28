@@ -61,7 +61,8 @@ Use `DataMarketplaceSpec` when creating or updating a marketplace.
 |------|------|
 | `DataProduct` | Data product returned by list, get, create, update, publish, and version endpoints. |
 | `DataProductWithMarketplaceInfo` | Data product response that also contains `marketplace_context`. |
-| `DataMarketplace` | Marketplace returned by list, get, create, and update endpoints. |
+| `DataMarketplace` | Marketplace returned by list, get, and update endpoints. |
+| `JobDetails` | Operation status returned by marketplace creation, deletion, and permission methods. Marketplace creation stores the API's success message in `msg`. |
 | `DataProductMarketplaceAssociation` | Marketplace association entry attached to a `DataProduct`. |
 | `DataProductVersionSummary` | Version summary returned when `group_by_product=True`. |
 
@@ -73,7 +74,7 @@ Use `DataMarketplaceSpec` when creating or updating a marketplace.
 | `DataMarketplaceParams` | Optional query parameters for `get_data_marketplaces` and `get_data_marketplace`. |
 | `PublishedDataProductParams` | Optional query parameters for `get_published_data_products`. |
 | `DataProductPublishParams` | Optional `version` query parameter for publish/update-published calls. |
-| `DataProductVersionUpdate` | Request body for `update_data_product_version`. |
+| `DataProductVersionStatusUpdate` | Request body for `update_data_product_version_status`. |
 | `DataProductCheck` | Request body for `check_data_product`. |
 | `DataProductCheckStandard` | Standard entry used inside `DataProductCheck`. |
 | `DataProductCheckResultItem` | Result row returned by `check_data_product`. |
@@ -109,7 +110,7 @@ delete_data_product_version(product_id: str, version_id: str) -> JobDetails
 
 ```python
 get_data_marketplaces(query_params: DataMarketplaceParams = None) -> list[DataMarketplace]
-create_data_marketplace(marketplace_spec: DataMarketplaceSpec | dict | str) -> DataMarketplace
+create_data_marketplace(marketplace_spec: DataMarketplaceSpec | dict | str) -> JobDetails | None
 update_data_marketplace(marketplace_spec: DataMarketplaceSpec | dict | str) -> DataMarketplace
 get_data_marketplace(
     marketplace_id: str,
@@ -117,6 +118,29 @@ get_data_marketplace(
 ) -> DataMarketplace
 delete_data_marketplace(marketplace_id: str) -> JobDetails
 ```
+
+`get_data_marketplaces` unwraps the API's `{"data": [...], "total": 2}` response
+and returns a `list[DataMarketplace]`. An empty `data` list returns `[]`. When no
+limit or offset is supplied, the method uses `total` to fetch all pages with
+`limit` and `skip`. Set either bound with `DataMarketplaceParams` to fetch one page.
+
+`create_data_marketplace` maps the API's message-only response to `JobDetails`:
+
+```json
+{
+  "message": "Marketplace with ID: my-marketplace successfully created."
+}
+```
+
+```python
+creation_result = alation.data_product.create_data_marketplace(marketplace_spec)
+if creation_result is not None:
+    print(creation_result.status)  # successful
+    print(creation_result.msg)  # Marketplace with ID: my-marketplace successfully created.
+```
+
+The method returns `None` when the API response is empty. Call
+`get_data_marketplace(marketplace_id)` to retrieve the created marketplace's details.
 
 ### Publishing
 
