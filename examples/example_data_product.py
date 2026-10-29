@@ -51,6 +51,7 @@ example_switches = config["data_product_examples"]
 DATA_PRODUCT_ID = data_product_settings["DATA_PRODUCT_ID"]
 DATA_PRODUCT_VERSION = data_product_settings["DATA_PRODUCT_VERSION"]
 MARKETPLACE_ID = data_product_settings["MARKETPLACE_ID"]
+UPDATED_DATA_PRODUCT_VERSION = data_product_settings["UPDATED_DATA_PRODUCT_VERSION"]
 
 # ================================
 # Create Session With Your Alation Instance
@@ -253,11 +254,18 @@ if example_switches.getboolean("FETCH_PUBLISHED_DATA_PRODUCT"):
 # UPDATE A PUBLISHED DATA PRODUCT
 # ================================
 
+r"""
+Note: Once you call this endpoint successfully, an approval request workflow will be triggered. This one has to be 
+approved and only then the new data product version will show up in the data marketplace.
+"""
+
 if example_switches.getboolean("UPDATE_PUBLISHED_DATA_PRODUCT"):
     updated_published_product = alation.data_product.update_published_data_product(
         marketplace_id=MARKETPLACE_ID,
         product_id=DATA_PRODUCT_ID,
-        query_params=allie.DataProductPublishParams(version=DATA_PRODUCT_VERSION),
+        query_params=allie.DataProductPublishParams(version=UPDATED_DATA_PRODUCT_VERSION)
+        # Note: I had to explicitly state the version otherwise it would trigger the workflow on the already
+        # published version.
     )
     logging.info(f"Updated published product {updated_published_product.product_id} to version {updated_published_product.version_id}.")
 

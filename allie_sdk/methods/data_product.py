@@ -668,6 +668,9 @@ class AlationDataProduct(RequestHandler):
             DataProduct: Product details returned after updating the publication.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/update_published_data_product
+
+        Note: Once you call this endpoint successfully, an approval request workflow will be triggered. This one has to be
+        approved and only then the new data product version will show up in the data marketplace.
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
@@ -684,6 +687,8 @@ class AlationDataProduct(RequestHandler):
             body={},
             query_params=params,
         )
+        # TODO: This return type is wrong. Make sure we extract message and workflow_request_id
+        # TODO: Also check if this applies to the standard publish entpoint as well!
         return DataProduct.from_api_response(response)
 
     def unpublish_data_product(self, marketplace_id: str, product_id: str) -> JobDetails:
