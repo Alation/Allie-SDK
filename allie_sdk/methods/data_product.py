@@ -22,8 +22,10 @@ from ..models.data_product_model import (
     DataProductParams,
     DataProductPermission,
     DataProductPermissionParams,
+    DataProductPublicationResponse,
     DataProductPublishParams,
     DataProductSearchQuery,
+    DataProductSearchResponse,
     DataProductSpec,
     DataProductVersionStatusUpdate,
     DataProductWithMarketplaceInfo,
@@ -653,7 +655,7 @@ class AlationDataProduct(RequestHandler):
         marketplace_id: str,
         product_id: str,
         query_params: DataProductPublishParams | None = None,
-    ) -> DataProduct:
+    ) -> DataProductPublicationResponse:
         """Update which version of a product is published in a marketplace.
 
         Args:
@@ -665,7 +667,9 @@ class AlationDataProduct(RequestHandler):
                 choose the version.
 
         Returns:
-            DataProduct: Product details returned after updating the publication.
+            DataProductPublicationResponse: API message and approval workflow
+            request identifier. The new version appears in the marketplace only
+            after the workflow request is approved.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/update_published_data_product
 
@@ -687,9 +691,7 @@ class AlationDataProduct(RequestHandler):
             body={},
             query_params=params,
         )
-        # TODO: This return type is wrong. Make sure we extract message and workflow_request_id
-        # TODO: Also check if this applies to the standard publish entpoint as well!
-        return DataProduct.from_api_response(response)
+        return DataProductPublicationResponse.from_api_response(response)
 
     def unpublish_data_product(self, marketplace_id: str, product_id: str) -> JobDetails:
         """Remove a product's publication from a particular marketplace.
@@ -755,7 +757,7 @@ class AlationDataProduct(RequestHandler):
         self,
         marketplace_id: str,
         search_query: DataProductSearchQuery,
-    ) -> list[DataProductWithMarketplaceInfo]:
+    ) -> DataProductSearchResponse:
         """Find data products in a marketplace using a natural-language query.
 
         Args:
@@ -764,9 +766,12 @@ class AlationDataProduct(RequestHandler):
                 contains the natural-language description of the desired products.
 
         Returns:
-            list[DataProductWithMarketplaceInfo]: Matching products with any
-            marketplace context, such as badges, supplied by the API. Returns an
-            empty list if no products are found.
+            DataProductSearchResponse: Search identifier and matching results.
+            Each result contains a product with any marketplace context and a
+            suggestion. The results list is empty if no products are found.
+
+        Raises:
+            ValueError: If the API response is not an object containing a results list.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/search/data_product_marketplace_search#search-for-data-products-in-a-marketplace
         """
@@ -783,9 +788,11 @@ class AlationDataProduct(RequestHandler):
             body=payload,
         )
 
-        if response:
-            return [DataProductWithMarketplaceInfo.from_api_response(item) for item in response]
-        return []
+        if not isinstance(response, dict) or not isinstance(response.get("results"), list):
+            LOGGER.error("Marketplace search response must contain a 'results' list.")
+            raise ValueError("Marketplace search response must be a dictionary containing a 'results' list.")
+
+        return DataProductSearchResponse.from_api_response(response)
 
     def get_permissions(
         self,

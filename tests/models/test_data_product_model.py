@@ -21,11 +21,14 @@ from allie_sdk.models.data_product_model import (
     DataProductRecordSetField,
     DataProductRecordSetSample,
     DataProductSearchQuery,
+    DataProductSearchResponse,
+    DataProductSearchResultItem,
     DataProductSpec,
     DataProductSpecDefinition,
     DataProductStandard,
     DataProductStandardDisplayName,
     DataProductVersionStatusUpdate,
+    DataProductWithMarketplaceInfo,
 )
 
 
@@ -258,6 +261,73 @@ class TestDataProductModels:
                 }
             ],
         )
+
+    def test_search_response_maps_nested_models(self) -> None:
+        """Verify search wrappers preserve suggestions and parse nested product fields.
+
+        Args:
+            self (TestDataProductModels): Model test instance.
+
+        Returns:
+            None: Assertions verify the search ID, suggestion, and nested models.
+        """
+        response = DataProductSearchResponse.from_api_response(
+            {
+                "search_id": "13f1a755-f671-4bb4-abaa-4fb88b499c73",
+                "results": [
+                    {
+                        "product": {
+                            "product_id": "last-quarter-sales",
+                            "version_id": "2.0.0",
+                            "status": 1,
+                            "spec_json": {"product": {"en": {"name": "Last Quarter Sales"}}},
+                            "spec_yaml": "product:\n  productId: last-quarter-sales\n",
+                            "ts_created": "2026-10-29T13:59:33.468410Z",
+                            "versions_details": None,
+                            "marketplace_context": {
+                                "badges": [{"key": "product.contactEmail", "check": "Has contact email"}]
+                            },
+                        },
+                        "suggestion": "Use this product for quarterly performance reviews.",
+                    }
+                ],
+            }
+        )
+
+        assert response.search_id == "13f1a755-f671-4bb4-abaa-4fb88b499c73"
+        assert len(response.results) == 1
+        match = response.results[0]
+        assert isinstance(match, DataProductSearchResultItem)
+        assert match.suggestion == "Use this product for quarterly performance reviews."
+        assert isinstance(match.product, DataProductWithMarketplaceInfo)
+        assert match.product.product_id == "last-quarter-sales"
+        assert match.product.version_id == "2.0.0"
+        assert match.product.status == 1
+        assert isinstance(match.product.spec_json, DataProductSpec)
+        assert match.product.spec_json.product.en.name == "Last Quarter Sales"
+        assert match.product.spec_yaml == "product:\n  productId: last-quarter-sales\n"
+        assert match.product.ts_created == datetime(2026, 10, 29, 13, 59, 33, 468410)
+        assert match.product.versions_details == []
+        assert match.product.marketplace_context.badges[0].check == "Has contact email"
+
+    def test_search_response_preserves_model_instances(self) -> None:
+        """Verify search models accept products and results that are already typed.
+
+        Args:
+            self (TestDataProductModels): Model test instance.
+
+        Returns:
+            None: Assertions verify that the supplied model instances are retained.
+        """
+        product = DataProductWithMarketplaceInfo(product_id="last-quarter-sales")
+        match = DataProductSearchResultItem(product=product, suggestion="")
+
+        response = DataProductSearchResponse(results=[match])
+
+        assert response.results[0] is match
+        assert match.product is product
+        assert match.suggestion == ""
+        assert response.search_id is None
 
     def test_marketplace_response_maps_nested_models(self):
         api_response = {

@@ -6,6 +6,7 @@ import pytest
 import requests
 from requests_mock import Mocker
 
+import allie_sdk as allie
 from allie_sdk.methods.data_product import AlationDataProduct
 from allie_sdk.models.data_product_model import (
     DataMarketplace,
@@ -482,16 +483,6 @@ class TestDataProductMethods:
             status_code=200,
         )
         requests_mock.register_uri(
-            method="PUT",
-            url="/dps/integration/data-products/v1/marketplace/finance:public/data-product/finance:last_quarter_sales/",
-            json={
-                "product_id": "finance:last_quarter_sales",
-                "version_id": "2.0.0",
-                "status": "ready",
-            },
-            status_code=200,
-        )
-        requests_mock.register_uri(
             method="DELETE",
             url="/dps/integration/data-products/v1/marketplace/finance:public/data-product/finance:last_quarter_sales/",
             text="",
@@ -507,11 +498,6 @@ class TestDataProductMethods:
             "finance:last_quarter_sales",
             DataProductPublishParams(version="1.0.0"),
         )
-        updated_product = self.mock_data_product.update_published_data_product(
-            "finance:public",
-            "finance:last_quarter_sales",
-            DataProductPublishParams(version="2.0.0"),
-        )
         unpublished = self.mock_data_product.unpublish_data_product(
             "finance:public",
             "finance:last_quarter_sales",
@@ -519,10 +505,45 @@ class TestDataProductMethods:
 
         assert published[0].product_id == "finance:last_quarter_sales"
         assert published_product.version_id == "1.0.0"
-        assert updated_product.version_id == "2.0.0"
         assert unpublished.status == "successful"
         assert requests_mock.request_history[1].qs["version"] == ["1.0.0"]
-        assert requests_mock.request_history[2].qs["version"] == ["2.0.0"]
+
+    @pytest.mark.parametrize("version", [None, "2.0.0"])
+    def test_update_published_data_product_returns_workflow_response(self, requests_mock: Mocker, version: str | None) -> None:
+        """Verify publication updates preserve the approval message and workflow ID.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            version (str | None): Explicit version to publish, or None for the API default.
+
+        Returns:
+            None: Assertions verify the typed response and version query parameter.
+        """
+        workflow_request_id = "4459bebd-7f92-443d-b216-289148606301"
+        message = (
+            "Approval required to update product 'last-quarter-sales' in marketplace 'acme-market-2'. "
+            f"Workflow request created with ID: {workflow_request_id}"
+        )
+        requests_mock.put(
+            "/dps/integration/data-products/v1/marketplace/acme-market-2/data-product/last-quarter-sales/",
+            json={"message": message, "workflow_request_id": workflow_request_id},
+            status_code=200,
+        )
+        query_params = DataProductPublishParams(version=version) if version is not None else None
+
+        result = self.mock_data_product.update_published_data_product(
+            "acme-market-2",
+            "last-quarter-sales",
+            query_params,
+        )
+
+        assert result.message == message
+        assert result.workflow_request_id == workflow_request_id
+        assert isinstance(result, allie.DataProductPublicationResponse)
+        assert requests_mock.call_count == 1
+        request = requests_mock.request_history[0]
+        assert request.qs == ({"version": [version]} if version is not None else {})
+        assert json.loads(request.text) == {}
 
     def test_check_and_search_data_products(self, requests_mock):
         requests_mock.register_uri(
@@ -542,13 +563,19 @@ class TestDataProductMethods:
         requests_mock.register_uri(
             method="POST",
             url="/dps/integration/data-products/v1/search-internally/finance:public/",
-            json=[
-                {
-                    "product_id": "finance:last_quarter_sales",
-                    "version_id": "1.0.0",
-                    "status": "ready",
-                }
-            ],
+            json={
+                "results": [
+                    {
+                        "product": {
+                            "product_id": "finance:last_quarter_sales",
+                            "version_id": "1.0.0",
+                            "status": "ready",
+                        },
+                        "suggestion": "",
+                    }
+                ],
+                "search_id": "13f1a755-f671-4bb4-abaa-4fb88b499c73",
+            },
             status_code=200,
         )
 
@@ -570,10 +597,112 @@ class TestDataProductMethods:
         )
 
         assert check_results[0].passed is True
-        assert search_results[0].product_id == "finance:last_quarter_sales"
+        assert search_results.results[0].product.product_id == "finance:last_quarter_sales"
         assert json.loads(requests_mock.request_history[1].text) == {
             "user_query": "Which products have recent sales information?"
         }
+
+    def test_search_data_products_in_marketplace(self, requests_mock: Mocker) -> None:
+        """Verify marketplace search returns typed matches and the search identifier.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the response wrapper and submitted query.
+        """
+        search_id = "13f1a755-f671-4bb4-abaa-4fb88b499c73"
+        requests_mock.post(
+            "/dps/integration/data-products/v1/search-internally/finance:public/",
+            json={
+                "results": [
+                    {
+                        "product": {
+                            "product_id": "last-quarter-sales",
+                            "version_id": "2.0.0",
+                            "status": 1,
+                            "marketplace_context": None,
+                            "versions_details": None,
+                        },
+                        "suggestion": "",
+                    },
+                    {
+                        "product": {"product_id": "annual-sales", "version_id": "1.0.0"},
+                        "suggestion": "Consider annual sales for a longer time range.",
+                    },
+                ],
+                "search_id": search_id,
+            },
+        )
+
+        response = self.mock_data_product.search_data_products_in_marketplace(
+            "finance:public",
+            DataProductSearchQuery(user_query="Which products contain sales data?"),
+        )
+
+        assert isinstance(response, allie.DataProductSearchResponse)
+        assert response.search_id == search_id
+        assert len(response.results) == 2
+        match = response.results[0]
+        assert isinstance(match, allie.DataProductSearchResultItem)
+        assert isinstance(match.product, allie.DataProductWithMarketplaceInfo)
+        assert match.product.product_id == "last-quarter-sales"
+        assert match.product.version_id == "2.0.0"
+        assert match.product.marketplace_context is None
+        assert match.suggestion == ""
+        assert response.results[1].product.product_id == "annual-sales"
+        assert response.results[1].suggestion == "Consider annual sales for a longer time range."
+        assert requests_mock.call_count == 1
+        request = requests_mock.request_history[0]
+        assert request.headers["Authorization"] == "Bearer test-token"
+        assert json.loads(request.text) == {"user_query": "Which products contain sales data?"}
+
+    def test_search_data_products_in_marketplace_without_matches(self, requests_mock: Mocker) -> None:
+        """Verify an empty results list retains the API search identifier.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the empty typed search response.
+        """
+        search_id = "13f1a755-f671-4bb4-abaa-4fb88b499c73"
+        requests_mock.post(
+            "/dps/integration/data-products/v1/search-internally/finance:public/",
+            json={"results": [], "search_id": search_id},
+        )
+
+        response = self.mock_data_product.search_data_products_in_marketplace(
+            "finance:public",
+            DataProductSearchQuery(user_query="Products with no matches"),
+        )
+
+        assert isinstance(response, allie.DataProductSearchResponse)
+        assert response.results == []
+        assert response.search_id == search_id
+
+    @pytest.mark.parametrize("response_body", [{}, {"results": None}, {"results": {}}, []])
+    def test_search_data_products_in_marketplace_rejects_invalid_response(
+        self, requests_mock: Mocker, response_body: dict[str, object] | list[object]
+    ) -> None:
+        """Verify malformed search responses raise an explicit error.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            response_body (dict[str, object] | list[object]): Invalid API response.
+
+        Returns:
+            None: An assertion verifies the response shape error.
+        """
+        requests_mock.post(
+            "/dps/integration/data-products/v1/search-internally/finance:public/",
+            json=response_body,
+        )
+
+        with pytest.raises(ValueError, match="containing a 'results' list"):
+            self.mock_data_product.search_data_products_in_marketplace(
+                "finance:public", DataProductSearchQuery(user_query="Sales data")
+            )
 
     def test_permission_endpoints(self, requests_mock):
         requests_mock.register_uri(

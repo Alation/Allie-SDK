@@ -61,6 +61,9 @@ Use `DataMarketplaceSpec` when creating or updating a marketplace.
 |------|------|
 | `DataProduct` | Data product returned by list, get, create, update, publish, and version endpoints. |
 | `DataProductWithMarketplaceInfo` | Data product response that also contains `marketplace_context`. |
+| `DataProductSearchResponse` | Marketplace search response containing `results` and `search_id`. |
+| `DataProductSearchResultItem` | Search match containing a `DataProductWithMarketplaceInfo` in `product` and a `suggestion`. |
+| `DataProductPublicationResponse` | API `message` and `workflow_request_id` returned by `update_published_data_product`. |
 | `DataMarketplace` | Marketplace returned by list, get, and update endpoints. |
 | `JobDetails` | Operation status returned by marketplace creation, deletion, and permission methods. Marketplace creation stores the API's success message in `msg`. |
 | `DataProductMarketplaceAssociation` | Marketplace association entry attached to a `DataProduct`. |
@@ -162,7 +165,7 @@ update_published_data_product(
     marketplace_id: str,
     product_id: str,
     query_params: DataProductPublishParams = None,
-) -> DataProduct
+) -> DataProductPublicationResponse
 unpublish_data_product(marketplace_id: str, product_id: str) -> JobDetails
 bulk_publish_data_products(
     marketplace_id: str,
@@ -170,15 +173,48 @@ bulk_publish_data_products(
 ) -> list[DataProduct]
 ```
 
+`update_published_data_product` returns the approval response, including the API's
+`message` and `workflow_request_id`:
+
+```python
+publication_response = alation.data_product.update_published_data_product(
+    marketplace_id="acme-market-2",
+    product_id="last-quarter-sales",
+    query_params=allie.DataProductPublishParams(version="2.0.0"),
+)
+print(publication_response.message)
+print(publication_response.workflow_request_id)  # 4459bebd-7f92-443d-b216-289148606301
+```
+
+The new product version appears in the marketplace after the workflow request is approved.
+
 ### Checks, Search, and Permissions
 
 ```python
 check_data_product(data_product_check: DataProductCheck) -> list[DataProductCheckResultItem]
+search_data_products_in_marketplace(
+    marketplace_id: str,
+    search_query: DataProductSearchQuery,
+) -> DataProductSearchResponse
 get_permissions(query_params: DataProductPermissionParams = None) -> list[DataProductPermission]
 create_permission(permission: DataProductPermission) -> JobDetails
 update_permission(permission: DataProductPermission) -> JobDetails
 delete_permission(permission: DataProductPermission) -> JobDetails
 get_user_permissions() -> list[DataProductPermission]
+```
+
+Marketplace search returns the API's `results` wrapper and `search_id`. Each entry
+in `results` contains a typed `product` and the API's `suggestion` string. When
+there are no matches, `results` is an empty list and `search_id` is preserved.
+
+```python
+search_response = alation.data_product.search_data_products_in_marketplace(
+    marketplace_id="finance:public",
+    search_query=allie.DataProductSearchQuery(user_query="Which products contain sales data?"),
+)
+print(search_response.search_id)
+for match in search_response.results:
+    print(match.product.product_id, match.suggestion)
 ```
 
 ## Notes

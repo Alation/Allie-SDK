@@ -832,6 +832,68 @@ class DataProductWithMarketplaceInfo(DataProduct):
 
 
 @dataclass(kw_only=True)
+class DataProductSearchResultItem(BaseClass):
+    """Marketplace search match containing a product and its suggestion.
+
+    Attributes:
+        product (DataProductWithMarketplaceInfo | None): Matching data product.
+        suggestion (str | None): Suggestion supplied by the API for this match.
+    """
+
+    product: DataProductWithMarketplaceInfo | None = field(default=None)
+    suggestion: str | None = field(default=None)
+
+    def __post_init__(self) -> None:
+        """Convert the nested product payload into an SDK model.
+
+        Args:
+            self (DataProductSearchResultItem): Search match to normalize.
+
+        Returns:
+            None: Updates ``self.product`` in place when it is a dictionary.
+        """
+        if isinstance(self.product, dict):
+            self.product = DataProductWithMarketplaceInfo.from_api_response(self.product)
+
+
+@dataclass(kw_only=True)
+class DataProductSearchResponse(BaseClass):
+    """Response returned by a marketplace data product search.
+
+    Attributes:
+        results (list[DataProductSearchResultItem]): Matching products and suggestions.
+        search_id (str | None): Identifier assigned to this search by the API.
+    """
+
+    results: list[DataProductSearchResultItem] = field(default_factory=list)
+    search_id: str | None = field(default=None)
+
+    def __post_init__(self) -> None:
+        """Convert search result dictionaries into SDK models.
+
+        Args:
+            self (DataProductSearchResponse): Search response to normalize.
+
+        Returns:
+            None: Updates ``self.results`` in place with typed search matches.
+        """
+        self.results = _map_list(self.results, DataProductSearchResultItem)
+
+
+@dataclass(kw_only=True)
+class DataProductPublicationResponse(BaseClass):
+    """Approval response returned when updating a published data product.
+
+    Attributes:
+        message (str | None): API message describing the publication update request.
+        workflow_request_id (str | None): Identifier of the approval workflow request.
+    """
+
+    message: str | None = field(default=None)
+    workflow_request_id: str | None = field(default=None)
+
+
+@dataclass(kw_only=True)
 class DataMarketplace(BaseClass):
     """Marketplace returned by the Data Products API."""
 

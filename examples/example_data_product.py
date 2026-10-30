@@ -260,25 +260,34 @@ approved and only then the new data product version will show up in the data mar
 """
 
 if example_switches.getboolean("UPDATE_PUBLISHED_DATA_PRODUCT"):
-    updated_published_product = alation.data_product.update_published_data_product(
+    publication_response = alation.data_product.update_published_data_product(
         marketplace_id=MARKETPLACE_ID,
         product_id=DATA_PRODUCT_ID,
         query_params=allie.DataProductPublishParams(version=UPDATED_DATA_PRODUCT_VERSION)
         # Note: I had to explicitly state the version otherwise it would trigger the workflow on the already
         # published version.
     )
-    logging.info(f"Updated published product {updated_published_product.product_id} to version {updated_published_product.version_id}.")
+
+    workflow_request_id = publication_response.workflow_request_id
+
+    logging.info(f"Publication update response: {publication_response.message}")
+    logging.info(f"Approval workflow request ID: {workflow_request_id}")
+
+    # TODO: approve the approval request - outside the scope of this change request.
+
 
 # ================================
 # SEARCH PRODUCTS INSIDE A MARKETPLACE
 # ================================
 
 if example_switches.getboolean("SEARCH_PRODUCTS_INSIDE_A_MARKETPLACE"):
-    search_results = alation.data_product.search_data_products_in_marketplace(
+    search_response = alation.data_product.search_data_products_in_marketplace(
         marketplace_id=MARKETPLACE_ID,
         search_query=allie.DataProductSearchQuery(user_query=data_product_settings["SEARCH_QUERY"]),
     )
-    logging.info(f"Marketplace search returned {len(search_results)} product(s).")
+    logging.info(f"Marketplace search {search_response.search_id} returned {len(search_response.results)} product(s).")
+    for search_result in search_response.results:
+        logging.info(f"Matched product: {search_result.product.product_id}; suggestion: {search_result.suggestion}")
 
 # ================================
 # CREATE, FETCH, AND UPDATE PERMISSIONS
