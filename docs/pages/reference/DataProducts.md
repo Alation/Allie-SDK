@@ -59,13 +59,13 @@ Use `DataMarketplaceSpec` when creating or updating a marketplace.
 
 | Model | Purpose |
 |------|------|
-| `DataProduct` | Data product returned by list, get, create, update, publish, and version endpoints. |
+| `DataProduct` | Data product returned by list, get, create, update, and version endpoints. |
 | `DataProductWithMarketplaceInfo` | Data product response that also contains `marketplace_context`. |
 | `DataProductSearchResponse` | Marketplace search response containing `results` and `search_id`. |
 | `DataProductSearchResultItem` | Search match containing a `DataProductWithMarketplaceInfo` in `product` and a `suggestion`. |
-| `DataProductPublicationResponse` | API `message` and `workflow_request_id` returned by `update_published_data_product`. |
-| `DataMarketplace` | Marketplace returned by list, get, and update endpoints. |
-| `JobDetails` | Operation status returned by marketplace creation, deletion, and permission methods. Marketplace creation stores the API's success message in `msg`. |
+| `DataProductPublicationResponse` | API `message` and `workflow_request_id` stored in `JobDetails.result` by publish, update-published, and unpublish methods. |
+| `DataMarketplace` | Marketplace returned by list and get endpoints, and stored in `JobDetails.result` by marketplace updates. |
+| `JobDetails` | Operation status returned by version status updates, marketplace creation and updates, publication, deletion, and permission methods. Version status updates store a `DataProduct` in `result`; marketplace updates store a `DataMarketplace`. Marketplace creation stores the API's success message in `msg`. |
 | `DataProductMarketplaceAssociation` | Marketplace association entry attached to a `DataProduct`. |
 | `DataProductVersionSummary` | Version summary returned when `group_by_product=True`. |
 
@@ -101,12 +101,27 @@ delete_data_product(product_id: str) -> JobDetails
 
 ```python
 get_data_product_version(product_id: str, version_id: str) -> DataProduct
-update_data_product_version(
+update_data_product_version_status(
     product_id: str,
     version_id: str,
-    data_product_version: DataProductVersionUpdate,
-) -> DataProduct
+    data_product_version: DataProductVersionStatusUpdate,
+) -> JobDetails
 delete_data_product_version(product_id: str, version_id: str) -> JobDetails
+```
+
+`update_data_product_version_status` returns `JobDetails` with the updated
+`DataProduct` in `result`. The job's `status` describes the operation; the
+product's `status` is `draft` or `ready`.
+
+```python
+update_result = alation.data_product.update_data_product_version_status(
+    product_id="finance:last_quarter_sales",
+    version_id="1.0.0",
+    data_product_version=allie.DataProductVersionStatusUpdate(status="ready"),
+)
+print(update_result.status)  # successful
+print(update_result.result.version_id)  # 1.0.0
+print(update_result.result.status)  # ready
 ```
 
 ### Marketplaces
@@ -114,7 +129,7 @@ delete_data_product_version(product_id: str, version_id: str) -> JobDetails
 ```python
 get_data_marketplaces(query_params: DataMarketplaceParams = None) -> list[DataMarketplace]
 create_data_marketplace(marketplace_spec: DataMarketplaceSpec | dict | str) -> JobDetails | None
-update_data_marketplace(marketplace_spec: DataMarketplaceSpec | dict | str) -> DataMarketplace
+update_data_marketplace(marketplace_spec: DataMarketplaceSpec | dict | str) -> JobDetails
 get_data_marketplace(
     marketplace_id: str,
     query_params: DataMarketplaceParams = None,
@@ -145,6 +160,15 @@ if creation_result is not None:
 The method returns `None` when the API response is empty. Call
 `get_data_marketplace(marketplace_id)` to retrieve the created marketplace's details.
 
+`update_data_marketplace` returns `JobDetails` with the updated `DataMarketplace`
+in `result`, including any specification and product information returned by the API:
+
+```python
+update_result = alation.data_product.update_data_marketplace(marketplace_spec)
+print(update_result.status)  # successful
+print(update_result.result.external_marketplace_id)
+```
+
 ### Publishing
 
 ```python
@@ -160,12 +184,12 @@ publish_data_product(
     marketplace_id: str,
     product_id: str,
     query_params: DataProductPublishParams = None,
-) -> DataProduct
+) -> JobDetails
 update_published_data_product(
     marketplace_id: str,
     product_id: str,
     query_params: DataProductPublishParams = None,
-) -> DataProductPublicationResponse
+) -> JobDetails
 unpublish_data_product(marketplace_id: str, product_id: str) -> JobDetails
 bulk_publish_data_products(
     marketplace_id: str,
@@ -173,20 +197,24 @@ bulk_publish_data_products(
 ) -> list[DataProduct]
 ```
 
-`update_published_data_product` returns the approval response, including the API's
-`message` and `workflow_request_id`:
+`publish_data_product`, `update_published_data_product`, and `unpublish_data_product`
+return `JobDetails`. Each job's `result` is a `DataProductPublicationResponse`
+containing the API's `message` and `workflow_request_id`:
 
 ```python
-publication_response = alation.data_product.update_published_data_product(
+publication_job = alation.data_product.update_published_data_product(
     marketplace_id="acme-market-2",
     product_id="last-quarter-sales",
     query_params=allie.DataProductPublishParams(version="2.0.0"),
 )
-print(publication_response.message)
-print(publication_response.workflow_request_id)  # 4459bebd-7f92-443d-b216-289148606301
+print(publication_job.status)  # successful
+print(publication_job.result.message)
+print(publication_job.result.workflow_request_id)  # 4459bebd-7f92-443d-b216-289148606301
 ```
 
-The new product version appears in the marketplace after the workflow request is approved.
+The `successful` job status means the request succeeded. Publication changes take
+effect after the workflow request is approved. If the API returns an empty body,
+`result` is still a `DataProductPublicationResponse`, with both fields set to `None`.
 
 ### Checks, Search, and Permissions
 

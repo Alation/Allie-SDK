@@ -135,6 +135,33 @@ class AlationDataProduct(RequestHandler):
             return True
         return getattr(query_params, "limit", None) is None and getattr(query_params, "offset", None) is None
 
+    @staticmethod
+    def _parse_publication_job(response: dict[str, Any]) -> JobDetails:
+        """Convert a publication job's result into its approval response model.
+
+        Args:
+            response (dict[str, Any]): Job status, message, and publication payload.
+
+        Returns:
+            JobDetails: Job containing a DataProductPublicationResponse in result.
+                Empty response bodies produce a model with None-valued fields.
+
+        Raises:
+            ValueError: If the publication payload is neither an object nor empty.
+        """
+        publication_response = response.get("result")
+        if publication_response is None or publication_response == "":
+            publication_response = {}
+        if not isinstance(publication_response, dict):
+            message = "Data product publication responses must be an object or empty."
+            LOGGER.error(message)
+            raise ValueError(message)
+
+        LOGGER.debug("Mapping data product publication response to job details.")
+        job_details = JobDetails.from_api_response(response)
+        job_details.result = DataProductPublicationResponse.from_api_response(publication_response)
+        return job_details
+
     def get_data_products(
         self,
         query_params: DataProductParams | None = None,
@@ -317,7 +344,7 @@ class AlationDataProduct(RequestHandler):
         product_id: str,
         version_id: str,
         data_product_version: DataProductVersionStatusUpdate,
-    ) -> DataProduct:
+    ) -> JobDetails:
         """Change the status of a particular data product version.
 
         Args:
@@ -327,7 +354,7 @@ class AlationDataProduct(RequestHandler):
                 Its status must be "draft" or "ready".
 
         Returns:
-            DataProduct: Updated product version returned by the API.
+            JobDetails: Operation status with the updated DataProduct in result.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/update_data_product_version#update-a-data-product-version-status
         """
@@ -339,12 +366,14 @@ class AlationDataProduct(RequestHandler):
         validate_rest_payload(payload=[data_product_version], expected_types=(DataProductVersionStatusUpdate,))
         payload = data_product_version.generate_api_payload()
 
-        LOGGER.info("Updating data product '%s' version '%s'.", product_id, version_id)
+        LOGGER.info(f"Updating data product '{product_id}' version '{version_id}'.")
         response = self.put(
             url=f"/dps/integration/data-products/v1/data-product/{product_id}/version/{version_id}/",
             body=payload,
         )
-        return DataProduct.from_api_response(response)
+        updated_product = DataProduct.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=updated_product)
+        return JobDetails.from_api_response(mapped_response)
 
     def delete_data_product_version(self, product_id: str, version_id: str) -> JobDetails:
         """Delete a particular version of a data product.
@@ -468,7 +497,7 @@ class AlationDataProduct(RequestHandler):
     def update_data_marketplace(
         self,
         marketplace_spec: DataMarketplaceSpec | dict[str, Any] | str,
-    ) -> DataMarketplace:
+    ) -> JobDetails:
         """Update a data marketplace using the identifier in its specification.
 
         Args:
@@ -478,8 +507,9 @@ class AlationDataProduct(RequestHandler):
                 are validated locally; YAML is sent directly to the API.
 
         Returns:
-            DataMarketplace: Updated marketplace, including any specification and
-            product information supplied by the API.
+            JobDetails: Operation status with the updated DataMarketplace in
+            result, including any specification and product information supplied
+            by the API.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-marketplaces/update_data_marketplace
         """
@@ -495,7 +525,9 @@ class AlationDataProduct(RequestHandler):
             body=payload,
             headers=headers,
         )
-        return DataMarketplace.from_api_response(response)
+        updated_marketplace = DataMarketplace.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=updated_marketplace)
+        return JobDetails.from_api_response(mapped_response)
 
     def get_data_marketplace(
         self,
@@ -623,7 +655,7 @@ class AlationDataProduct(RequestHandler):
         marketplace_id: str,
         product_id: str,
         query_params: DataProductPublishParams | None = None,
-    ) -> DataProduct:
+    ) -> JobDetails:
         """Publish a data product in a particular marketplace.
 
         Args:
@@ -633,7 +665,9 @@ class AlationDataProduct(RequestHandler):
                 Defaults to None to let the API choose the version.
 
         Returns:
-            DataProduct: Product details returned by the API after publication.
+            JobDetails: Operation status with a DataProductPublicationResponse in
+            result containing the API message and approval workflow request ID.
+            Publication takes effect after the workflow request is approved.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/publish_data_product
         """
@@ -648,14 +682,15 @@ class AlationDataProduct(RequestHandler):
             body={},
             query_params=params,
         )
-        return DataProduct.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=response)
+        return self._parse_publication_job(mapped_response)
 
     def update_published_data_product(
         self,
         marketplace_id: str,
         product_id: str,
         query_params: DataProductPublishParams | None = None,
-    ) -> DataProductPublicationResponse:
+    ) -> JobDetails:
         """Update which version of a product is published in a marketplace.
 
         Args:
@@ -667,8 +702,9 @@ class AlationDataProduct(RequestHandler):
                 choose the version.
 
         Returns:
-            DataProductPublicationResponse: API message and approval workflow
-            request identifier. The new version appears in the marketplace only
+            JobDetails: Operation status with a DataProductPublicationResponse in
+            result containing the API message and approval workflow request ID.
+            The new version appears in the marketplace only
             after the workflow request is approved.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/update_published_data_product
@@ -691,7 +727,8 @@ class AlationDataProduct(RequestHandler):
             body={},
             query_params=params,
         )
-        return DataProductPublicationResponse.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=response)
+        return self._parse_publication_job(mapped_response)
 
     def unpublish_data_product(self, marketplace_id: str, product_id: str) -> JobDetails:
         """Remove a product's publication from a particular marketplace.
@@ -702,9 +739,14 @@ class AlationDataProduct(RequestHandler):
             product_id (str): Non-empty identifier of the product to unpublish.
 
         Returns:
-            JobDetails: Unpublish status and any response message from the API.
+            JobDetails: Operation status with a DataProductPublicationResponse in
+            result containing the API message and approval workflow request ID.
+            Empty response bodies produce a result with None-valued fields.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products-publishing/unpublish_data_product
+
+        Note: Once you call this endpoint successfully, an approval request workflow will be triggered. This one has to be
+        approved and only then the data product will be unpublished from the data marketplace.
         """
         self._validate_identifier(marketplace_id, "marketplace_id")
         self._validate_identifier(product_id, "product_id")
@@ -713,7 +755,7 @@ class AlationDataProduct(RequestHandler):
         response = self.delete(
             url=f"/dps/integration/data-products/v1/marketplace/{marketplace_id}/data-product/{product_id}/",
         )
-        return JobDetails.from_api_response(response)
+        return self._parse_publication_job(response)
 
     def check_data_product(self, data_product_check: DataProductCheck) -> list[DataProductCheckResultItem]:
         """Evaluate a data product specification against supplied standards.

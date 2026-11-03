@@ -882,10 +882,10 @@ class DataProductSearchResponse(BaseClass):
 
 @dataclass(kw_only=True)
 class DataProductPublicationResponse(BaseClass):
-    """Approval response returned when updating a published data product.
+    """Approval response stored in a data product publication job's result.
 
     Attributes:
-        message (str | None): API message describing the publication update request.
+        message (str | None): API message describing a publish, update, or unpublish request.
         workflow_request_id (str | None): Identifier of the approval workflow request.
     """
 

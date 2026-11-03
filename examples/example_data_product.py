@@ -160,11 +160,13 @@ if example_switches.getboolean("FETCH_DATA_PRODUCT_VERSION"):
 # ================================
 
 if example_switches.getboolean("UPDATE_DATA_PRODUCT_VERSION_STATUS"):
-    updated_version = alation.data_product.update_data_product_version_status(
+    update_result = alation.data_product.update_data_product_version_status(
         product_id=DATA_PRODUCT_ID,
         version_id=DATA_PRODUCT_VERSION,
         data_product_version=allie.DataProductVersionStatusUpdate(status=data_product_settings["VERSION_STATUS"]),
     )
+    updated_version = update_result.result
+    logging.info(f"Version status update: {update_result.status}.")
     logging.info(f"Updated version {updated_version.version_id} to status {updated_version.status}.")
 
 # ================================
@@ -202,7 +204,9 @@ if example_switches.getboolean("LIST_DATA_MARKETPLACES"):
 
 if example_switches.getboolean("UPDATE_DATA_MARKETPLACE"):
     marketplace_spec.marketplace.en.description = data_product_settings["UPDATED_MARKETPLACE_DESCRIPTION"]
-    updated_marketplace = alation.data_product.update_data_marketplace(marketplace_spec=marketplace_spec)
+    update_result = alation.data_product.update_data_marketplace(marketplace_spec=marketplace_spec)
+    updated_marketplace = update_result.result
+    logging.info(f"Marketplace update status: {update_result.status}.")
     logging.info(f"Updated marketplace {updated_marketplace.external_marketplace_id}.")
 
 # ================================
@@ -210,19 +214,21 @@ if example_switches.getboolean("UPDATE_DATA_MARKETPLACE"):
 # ================================
 
 if example_switches.getboolean("PUBLISH_PRODUCT_TO_MARKETPLACE"):
-    published_product = alation.data_product.publish_data_product(
+    publication_job = alation.data_product.publish_data_product(
         marketplace_id=MARKETPLACE_ID,
         product_id=DATA_PRODUCT_ID,
         query_params=allie.DataProductPublishParams(version=DATA_PRODUCT_VERSION),
     )
-    logging.info(f"Published product {published_product.product_id} version {published_product.version_id} to marketplace {MARKETPLACE_ID}.")
+    logging.info(f"Publish request status: {publication_job.status}")
+    logging.info(f"Publish response: {publication_job.result.message}")
+    logging.info(f"Approval workflow request ID: {publication_job.result.workflow_request_id}")
 
 # ================================
 # GET WORKFLOW REQUESTS
 # ================================
 
 # After a data product gets published, an approval workflow is automatically triggered.
-# We have to fetch the approval workflow id.
+# The approval workflow ID is available in publication_job.result.workflow_request_id.
 # TODO: Support for this will be implemented at a later stage. Out of scope for this change request.
 
 # ================================
@@ -260,17 +266,18 @@ approved and only then the new data product version will show up in the data mar
 """
 
 if example_switches.getboolean("UPDATE_PUBLISHED_DATA_PRODUCT"):
-    publication_response = alation.data_product.update_published_data_product(
+    publication_job = alation.data_product.update_published_data_product(
         marketplace_id=MARKETPLACE_ID,
         product_id=DATA_PRODUCT_ID,
-        query_params=allie.DataProductPublishParams(version=UPDATED_DATA_PRODUCT_VERSION)
+        query_params=allie.DataProductPublishParams(version=UPDATED_DATA_PRODUCT_VERSION),
         # Note: I had to explicitly state the version otherwise it would trigger the workflow on the already
         # published version.
     )
 
-    workflow_request_id = publication_response.workflow_request_id
+    workflow_request_id = publication_job.result.workflow_request_id
 
-    logging.info(f"Publication update response: {publication_response.message}")
+    logging.info(f"Publication update status: {publication_job.status}")
+    logging.info(f"Publication update response: {publication_job.result.message}")
     logging.info(f"Approval workflow request ID: {workflow_request_id}")
 
     # TODO: approve the approval request - outside the scope of this change request.
@@ -306,13 +313,14 @@ if example_switches.getboolean("CREATE_PERMISSION"):
     logging.info(f"Create permission result: {created_permission}")
 
 if example_switches.getboolean("FETCH_PERMISSIONS"):
+    query_params = allie.DataProductPermissionParams(
+        subject_type=permission.subject_type,
+        subject_id=permission.subject_id,
+        object_type=permission.object_type,
+        object_id=permission.object_id,
+    )
     permissions = alation.data_product.get_permissions(
-        query_params=allie.DataProductPermissionParams(
-            subject_type=permission.subject_type,
-            subject_id=permission.subject_id,
-            object_type=permission.object_type,
-            object_id=permission.object_id,
-        )
+        query_params=query_params
     )
     logging.info(f"Fetched {len(permissions)} permission assignment(s).")
 
@@ -330,11 +338,13 @@ if example_switches.getboolean("VIEW_EFFECTIVE_PERMISSIONS"):
 # ================================
 
 if example_switches.getboolean("UNPUBLISH_PRODUCT_FROM_MARKETPLACE"):
-    unpublished_product = alation.data_product.unpublish_data_product(
+    publication_job = alation.data_product.unpublish_data_product(
         marketplace_id=MARKETPLACE_ID,
         product_id=DATA_PRODUCT_ID,
     )
-    logging.info(f"Unpublish product result: {unpublished_product}")
+    logging.info(f"Unpublish request status: {publication_job.status}")
+    logging.info(f"Unpublish response: {publication_job.result.message}")
+    logging.info(f"Approval workflow request ID: {publication_job.result.workflow_request_id}")
 
 if example_switches.getboolean("DELETE_PERMISSION"):
     # Use the current role, including any change made by UPDATE_PERMISSION.

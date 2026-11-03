@@ -14,6 +14,7 @@ from allie_sdk.models.data_product_model import (
     DataMarketplaceLanguage,
     DataMarketplaceParams,
     DataMarketplaceSpec,
+    DataProduct,
     DataProductCheck,
     DataProductCheckStandard,
     DataProductDescription,
@@ -165,26 +166,70 @@ class TestDataProductMethods:
         assert request.headers["Content-Type"] == "application/x-yaml; charset=utf-8"
         assert request.text == yaml_payload
 
-    def test_update_data_product_version(self, requests_mock):
+    @pytest.mark.parametrize(("product_status", "status_code"), [("ready", 201), ("draft", 200)])
+    def test_update_data_product_version_status(self, requests_mock: Mocker, product_status: str, status_code: int) -> None:
+        """Verify version status updates return a job containing the typed product.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            product_status (str): Product version status to request and return.
+            status_code (int): Successful HTTP response status to exercise.
+
+        Returns:
+            None: Assertions verify operation status, product details, and payload.
+        """
         requests_mock.register_uri(
             method="PUT",
             url="/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/version/1.0.0/",
             json={
                 "product_id": "finance:last_quarter_sales",
                 "version_id": "1.0.0",
-                "status": "ready",
+                "status": product_status,
+                "spec_json": build_data_product_spec().generate_api_payload(),
             },
-            status_code=201,
+            status_code=status_code,
         )
 
         result = self.mock_data_product.update_data_product_version_status(
             "finance:last_quarter_sales",
             "1.0.0",
-            DataProductVersionStatusUpdate(status="ready"),
+            DataProductVersionStatusUpdate(status=product_status),
         )
 
-        assert result.status == "ready"
-        assert json.loads(requests_mock.request_history[0].text) == {"status": "ready"}
+        assert isinstance(result, JobDetails)
+        assert result.status == "successful"
+        assert result.msg == ""
+        assert isinstance(result.result, DataProduct)
+        assert result.result.product_id == "finance:last_quarter_sales"
+        assert result.result.version_id == "1.0.0"
+        assert result.result.status == product_status
+        assert isinstance(result.result.spec_json, DataProductSpec)
+        assert result.result.spec_json.product.en.name == "Last Quarter Sales"
+        assert json.loads(requests_mock.request_history[0].text) == {"status": product_status}
+
+    def test_update_data_product_version_status_raises_http_error(self, requests_mock: Mocker) -> None:
+        """Verify a rejected version update raises instead of returning a success job.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the API error propagates to the caller.
+        """
+        requests_mock.put(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/version/1.0.0/",
+            json={"message": "Permission denied."},
+            status_code=403,
+        )
+
+        with pytest.raises(requests.HTTPError) as error:
+            self.mock_data_product.update_data_product_version_status(
+                "finance:last_quarter_sales",
+                "1.0.0",
+                DataProductVersionStatusUpdate(status="ready"),
+            )
+
+        assert error.value.response.status_code == 403
 
     def test_get_and_delete_marketplace(self, requests_mock: Mocker) -> None:
         """Verify marketplace listing and deletion.
@@ -459,7 +504,87 @@ class TestDataProductMethods:
 
         assert self.mock_data_product.create_data_marketplace(build_marketplace_spec()) is None
 
-    def test_get_and_publish_marketplace_products(self, requests_mock):
+    @pytest.mark.parametrize("payload_format", ["model", "dict", "yaml"])
+    def test_update_data_marketplace_returns_job(self, requests_mock: Mocker, payload_format: str) -> None:
+        """Verify marketplace updates return a job containing typed marketplace details.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            payload_format (str): Model, dictionary, or YAML request format.
+
+        Returns:
+            None: Assertions verify operation status, nested models, and the request.
+        """
+        specification = build_marketplace_spec()
+        specification_yaml = "marketplace:\n  marketplaceId: finance:public\n"
+        requests_mock.put(
+            "/dps/integration/data-products/v1/marketplace/",
+            json={
+                "external_marketplace_id": "finance:public",
+                "name": "Finance Marketplace",
+                "spec": specification.generate_api_payload(),
+                "spec_yaml": specification_yaml,
+                "products": [{"product_id": "finance:last_quarter_sales", "version_id": "1.0.0"}],
+                "products_total": 1,
+            },
+            status_code=200,
+        )
+        marketplace_spec: DataMarketplaceSpec | dict[str, object] | str = specification
+        if payload_format == "dict":
+            marketplace_spec = specification.generate_api_payload()
+        elif payload_format == "yaml":
+            marketplace_spec = specification_yaml
+
+        result = self.mock_data_product.update_data_marketplace(marketplace_spec)
+
+        assert isinstance(result, JobDetails)
+        assert result.status == "successful"
+        assert result.msg == ""
+        assert isinstance(result.result, DataMarketplace)
+        assert result.result.external_marketplace_id == "finance:public"
+        assert result.result.name == "Finance Marketplace"
+        assert isinstance(result.result.spec, DataMarketplaceSpec)
+        assert result.result.spec.marketplace.en.name == "Finance Marketplace"
+        assert result.result.spec_yaml == specification_yaml
+        assert isinstance(result.result.products[0], DataProduct)
+        assert result.result.products[0].product_id == "finance:last_quarter_sales"
+        assert result.result.products_total == 1
+        request = requests_mock.request_history[0]
+        if payload_format == "yaml":
+            assert request.headers["Content-Type"] == "application/x-yaml; charset=utf-8"
+            assert request.text == specification_yaml
+        else:
+            assert json.loads(request.text) == specification.generate_api_payload()
+
+    def test_update_data_marketplace_raises_http_error(self, requests_mock: Mocker) -> None:
+        """Verify a rejected marketplace update raises an HTTP error.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the API error propagates to the caller.
+        """
+        requests_mock.put(
+            "/dps/integration/data-products/v1/marketplace/",
+            json={"message": "Permission denied."},
+            status_code=403,
+        )
+
+        with pytest.raises(requests.HTTPError) as error:
+            self.mock_data_product.update_data_marketplace(build_marketplace_spec())
+
+        assert error.value.response.status_code == 403
+
+    def test_get_published_marketplace_products(self, requests_mock: Mocker) -> None:
+        """Verify published products are returned as product models.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the published product identifier.
+        """
         requests_mock.register_uri(
             method="GET",
             url="/dps/integration/data-products/v1/marketplace/finance:public/data-product/",
@@ -472,78 +597,157 @@ class TestDataProductMethods:
             ],
             status_code=200,
         )
-        requests_mock.register_uri(
-            method="POST",
-            url="/dps/integration/data-products/v1/marketplace/finance:public/data-product/finance:last_quarter_sales/",
-            json={
-                "product_id": "finance:last_quarter_sales",
-                "version_id": "1.0.0",
-                "status": "ready",
-            },
-            status_code=200,
-        )
-        requests_mock.register_uri(
-            method="DELETE",
-            url="/dps/integration/data-products/v1/marketplace/finance:public/data-product/finance:last_quarter_sales/",
-            text="",
-            status_code=204,
-        )
-
         published = self.mock_data_product.get_published_data_products(
             "finance:public",
             PublishedDataProductParams(limit=10, offset=0),
         )
-        published_product = self.mock_data_product.publish_data_product(
-            "finance:public",
-            "finance:last_quarter_sales",
-            DataProductPublishParams(version="1.0.0"),
-        )
-        unpublished = self.mock_data_product.unpublish_data_product(
-            "finance:public",
-            "finance:last_quarter_sales",
-        )
-
         assert published[0].product_id == "finance:last_quarter_sales"
-        assert published_product.version_id == "1.0.0"
-        assert unpublished.status == "successful"
-        assert requests_mock.request_history[1].qs["version"] == ["1.0.0"]
 
-    @pytest.mark.parametrize("version", [None, "2.0.0"])
-    def test_update_published_data_product_returns_workflow_response(self, requests_mock: Mocker, version: str | None) -> None:
-        """Verify publication updates preserve the approval message and workflow ID.
+    @pytest.mark.parametrize(
+        ("method_name", "http_method", "version"),
+        [
+            ("publish_data_product", "POST", None),
+            ("publish_data_product", "POST", "2.0.0"),
+            ("update_published_data_product", "PUT", None),
+            ("update_published_data_product", "PUT", "2.0.0"),
+            ("unpublish_data_product", "DELETE", None),
+        ],
+    )
+    def test_publication_methods_return_job_details(self, requests_mock: Mocker, method_name: str, http_method: str, version: str | None) -> None:
+        """Verify publication jobs preserve the approval message and workflow ID.
 
         Args:
             requests_mock (Mocker): Fixture intercepting HTTP requests.
+            method_name (str): SDK publication method to exercise.
+            http_method (str): HTTP method expected for the publication request.
             version (str | None): Explicit version to publish, or None for the API default.
 
         Returns:
             None: Assertions verify the typed response and version query parameter.
         """
         workflow_request_id = "4459bebd-7f92-443d-b216-289148606301"
-        message = (
-            "Approval required to update product 'last-quarter-sales' in marketplace 'acme-market-2'. "
-            f"Workflow request created with ID: {workflow_request_id}"
-        )
-        requests_mock.put(
+        message = f"Approval required to update product 'last-quarter-sales' in marketplace 'acme-market-2'. Workflow request created with ID: {workflow_request_id}"
+        requests_mock.register_uri(
+            http_method,
             "/dps/integration/data-products/v1/marketplace/acme-market-2/data-product/last-quarter-sales/",
             json={"message": message, "workflow_request_id": workflow_request_id},
             status_code=200,
         )
         query_params = DataProductPublishParams(version=version) if version is not None else None
 
-        result = self.mock_data_product.update_published_data_product(
-            "acme-market-2",
-            "last-quarter-sales",
-            query_params,
-        )
+        publication_method = getattr(self.mock_data_product, method_name)
+        if http_method == "DELETE":
+            result = publication_method("acme-market-2", "last-quarter-sales")
+        else:
+            result = publication_method("acme-market-2", "last-quarter-sales", query_params)
 
-        assert result.message == message
-        assert result.workflow_request_id == workflow_request_id
-        assert isinstance(result, allie.DataProductPublicationResponse)
+        assert isinstance(result, JobDetails)
+        assert result.status == "successful"
+        assert result.msg == ""
+        assert isinstance(result.result, allie.DataProductPublicationResponse)
+        assert result.result.message == message
+        assert result.result.workflow_request_id == workflow_request_id
         assert requests_mock.call_count == 1
         request = requests_mock.request_history[0]
         assert request.qs == ({"version": [version]} if version is not None else {})
-        assert json.loads(request.text) == {}
+        if http_method != "DELETE":
+            assert json.loads(request.text) == {}
+
+    @pytest.mark.parametrize(
+        ("method_name", "http_method"),
+        [
+            ("publish_data_product", "POST"),
+            ("update_published_data_product", "PUT"),
+            ("unpublish_data_product", "DELETE"),
+        ],
+    )
+    @pytest.mark.parametrize("message", [None, "Publication request accepted."])
+    def test_publication_methods_handle_missing_workflow_id(self, requests_mock: Mocker, method_name: str, http_method: str, message: str | None) -> None:
+        """Verify message-only and empty responses still yield typed job results.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            method_name (str): SDK publication method to exercise.
+            http_method (str): HTTP method expected for the publication request.
+            message (str | None): Message-only payload, or None for an empty body.
+
+        Returns:
+            None: Assertions verify optional approval fields in the typed result.
+        """
+        response_options = {"text": "", "status_code": 204} if message is None else {"json": {"message": message}, "status_code": 200}
+        requests_mock.register_uri(
+            http_method,
+            "/dps/integration/data-products/v1/marketplace/acme-market-2/data-product/last-quarter-sales/",
+            **response_options,
+        )
+
+        result = getattr(self.mock_data_product, method_name)("acme-market-2", "last-quarter-sales")
+
+        assert isinstance(result, JobDetails)
+        assert result.status == "successful"
+        assert isinstance(result.result, allie.DataProductPublicationResponse)
+        assert result.result.message == message
+        assert result.result.workflow_request_id is None
+
+    @pytest.mark.parametrize(
+        ("method_name", "http_method"),
+        [
+            ("publish_data_product", "POST"),
+            ("update_published_data_product", "PUT"),
+            ("unpublish_data_product", "DELETE"),
+        ],
+    )
+    def test_publication_methods_raise_http_errors(self, requests_mock: Mocker, method_name: str, http_method: str) -> None:
+        """Verify rejected publication requests propagate the HTTP error.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            method_name (str): SDK publication method to exercise.
+            http_method (str): HTTP method expected for the publication request.
+
+        Returns:
+            None: Assertions verify no success job is returned for a rejected request.
+        """
+        requests_mock.register_uri(
+            http_method,
+            "/dps/integration/data-products/v1/marketplace/acme-market-2/data-product/last-quarter-sales/",
+            json={"message": "Permission denied."},
+            status_code=403,
+        )
+
+        with pytest.raises(requests.HTTPError) as error:
+            getattr(self.mock_data_product, method_name)("acme-market-2", "last-quarter-sales")
+
+        assert error.value.response.status_code == 403
+
+    @pytest.mark.parametrize(
+        ("method_name", "http_method"),
+        [
+            ("publish_data_product", "POST"),
+            ("update_published_data_product", "PUT"),
+            ("unpublish_data_product", "DELETE"),
+        ],
+    )
+    def test_publication_methods_reject_invalid_response(self, requests_mock: Mocker, method_name: str, http_method: str) -> None:
+        """Verify invalid publication payloads fail instead of losing response data.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            method_name (str): SDK publication method to exercise.
+            http_method (str): HTTP method expected for the publication request.
+
+        Returns:
+            None: Assertions verify an unexpected response type raises ValueError.
+        """
+        requests_mock.register_uri(
+            http_method,
+            "/dps/integration/data-products/v1/marketplace/acme-market-2/data-product/last-quarter-sales/",
+            json=[{"message": "Unexpected list response."}],
+            status_code=200,
+        )
+
+        with pytest.raises(ValueError, match="publication responses must be an object or empty"):
+            getattr(self.mock_data_product, method_name)("acme-market-2", "last-quarter-sales")
 
     def test_check_and_search_data_products(self, requests_mock):
         requests_mock.register_uri(
