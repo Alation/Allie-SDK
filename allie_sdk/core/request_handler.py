@@ -8,17 +8,25 @@ from requests.auth import HTTPBasicAuth
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
 from ..models.job_model import *
+from ..models.authentication_model import AuthHeaderType
 
 API_LOGGER = logging.getLogger("allie_sdk_logger")
 RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
 SUCCESS_CODES = [200, 201, 202, 204]
 
 
+
 class RequestHandler(object):
     """Route all Alation API Calls through same core request functions."""
 
-    def __init__(self, session: requests.Session, host: str, access_token: str = None,
-                 page_size: int = 1000):
+    def __init__(
+            self,
+            session: requests.Session,
+            host: str,
+            access_token: str = None,
+            page_size: int = 1000,
+            auth_header_type:AuthHeaderType = "Token"
+    ):
         """Creates an instance of the RequestHandler object.
 
         Args:
@@ -26,6 +34,8 @@ class RequestHandler(object):
             host (str): Alation URL.
             access_token (str): Alation REST API Access Token.
             page_size (int): Page size of REST API Get Calls.
+            auth_header_type (auth_header_type): Define whether "Authorization" or "Token" should be used in the header.
+                Defaults to "Token". (Introduced Nov 2026 since the AI API endpoint requires the "Authorization" header)
 
         """
         self.s = session
@@ -39,9 +49,12 @@ class RequestHandler(object):
         self.headers = {"Content-Type": "application/json; charset=utf-8"}
         self.access_token = access_token
         if access_token:
-            # TODO: We need to send the Authorization header when using OAUTH 2.0 only
-            # self.headers['Token'] = access_token
-            self.headers["Authorization"] = f"Bearer {access_token}"
+            if auth_header_type == "Token":
+                self.headers['Token'] = access_token
+            elif auth_header_type == "Authorization":
+                self.headers["Authorization"] = f"Bearer {access_token}"
+            else:
+                raise ValueError("Invalid Authorization header type")
 
     def delete(
         self,

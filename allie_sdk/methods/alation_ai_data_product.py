@@ -4,6 +4,7 @@ import logging
 from time import sleep
 
 import requests
+from ..models.authentication_model import AuthHeaderType
 
 from ..core.custom_exceptions import (
     InvalidPostBody,
@@ -37,7 +38,13 @@ LOGGER = logging.getLogger("allie_sdk_logger")
 class AlationAIDataProduct(RequestHandler):
     """Interact with the Alation AI API Data Product endpoints."""
 
-    def __init__(self, access_token: str, session: requests.Session, host: str):
+    def __init__(
+            self,
+            access_token: str,
+            session: requests.Session,
+            host: str,
+            auth_header_type:AuthHeaderType,
+    ):
         """Create a data product API methods wrapper.
 
         Args:
@@ -46,7 +53,7 @@ class AlationAIDataProduct(RequestHandler):
             host (str): Base Alation host URL.
         """
 
-        super().__init__(session=session, host=host, access_token=access_token)
+        super().__init__(session=session, host=host, access_token=access_token, auth_header_type=auth_header_type)
 
     @staticmethod
     def _validate_identifier(value: str, field_name: str):

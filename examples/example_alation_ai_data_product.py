@@ -82,7 +82,7 @@ table_b_columns = alation.rdbms.get_columns(
 TABLE_B_COLUMN_IDS = [ c.id for c in table_b_columns ]
 
 # ================================
-# CREATE DATA PRODUCT
+# ENRICH DATA PRODUCT
 # ================================
 
 creation_request = allie.AlationAIDataProductCreationInfo(

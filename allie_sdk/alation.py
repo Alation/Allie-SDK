@@ -148,7 +148,7 @@ class Alation(object):
             access_token=self.access_token, session=session, host=host
         )
         self.alation_ai_data_product = AlationAIDataProduct(
-            access_token=self.access_token, session=session, host=host
+            access_token=self.access_token, session=session, host=host, auth_header_type = "Authorization"
         )
         self.data_product = AlationDataProduct(
             access_token=self.access_token, session=session, host=host
