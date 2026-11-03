@@ -3,7 +3,7 @@
 Prerequisites:
 
 - You adjusted the "config.ini" file with your settings.
-- The table and column IDs below already exist in Alation.
+- The published data product and BI datasource IDs below already exist in Alation.
 - Your Alation credentials have access to the AI API data product endpoints.
 """
 
@@ -13,15 +13,11 @@ import sys
 
 import allie_sdk as allie
 
-
 # ================================
 # Set Global Variables
 # ================================
 
-TABLE_A_ID = 311
-TABLE_B_ID = 312
 PUBLISHED_DATA_PRODUCT_ID = "customer-orders-redshift-provisioned"
-EXISTING_DATA_PRODUCT_YAML = None
 BI_DATASOURCE_ID = 1
 SQL_STATEMENTS = [
     "SELECT COUNT(*) AS cnt_customers FROM customersx",
@@ -62,56 +58,14 @@ alation = allie.Alation(
 )
 
 # ================================
-# GET TABLE AND COLUMN IDS
+# CREATE OR PREVIEW A DATA PRODUCT FROM A BI DATASOURCE
 # ================================
 
-table_a_columns = alation.rdbms.get_columns(
-    allie.ColumnParams(
-        table_id = TABLE_A_ID
-    )
+bi_datasource_preview = alation.alation_ai_data_product.create_data_product_from_bi_source(
+    datasource_id=BI_DATASOURCE_ID,
+    create_product=False,
 )
-
-TABLE_A_COLUMN_IDS = [ c.id for c in table_a_columns ]
-
-table_b_columns = alation.rdbms.get_columns(
-    allie.ColumnParams(
-        table_id = TABLE_B_ID
-    )
-)
-
-TABLE_B_COLUMN_IDS = [ c.id for c in table_b_columns ]
-
-# ================================
-# ENRICH DATA PRODUCT
-# ================================
-
-creation_request = allie.AlationAIDataProductCreationInfo(
-    table_column_info_list=[
-        allie.AlationAIDataProductTableColumnInfo(
-            table_id=TABLE_A_ID,
-            column_ids=TABLE_A_COLUMN_IDS,
-        ),
-        allie.AlationAIDataProductTableColumnInfo(
-            table_id=TABLE_B_ID,
-            column_ids=TABLE_B_COLUMN_IDS,
-        )
-    ],
-    existing_data_product=EXISTING_DATA_PRODUCT_YAML,
-)
-
-creation_task = alation.alation_ai_data_product.enrich_data_product_spec(
-    alation_ai_data_product=creation_request,
-    generate_missing_descriptions=False,
-    generate_relationships=False
-)
-logging.info(f"Started data product creation task {creation_task.task_id}")
-
-# ================================
-# WAIT FOR FINAL DATA PRODUCT YAML
-# ================================
-
-data_product_result = alation.alation_ai_data_product.get_data_product_task(creation_task.task_id)
-logging.info(f"Data product YAML:\n{data_product_result}")
+logging.info("BI datasource preview:\n%s", bi_datasource_preview.result)
 
 # ================================
 # GENERATE RELATIONSHIPS FROM THE YAML SPEC
@@ -119,10 +73,10 @@ logging.info(f"Data product YAML:\n{data_product_result}")
 
 generated_relationships = alation.alation_ai_data_product.generate_relationships(
     allie.AlationAIGenerateRelationshipsRequest(
-        data_product_spec_yaml=data_product_result,
+        data_product_spec_yaml=bi_datasource_preview.result,
     )
 )
-logging.info("Generated %s relationship(s)", len(generated_relationships.relationships))
+logging.info("Generated %s relationship(s)", len(generated_relationships.result.relationships))
 
 # ================================
 # VALIDATE SQL AGAINST A DATA PRODUCT
@@ -132,7 +86,7 @@ validated_sql = alation.alation_ai_data_product.validate_sql(
     PUBLISHED_DATA_PRODUCT_ID,
     SQL_STATEMENTS,
 )
-logging.info(f"Validated {len(validated_sql)} SQL statement(s)")
+logging.info(f"Validated {len(validated_sql.result)} SQL statement(s)")
 
 # ================================
 # EXTRACT METRICS FROM SQL STATEMENTS
@@ -142,20 +96,10 @@ metrics_task = alation.alation_ai_data_product.extract_metrics_from_sql_statemen
     PUBLISHED_DATA_PRODUCT_ID,
     SQL_STATEMENTS,
 )
-logging.info("Started metric extraction task %s", metrics_task.task_id)
+logging.info("Started metric extraction task %s", metrics_task.result.task_id)
 
-metrics_result = alation.alation_ai_data_product.get_data_product_metrics_extraction_result(metrics_task.task_id)
+metrics_result = alation.alation_ai_data_product.get_data_product_metrics_extraction_result(metrics_task.result.task_id)
 if isinstance(metrics_result, allie.AlationAIAsyncTask):
     logging.info("Metric extraction task %s is %s", metrics_result.id, metrics_result.status)
 else:
     logging.info("Extracted metrics for %s SQL statement(s)", len(metrics_result))
-
-# ================================
-# CREATE OR PREVIEW A DATA PRODUCT FROM A BI DATASOURCE
-# ================================
-
-bi_datasource_preview = alation.alation_ai_data_product.create_data_product_from_bi_source(
-    datasource_id=BI_DATASOURCE_ID,
-    create_product=False,
-)
-logging.info("BI datasource preview:\n%s", bi_datasource_preview)

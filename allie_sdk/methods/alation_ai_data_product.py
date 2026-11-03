@@ -1,25 +1,28 @@
 """Alation AI API Data Product Methods."""
 
 import logging
-from time import sleep
+from math import isfinite
+from time import monotonic, sleep
+from typing import NoReturn
 
 import requests
-from ..models.authentication_model import AuthHeaderType
 
 from ..core.custom_exceptions import (
     InvalidPostBody,
+    UnsupportedPostBody,
     validate_query_params,
     validate_rest_payload,
 )
 from ..core.request_handler import RequestHandler
 from ..models.alation_ai_data_product_model import (
-    AlationAIDataProductCreationInfo,
+    AlationAIAsyncTask,
     AlationAIDataProductJobResult,
     AlationAIDataProductTask,
     AlationAIExtractMetricsFromBIParams,
     AlationAIGenerateRelationshipsRequest,
     AlationAIGenerateRelationshipsResponse,
     AlationAIGetUpstreamTablesFromBiObjectParams,
+    AlationAIGetUpstreamTablesFromBiObjectResponse,
     AlationAIMetricResultWithSource,
     AlationAIReviseDataProductJobsParams,
     AlationAIReviseDataProductRequest,
@@ -28,9 +31,9 @@ from ..models.alation_ai_data_product_model import (
     AlationAIReviseDataProductResultsPage,
     AlationAISqlMetricResult,
     AlationAISqlWithValidation,
-    AlationAIAsyncTask,
-    AlationAIGetUpstreamTablesFromBiObjectResponse,
 )
+from ..models.authentication_model import AuthHeaderType
+from ..models.job_model import JobDetails
 
 LOGGER = logging.getLogger("allie_sdk_logger")
 
@@ -43,58 +46,79 @@ class AlationAIDataProduct(RequestHandler):
             access_token: str,
             session: requests.Session,
             host: str,
-            auth_header_type:AuthHeaderType,
-    ):
+            auth_header_type: AuthHeaderType,
+    ) -> None:
         """Create a data product API methods wrapper.
 
         Args:
             access_token (str): Alation REST API access token.
             session (requests.Session): Shared requests session used for API calls.
             host (str): Base Alation host URL.
+            auth_header_type (AuthHeaderType): Authentication header used for API calls.
+
+        Returns:
+            None: Initializes the client's connection and authentication settings.
         """
 
         super().__init__(session=session, host=host, access_token=access_token, auth_header_type=auth_header_type)
 
     @staticmethod
-    def _validate_identifier(value: str, field_name: str):
+    def _validate_identifier(value: str, field_name: str) -> None:
         """Validate that a required identifier value is present.
 
         Args:
             value (str): Identifier value supplied to the API method.
             field_name (str): Human-readable field name used in the error message.
 
+        Returns:
+            None: Returns without a value when the identifier is valid.
+
         Raises:
-            InvalidPostBody: If the identifier value is missing.
+            InvalidPostBody: If the identifier is not a non-empty string or contains
+                only whitespace.
         """
 
-        if value is None:
-            raise InvalidPostBody(f"'{field_name}' must be provided for the Data Product request.")
+        if not isinstance(value, str) or not value.strip():
+            error_message = f"'{field_name}' must be a non-empty string for the Data Product request."
+            LOGGER.error(error_message)
+            raise InvalidPostBody(error_message)
 
     @staticmethod
-    def _validate_data_product_sql_statements(sql_statements: list[str]):
+    def _validate_data_product_sql_statements(sql_statements: list[str]) -> None:
         """Validate SQL statements used by data product AI endpoints.
 
         Args:
             sql_statements (list[str]): SQL statements to validate before the request is sent.
 
+        Returns:
+            None: Returns without a value when a non-empty list of strings is supplied.
+
         Raises:
             InvalidPostBody: If no SQL statements are supplied.
-            UnsupportedPostBody: If any SQL statement is not a string.
+            UnsupportedPostBody: If the payload is not a list or any SQL statement
+                is not a string.
         """
 
+        if sql_statements is not None and not isinstance(sql_statements, list):
+            error_message = "'sql_statements' must be a list of SQL strings for the Data Product request."
+            LOGGER.error(error_message)
+            raise UnsupportedPostBody(error_message)
         if not sql_statements:
-            raise InvalidPostBody(
-                "'sql_statements' must include at least one SQL statement for the Data Product request."
-            )
+            error_message = "'sql_statements' must include at least one SQL statement for the Data Product request."
+            LOGGER.error(error_message)
+            raise InvalidPostBody(error_message)
         validate_rest_payload(sql_statements, (str,))
 
     @staticmethod
-    def _raise_failed_data_product_job_result(task_id: str, job_result: AlationAIDataProductJobResult):
+    def _raise_failed_data_product_job_result(task_id: str, job_result: AlationAIDataProductJobResult) -> NoReturn:
         """Raise an HTTP error for a failed data product creation result.
 
         Args:
             task_id (str): Identifier of the task that failed.
             job_result (AlationAIDataProductJobResult): Failed job result payload.
+
+        Returns:
+            NoReturn: Always raises an error containing the job failure details.
 
         Raises:
             requests.exceptions.HTTPError: Always raised with the job failure details.
@@ -110,92 +134,54 @@ class AlationAIDataProduct(RequestHandler):
         error_response._content = error_message.encode("utf-8")
         raise requests.exceptions.HTTPError(error_message, response=error_response)
 
-    def enrich_data_product_spec(
-        self,
-        alation_ai_data_product: AlationAIDataProductCreationInfo,
-        generate_missing_descriptions: bool = True,
-        generate_relationships: bool = True,
-    ) -> AlationAIDataProductTask:
-        """Generate an enriched data product specification from metadata.
-
-        This endpoint builds YAML for a data product based on the supplied table and
-        column metadata. It does not create a data product in the Data Products
-        Service catalog.
-
-        Args:
-            alation_ai_data_product (AlationAIDataProductCreationInfo): Metadata used
-                to build the data product specification.
-            generate_missing_descriptions (bool): Whether Alation AI should generate
-                descriptions for objects that do not already have them.
-            generate_relationships (bool): Whether Alation AI should infer
-                relationships between the supplied objects.
-
-        Returns:
-            AlationAIDataProductTask: Asynchronous task details for the spec
-            enrichment job.
-
-        Raises:
-            InvalidPostBody: If the payload is missing.
-            UnsupportedPostBody: If the payload type is invalid.
-            requests.exceptions.HTTPError: If the API returns a non-success status
-                code.
-        """
-
-        if not alation_ai_data_product:
-            raise InvalidPostBody("Data Product payload is required for POST requests.")
-
-        validate_rest_payload(
-            payload=[alation_ai_data_product],
-            expected_types=(AlationAIDataProductCreationInfo,),
-        )
-        payload = alation_ai_data_product.generate_api_post_payload()
-
-        LOGGER.info(
-            "Creating data product with %s table definition(s).",
-            len(alation_ai_data_product.table_column_info_list),
-        )
-        response = self.post(
-            url="/ai/api/v1/data_product/enrich_data_product_spec",
-            body=payload,
-            query_params={
-                "generate_missing_descriptions": generate_missing_descriptions,
-                "generate_relationships": generate_relationships,
-            },
-        )
-
-        return AlationAIDataProductTask.from_api_response(response)
-
-    def get_data_product_task(
+    def get_data_product_creation_result(
             self,
             task_id: str,
-            poll_interval_seconds: float = 3
+            poll_interval_seconds: float = 3,
+            timeout_seconds: float | None = 300,
     ) -> str:
         """Poll a data product task until final YAML is available.
 
         Args:
             task_id (str): Identifier of the asynchronous task to poll.
             poll_interval_seconds (float): Number of seconds to wait between polling
-                attempts. Must be greater than or equal to zero.
+                attempts. Must be finite and greater than or equal to zero.
+            timeout_seconds (float | None): Maximum time to keep polling, in seconds.
+                Defaults to 300. Must be finite and greater than zero, or None to
+                disable the timeout. Checked between HTTP requests; an in-flight
+                request is not interrupted.
 
         Returns:
             str: Final data product YAML returned by the completed task.
 
         Raises:
-            InvalidPostBody: If the task ID is missing or the poll interval is
-                negative.
+            InvalidPostBody: If the task ID, poll interval, or timeout is invalid.
             requests.exceptions.HTTPError: If the task reports failure or the API
                 returns a non-success status code.
+            TimeoutError: If the polling deadline is reached without a final result.
             ValueError: If the task returns an unexpected status.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_data_product_result#get-data-product-creation-result
         """
 
         self._validate_identifier(task_id, "task_id")
-        if poll_interval_seconds < 0:
-            raise InvalidPostBody(
-                "'poll_interval_seconds' must be greater than or equal to 0 for the Data Product request."
-            )
+        if not isfinite(poll_interval_seconds) or poll_interval_seconds < 0:
+            error_message = "'poll_interval_seconds' must be finite and greater than or equal to 0 for the Data Product request."
+            LOGGER.error(error_message)
+            raise InvalidPostBody(error_message)
+        if timeout_seconds is not None and (not isfinite(timeout_seconds) or timeout_seconds <= 0):
+            error_message = "'timeout_seconds' must be finite and greater than 0, or None, for the Data Product request."
+            LOGGER.error(error_message)
+            raise InvalidPostBody(error_message)
 
+        deadline = monotonic() + timeout_seconds if timeout_seconds is not None else None
         attempt = 1
         while True:
+            if deadline is not None and monotonic() >= deadline:
+                error_message = f"Data product task '{task_id}' did not complete within {timeout_seconds} seconds."
+                LOGGER.error(error_message)
+                raise TimeoutError(error_message)
+
             LOGGER.info(f"Fetching data product task {task_id} (attempt {attempt}).")
             response = self.get(
                 url=f"/ai/api/v1/data_product/get_data_product_result/{task_id}",
@@ -235,19 +221,22 @@ class AlationAIDataProduct(RequestHandler):
                 LOGGER.error(error_message)
                 raise ValueError(error_message)
 
+            sleep_seconds = poll_interval_seconds
+            if deadline is not None:
+                sleep_seconds = max(0, min(poll_interval_seconds, deadline - monotonic()))
             LOGGER.info(
                 "Data product task %s is %s. Polling again in %s second(s).",
                 task_id,
                 task_status,
-                poll_interval_seconds,
+                sleep_seconds,
             )
-            sleep(poll_interval_seconds)
+            sleep(sleep_seconds)
             attempt += 1
 
     def generate_relationships(
         self,
         generate_relationships_request: AlationAIGenerateRelationshipsRequest,
-    ) -> AlationAIGenerateRelationshipsResponse:
+    ) -> JobDetails:
         """Generate JOIN relationships for a data product specification.
 
         Args:
@@ -255,15 +244,17 @@ class AlationAIDataProduct(RequestHandler):
                 Request payload containing the full data product YAML spec.
 
         Returns:
-            AlationAIGenerateRelationshipsResponse: Generated relationships returned
-            by the Alation AI API. An empty response object is returned when the API
-            response is empty.
+            JobDetails: Operation status with an AlationAIGenerateRelationshipsResponse
+            in result. An empty response object is nested when the API response is
+            empty.
 
         Raises:
             InvalidPostBody: If the request payload is missing.
             UnsupportedPostBody: If the request payload type is invalid.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/generate_relationships_endpoint
         """
 
         if not generate_relationships_request:
@@ -281,15 +272,15 @@ class AlationAIDataProduct(RequestHandler):
             body=payload,
         )
 
-        if response:
-            return AlationAIGenerateRelationshipsResponse.from_api_response(response)
-        return AlationAIGenerateRelationshipsResponse()
+        relationships = AlationAIGenerateRelationshipsResponse.from_api_response(response) if response else AlationAIGenerateRelationshipsResponse()
+        mapped_response = self._map_request_success_to_job_details(response_data=relationships)
+        return JobDetails.from_api_response(mapped_response)
 
-    def revise_data_product(
+    def initiate_revise_data_product_workflow(
         self,
         data_product_id: str,
         revise_request: AlationAIReviseDataProductRequest = None,
-    ) -> AlationAIReviseDataProductResponse:
+    ) -> JobDetails:
         """Start a new "Suggest Fixes" workflow for a data product.
 
         Args:
@@ -299,14 +290,16 @@ class AlationAIDataProduct(RequestHandler):
                 used.
 
         Returns:
-            AlationAIReviseDataProductResponse: Response describing the started revise
-            workflow.
+            JobDetails: Operation status with an AlationAIReviseDataProductResponse
+            describing the started revise workflow in result.
 
         Raises:
             InvalidPostBody: If the data product ID is missing.
             UnsupportedPostBody: If the revise request has an invalid type.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/initiate_revise_data_product
         """
 
         self._validate_identifier(data_product_id, "alation_ai_data_product_id")
@@ -326,7 +319,9 @@ class AlationAIDataProduct(RequestHandler):
             body=payload,
         )
 
-        return AlationAIReviseDataProductResponse.from_api_response(response)
+        revise_result = AlationAIReviseDataProductResponse.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=revise_result)
+        return JobDetails.from_api_response(mapped_response)
 
     def get_data_product_revision_jobs(
         self,
@@ -349,6 +344,8 @@ class AlationAIDataProduct(RequestHandler):
             UnsupportedQueryParams: If the query parameter type is invalid.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_all_revise_data_product_results
         """
 
         validate_query_params(query_params, AlationAIReviseDataProductJobsParams)
@@ -382,6 +379,8 @@ class AlationAIDataProduct(RequestHandler):
             InvalidPostBody: If the result ID is missing.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_revise_data_product_result
         """
 
         self._validate_identifier(result_id, "result_id")
@@ -398,7 +397,7 @@ class AlationAIDataProduct(RequestHandler):
         self,
         data_product_id: str,
         sql_statements: list[str],
-    ) -> list[AlationAISqlWithValidation]:
+    ) -> JobDetails:
         """
         Validate SQL statements against a data product.
         Note: This function just validates the query syntactically, it doesn't check whether the columns
@@ -411,15 +410,19 @@ class AlationAIDataProduct(RequestHandler):
             sql_statements (list[str]): SQL statements to validate.
 
         Returns:
-            list[AlationAISqlWithValidation]: Validation results for each SQL
-            statement. Returns an empty list when the API response is empty.
+            JobDetails: Operation status with a list of AlationAISqlWithValidation
+            objects in result. The result is an empty list when the API response is
+            empty.
 
         Raises:
             InvalidPostBody: If the data product ID is missing or no SQL statements
                 are provided.
-            UnsupportedPostBody: If any SQL statement is not a string.
+            UnsupportedPostBody: If the payload is not a list or any SQL statement
+                is not a string.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/validate_sql
         """
 
         self._validate_identifier(data_product_id, "alation_ai_data_product_id")
@@ -435,15 +438,15 @@ class AlationAIDataProduct(RequestHandler):
             body=sql_statements,
         )
 
-        if response:
-            return [AlationAISqlWithValidation.from_api_response(item) for item in response]
-        return []
+        validation_results = [AlationAISqlWithValidation.from_api_response(item) for item in response] if response else []
+        mapped_response = self._map_request_success_to_job_details(response_data=validation_results)
+        return JobDetails.from_api_response(mapped_response)
 
     def extract_metrics_from_sql_statements(
         self,
         data_product_id: str,
         sql_statements: list[str],
-    ) -> AlationAIDataProductTask:
+    ) -> JobDetails:
         """Extract metrics from SQL statements for a data product.
 
         Note: This function also checks whether the columns or tables exist in the data product.
@@ -454,15 +457,18 @@ class AlationAIDataProduct(RequestHandler):
                 extracted.
 
         Returns:
-            AlationAIDataProductTask: Asynchronous task details for the metrics
-            extraction job.
+            JobDetails: Operation status with an AlationAIDataProductTask in result
+            containing the metrics extraction task ID.
 
         Raises:
             InvalidPostBody: If the data product ID is missing or no SQL statements
                 are provided.
-            UnsupportedPostBody: If any SQL statement is not a string.
+            UnsupportedPostBody: If the payload is not a list or any SQL statement
+                is not a string.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/extract_metrics
         """
 
         self._validate_identifier(data_product_id, "alation_ai_data_product_id")
@@ -478,25 +484,29 @@ class AlationAIDataProduct(RequestHandler):
             body=sql_statements,
         )
 
-        return AlationAIDataProductTask.from_api_response(response)
+        task = AlationAIDataProductTask.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=task)
+        return JobDetails.from_api_response(mapped_response)
 
     def extract_data_product_metrics_from_sample_queries(
         self,
         data_product_id: str,
-    ) -> AlationAIDataProductTask:
+    ) -> JobDetails:
         """Start extracting metrics from a data product's sample queries.
 
         Args:
             data_product_id (str): Identifier of the data product to analyze.
 
         Returns:
-            AlationAIDataProductTask: Asynchronous task details for the metrics
-            extraction job.
+            JobDetails: Operation status with an AlationAIDataProductTask in result
+            containing the metrics extraction task ID.
 
         Raises:
             InvalidPostBody: If the data product ID is missing.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/extract_metrics_from_sample_queries
         """
 
         self._validate_identifier(data_product_id, "alation_ai_data_product_id")
@@ -510,13 +520,15 @@ class AlationAIDataProduct(RequestHandler):
             body=None,
         )
 
-        return AlationAIDataProductTask.from_api_response(response)
+        task = AlationAIDataProductTask.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=task)
+        return JobDetails.from_api_response(mapped_response)
 
     def extract_data_product_metrics_from_bi(
         self,
         data_product_id: str,
         query_params: AlationAIExtractMetricsFromBIParams = None,
-    ) -> AlationAIDataProductTask:
+    ) -> JobDetails:
         """Start extracting metrics from downstream BI assets.
 
         Args:
@@ -525,14 +537,16 @@ class AlationAIDataProduct(RequestHandler):
                 options for selecting BI assets to analyze.
 
         Returns:
-            AlationAIDataProductTask: Asynchronous task details for the BI metrics
-            extraction job.
+            JobDetails: Operation status with an AlationAIDataProductTask in result
+            containing the BI metrics extraction task ID.
 
         Raises:
             InvalidPostBody: If the data product ID is missing.
             UnsupportedQueryParams: If the query parameter type is invalid.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/extract_metrics_from_bi
         """
 
         self._validate_identifier(data_product_id, "alation_ai_data_product_id")
@@ -546,7 +560,9 @@ class AlationAIDataProduct(RequestHandler):
             query_params=params,
         )
 
-        return AlationAIDataProductTask.from_api_response(response)
+        task = AlationAIDataProductTask.from_api_response(response)
+        mapped_response = self._map_request_success_to_job_details(response_data=task)
+        return JobDetails.from_api_response(mapped_response)
 
     def get_data_product_metrics_extraction_result(self, task_id: str) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]:
         """Retrieve the current state or final result of a metrics extraction task.
@@ -564,6 +580,8 @@ class AlationAIDataProduct(RequestHandler):
             InvalidPostBody: If the task ID is missing.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_metrics
         """
 
         self._validate_identifier(task_id, "task_id")
@@ -596,6 +614,8 @@ class AlationAIDataProduct(RequestHandler):
             InvalidPostBody: If the task ID is missing.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_metrics_with_source
         """
 
         self._validate_identifier(task_id, "task_id")
@@ -629,6 +649,8 @@ class AlationAIDataProduct(RequestHandler):
             UnsupportedQueryParams: If the query parameter type is invalid.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_tables_from_bi
         """
 
         if not query_params:
@@ -652,7 +674,7 @@ class AlationAIDataProduct(RequestHandler):
         self,
         datasource_id: int,
         create_product: bool = True,
-    ) -> str:
+    ) -> JobDetails:
         """Create a data product or preview its specification from a BI source.
 
         Args:
@@ -661,13 +683,15 @@ class AlationAIDataProduct(RequestHandler):
                 set to ``False``, the API returns a preview specification instead.
 
         Returns:
-            str: API response payload for the created data product or generated
-            specification preview.
+            JobDetails: Operation status with the API response payload for the
+            created data product or generated specification preview in result.
 
         Raises:
             InvalidPostBody: If the datasource ID is missing.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+
+        Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/create_data_product_from_bi_datasource
         """
 
         if datasource_id is None:
@@ -689,4 +713,5 @@ class AlationAIDataProduct(RequestHandler):
             },
         )
 
-        return response
+        mapped_response = self._map_request_success_to_job_details(response_data=response)
+        return JobDetails.from_api_response(mapped_response)

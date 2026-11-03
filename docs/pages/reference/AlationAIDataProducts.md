@@ -12,11 +12,17 @@ parent: SDK Reference
 
 The Data Product methods use the Alation AI API namespace at `/ai/api/v1/data_product/`.
 
+All POST, PATCH, and PUT methods return `JobDetails`. Successful requests have
+`status="successful"` and the method's typed response or payload in `result`.
+For example, metric extraction returns its task ID at `job.result.task_id`.
+This status describes the HTTP operation; use the task ID to check the asynchronous
+workflow's progress.
+
 ## Models
 
 ### AlationAIDataProductTableColumnInfo
 
-Python object used in `AlationAIDataProductCreationInfo` and `AlationAIGetUpstreamTablesFromBiObjectResponse`.
+Python object used in `AlationAIGetUpstreamTablesFromBiObjectResponse`.
 
 Attributes:
 
@@ -24,17 +30,6 @@ Attributes:
 |------|------|-------------|
 | table_id | integer | Table identifier included in the data product. |
 | column_ids | list[integer] | Column identifiers to include from the table. |
-
-### AlationAIDataProductCreationInfo
-
-Python object used to generate data product specifications with `enrich_data_product_spec`.
-
-Attributes:
-
-| Name | Type | Description |
-|------|------|-------------|
-| table_column_info_list | list[`AlationAIDataProductTableColumnInfo`] | Required. Tables and columns that should be included in the generated data product. |
-| existing_data_product | string | Optional existing YAML spec used as the starting point for generation. |
 
 ### AlationAIGenerateRelationshipsRequest
 
@@ -48,7 +43,7 @@ Attributes:
 
 ### AlationAIDataProductTask
 
-Python object returned when a data product or metrics workflow starts.
+Python object nested in `JobDetails.result` when a metrics workflow starts.
 
 Attributes:
 
@@ -76,7 +71,7 @@ Attributes:
 
 ### AlationAIGenerateRelationshipsResponse
 
-Python object returned by `generate_relationships`.
+Python object nested in `JobDetails.result` by `generate_relationships`.
 
 Attributes:
 
@@ -102,7 +97,7 @@ Attributes:
 
 ### AlationAIReviseDataProductRequest
 
-Python object used to start a revise workflow with `revise_data_product`.
+Python object used to start a revise workflow with `initiate_revise_data_product_workflow`.
 
 Attributes:
 
@@ -112,7 +107,7 @@ Attributes:
 
 ### AlationAIReviseDataProductResponse
 
-Python object returned when a revise workflow starts.
+Python object nested in `JobDetails.result` when a revise workflow starts.
 
 Attributes:
 
@@ -182,7 +177,7 @@ Attributes:
 
 ### AlationAISqlWithValidation
 
-Python object returned by `validate_sql`.
+Python object returned in the list at `JobDetails.result` by `validate_sql`.
 
 Attributes:
 
@@ -310,35 +305,27 @@ Attributes:
 
 ## Methods
 
-### enrich_data_product_spec
+### get_data_product_creation_result
 
 ```
-enrich_data_product_spec(
+get_data_product_creation_result(
     self,
-    alation_ai_data_product: AlationAIDataProductCreationInfo,
-    generate_missing_descriptions: bool = True,
-    generate_relationships: bool = True
-) -> AlationAIDataProductTask
-```
-
-Generate an enriched data product specification from table and column metadata.
-
-Notes:
-* Pass `existing_data_product` on `AlationAIDataProductCreationInfo` when you want the AI API to
-  start from an existing YAML spec instead of creating one from scratch.
-* This wraps the `/ai/api/v1/data_product/enrich_data_product_spec` endpoint.
-
-### get_data_product_task
-
-```
-get_data_product_task(self, task_id: str, poll_interval_seconds: float = 3) -> str
+    task_id: str,
+    poll_interval_seconds: float = 3,
+    timeout_seconds: float | None = 300
+) -> str
 ```
 
 Poll a data product task every few seconds until the final YAML is returned.
 
 Notes:
 * While the backend reports a non-terminal status such as `pending` or `running`, the SDK waits
-  `poll_interval_seconds` before polling again.
+  `poll_interval_seconds` before polling again, capped to the remaining timeout.
+* Polling raises `TimeoutError` after 300 seconds by default. Set `timeout_seconds` to a
+  positive, finite value to change this deadline, or `None` to disable it. The deadline
+  is checked between HTTP requests and does not interrupt an in-flight request.
+* The task ID must be a non-empty string containing more than whitespace. The poll
+  interval must be finite and greater than or equal to zero.
 * If the backend reports `status="failed"`, the SDK raises `requests.exceptions.HTTPError`.
 * This polls the `/ai/api/v1/data_product/get_data_product_result/{task_id}` endpoint.
 
@@ -348,26 +335,31 @@ Notes:
 generate_relationships(
     self,
     generate_relationships_request: AlationAIGenerateRelationshipsRequest
-) -> AlationAIGenerateRelationshipsResponse
+) -> JobDetails
 ```
 
 Generate JOIN relationships between record sets in a data product specification.
+The result contains an `AlationAIGenerateRelationshipsResponse`; access generated
+relationships at `job.result.relationships`. Empty responses produce an empty
+response model in `result`.
 
 Notes:
-* Pass the full YAML string in `data_product_spec_yaml`, typically the output returned by `get_data_product_task`.
+* Pass the full YAML string in `data_product_spec_yaml`, typically the output returned by `get_data_product_creation_result`.
 * This wraps the `/ai/api/v1/data_product/generate_relationships` endpoint.
 
-### revise_data_product
+### initiate_revise_data_product_workflow
 
 ```
-revise_data_product(
+initiate_revise_data_product_workflow(
     self,
     data_product_id: str,
     revise_request: AlationAIReviseDataProductRequest = None
-) -> AlationAIReviseDataProductResponse
+) -> JobDetails
 ```
 
 Start a revise data product workflow.
+The result contains an `AlationAIReviseDataProductResponse` with `result_id` and
+`chat_id`.
 
 ### get_data_product_revision_jobs
 
@@ -391,29 +383,36 @@ get_data_product_revision_result(
 
 Fetch a single revise data product result.
 
-### validate_sql_against_data_product
+### validate_sql
 
 ```
-validate_sql_against_data_product(
+validate_sql(
     self,
     data_product_id: str,
     sql_statements: list[str]
-) -> list[AlationAISqlWithValidation]
+) -> JobDetails
 ```
 
 Validate one or more SQL statements against a data product.
+`sql_statements` must be a non-empty list of strings; a bare string or another
+container raises `UnsupportedPostBody` before an HTTP request is sent.
+The result contains a list of `AlationAISqlWithValidation` objects, or an empty
+list when the API response is empty.
 
-### extract_data_product_metrics
+### extract_metrics_from_sql_statements
 
 ```
-extract_data_product_metrics(
+extract_metrics_from_sql_statements(
     self,
     data_product_id: str,
     sql_statements: list[str]
-) -> AlationAIDataProductTask
+) -> JobDetails
 ```
 
 Start metric extraction from one or more SQL statements.
+`sql_statements` must be a non-empty list of strings; a bare string or another
+container raises `UnsupportedPostBody` before an HTTP request is sent.
+The result contains an `AlationAIDataProductTask`; access its ID at `job.result.task_id`.
 
 ### extract_data_product_metrics_from_sample_queries
 
@@ -421,10 +420,11 @@ Start metric extraction from one or more SQL statements.
 extract_data_product_metrics_from_sample_queries(
     self,
     data_product_id: str
-) -> AlationAIDataProductTask
+) -> JobDetails
 ```
 
 Start metric extraction from the sample queries stored on a data product.
+The result contains an `AlationAIDataProductTask`; access its ID at `job.result.task_id`.
 
 ### extract_data_product_metrics_from_bi
 
@@ -433,10 +433,11 @@ extract_data_product_metrics_from_bi(
     self,
     data_product_id: str,
     query_params: AlationAIExtractMetricsFromBIParams = None
-) -> AlationAIDataProductTask
+) -> JobDetails
 ```
 
 Start metric extraction from downstream BI assets.
+The result contains an `AlationAIDataProductTask`; access its ID at `job.result.task_id`.
 
 ### get_data_product_metrics_extraction_result
 
@@ -472,10 +473,11 @@ create_data_product_from_bi_source(
     self,
     datasource_id: int,
     create_product: bool = True
-) -> str
+) -> JobDetails
 ```
 
 Create a data product from a BI datasource, or return a preview spec when `create_product=False`.
+The result contains the API payload, including the YAML string for a specification preview.
 
 ## Examples
 

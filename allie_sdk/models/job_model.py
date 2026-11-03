@@ -6,6 +6,11 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from ..core.data_structures import BaseClass
+from .alation_ai_data_product_model import (
+    AlationAIDataProductTask,
+    AlationAIGenerateRelationshipsResponse,
+    AlationAIReviseDataProductResponse,
+)
 from .data_product_model import DataMarketplace, DataProduct, DataProductPublicationResponse
 
 
@@ -37,7 +42,10 @@ to do the transformation/mapping in the specific methods. This provides the nece
 class JobDetails(BaseClass):
     status: Literal["successful", "partially_successful", "failed"]
     msg: str = field(default = None)
-    result: str | dict | list | DataMarketplace | DataProduct | DataProductPublicationResponse = field(default = None)
+    result: (
+        str | dict | list | DataMarketplace | DataProduct | DataProductPublicationResponse
+        | AlationAIDataProductTask | AlationAIGenerateRelationshipsResponse | AlationAIReviseDataProductResponse
+    ) = field(default = None)
 
 
 # --- BI SERVER POST --- #

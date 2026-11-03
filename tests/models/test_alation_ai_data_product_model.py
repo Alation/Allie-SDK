@@ -27,26 +27,6 @@ class TestAlationAIDataProductModel:
         with pytest.raises(InvalidPostBody):
             AlationAIDataProductTableColumnInfo(table_id=1, column_ids=[]).generate_api_payload()
 
-    def test_data_product_creation_info_generates_payload(self):
-        create_request = AlationAIDataProductCreationInfo(
-            table_column_info_list=[
-                AlationAIDataProductTableColumnInfo(table_id=1, column_ids=[11, 12]),
-            ],
-            existing_data_product="version: 1",
-        )
-
-        payload = create_request.generate_api_post_payload()
-
-        assert payload == {
-            "existing_data_product": "version: 1",
-            "table_column_info_list": [
-                {
-                    "table_id": 1,
-                    "column_ids": [11, 12],
-                }
-            ],
-        }
-
     def test_generate_relationships_request_generates_payload(self):
         generate_request = AlationAIGenerateRelationshipsRequest(data_product_spec_yaml="version: 1")
 

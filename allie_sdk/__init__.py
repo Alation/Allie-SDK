@@ -66,7 +66,6 @@ from .models import (
     DataDictionaryTaskProgress,
     DataDictionaryTaskRecords,
     DataDictionaryTaskResult,
-    AlationAIDataProductCreationInfo,
     AlationAIGenerateRelationshipsRequest,
     AlationAIGenerateRelationshipsResponse,
     AlationAIGeneratedRelationship,

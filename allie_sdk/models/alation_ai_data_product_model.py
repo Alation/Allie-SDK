@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from ..core.custom_exceptions import InvalidPostBody, validate_rest_payload
+from ..core.custom_exceptions import InvalidPostBody
 from ..core.data_structures import BaseClass, BaseParams
 
 
@@ -34,35 +34,6 @@ class AlationAIDataProductTableColumnInfo(BaseClass):
             "table_id": self.table_id,
             "column_ids": self.column_ids,
         }
-
-
-@dataclass(kw_only=True)
-class AlationAIDataProductCreationInfo(BaseClass):
-    """Payload used to create a data product."""
-
-    table_column_info_list: list[AlationAIDataProductTableColumnInfo] = field(default_factory=list)
-    existing_data_product: str = field(default=None)
-
-    def generate_api_post_payload(self) -> dict:
-        """Generate the API payload for creating a data product."""
-
-        if not self.table_column_info_list:
-            raise InvalidPostBody(
-                "'table_column_info_list' is a required field for Data Product POST payload bodies"
-            )
-
-        validate_rest_payload(self.table_column_info_list, (AlationAIDataProductTableColumnInfo,))
-
-        payload = {
-            "table_column_info_list": [
-                item.generate_api_payload() for item in self.table_column_info_list
-            ]
-        }
-
-        if self.existing_data_product is not None:
-            payload["existing_data_product"] = self.existing_data_product
-
-        return payload
 
 
 @dataclass(kw_only=True)
