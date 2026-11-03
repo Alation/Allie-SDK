@@ -131,6 +131,9 @@ dmypy.json
 # Custom
 .idea/*
 *.DS_STORE
+
+# Claude Code
+.claude/
 logs/alation-rest-*
 logs/allie-sdk-*
 /tests/core/logs/
