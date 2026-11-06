@@ -28,6 +28,7 @@ dependencies = [
   "requests>=2.32.5",
   "python-json-logger>=4.0.0",
   "python-dateutil>=2.9.0.post0",
+  "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]
@@ -38,6 +39,11 @@ dev = [
     "requests-mock>=1.12.1",
     "ruff>=0.14.3",
 ]
+
+[tool.pyrefly.errors]
+unannotated-return = "error"
+no-any-return = "error"
+implicit-any-parameter = "error"
 
 [project.urls]
 Homepage = "https://github.com/Alation/Allie-SDK"
@@ -83,3 +89,7 @@ convention = "google"
 python_version = "3.11"
 warn_return_any = true
 disallow_untyped_defs = true
+
+[tool.pyrefly]
+python-version = "3.11.0"
+preset = "legacy"

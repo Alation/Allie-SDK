@@ -4,6 +4,7 @@ import logging
 from math import isfinite
 from time import monotonic, sleep
 from typing import NoReturn
+import yaml
 
 import requests
 
@@ -13,6 +14,7 @@ from ..core.custom_exceptions import (
     validate_query_params,
     validate_rest_payload,
 )
+
 from ..core.request_handler import RequestHandler
 from ..models.alation_ai_data_product_model import (
     AlationAIAsyncTask,
@@ -34,9 +36,9 @@ from ..models.alation_ai_data_product_model import (
 )
 from ..models.authentication_model import AuthHeaderType
 from ..models.job_model import JobDetails
+from ..models.data_product_model import DataProductSpec
 
 LOGGER = logging.getLogger("allie_sdk_logger")
-
 
 class AlationAIDataProduct(RequestHandler):
     """Interact with the Alation AI API Data Product endpoints."""
@@ -633,7 +635,7 @@ class AlationAIDataProduct(RequestHandler):
         return []
 
     def get_upstream_tables_from_bi_object(self, query_params: AlationAIGetUpstreamTablesFromBiObjectParams) -> AlationAIGetUpstreamTablesFromBiObjectResponse:
-        """Resolve upstream tables for a BI object.
+        """Get upstream tables and columns from a BI report or LookML folder via lineage.
 
         Args:
             query_params (AlationAIGetUpstreamTablesFromBiObjectParams): BI object
@@ -676,6 +678,7 @@ class AlationAIDataProduct(RequestHandler):
         create_product: bool = True,
     ) -> JobDetails:
         """Create a data product or preview its specification from a BI source.
+        Supported: Power BI, Tableau, or Looker datasource.
 
         Args:
             datasource_id (int): Identifier of the BI datasource to analyze.
@@ -683,8 +686,8 @@ class AlationAIDataProduct(RequestHandler):
                 set to ``False``, the API returns a preview specification instead.
 
         Returns:
-            JobDetails: Operation status with the API response payload for the
-            created data product or generated specification preview in result.
+            JobDetails: The status property conveys the job outcome. If create_product is set to True the generated
+            data product ID will be returned as part of JobDetails.result, otherwise, the Data Product definition.
 
         Raises:
             InvalidPostBody: If the datasource ID is missing.
@@ -713,5 +716,23 @@ class AlationAIDataProduct(RequestHandler):
             },
         )
 
-        mapped_response = self._map_request_success_to_job_details(response_data=response)
-        return JobDetails.from_api_response(mapped_response)
+        if response:
+
+            # if create_product is set to True the data product ID will be returned
+            if create_product:
+                dp = response
+            # otherwise the YAML strong for the generated data product
+            else:
+                # the response is a yaml string
+                response_yaml = yaml.safe_load(response)
+                # map to DataProductSpecDefinition
+                dp = DataProductSpec.from_api_response(response_yaml)
+
+
+            mapped_response = self._map_request_success_to_job_details(response_data=dp)
+            return JobDetails.from_api_response(mapped_response)
+
+        else:
+            return JobDetails(
+                status = "failed"
+            )

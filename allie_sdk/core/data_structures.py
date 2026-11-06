@@ -12,7 +12,7 @@ class BaseClass:
     # that include properties that we are not expecting
     # Normally if response doesn't match the data class definition a 100%
     # this would result in an error.
-    # By using method you can handle this exception gracefully. 
+    # By using this method you can handle this exception gracefully.
     @classmethod
     def from_api_response(cls, body_params: dict):
         return cls(**{
