@@ -442,10 +442,23 @@ The result contains an `AlationAIDataProductTask`; access its ID at `job.result.
 ### get_data_product_metrics_extraction_result
 
 ```
-get_data_product_metrics_extraction_result(self, task_id: str) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]
+get_data_product_metrics_extraction_result(
+    self,
+    task_id: str,
+    poll_interval_seconds: float = 3,
+    timeout_seconds: float | None = 300
+) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]
 ```
 
-Fetch the current task status or completed SQL metric extraction results.
+Poll while the task status is `pending` or `running`, waiting 3 seconds between
+requests by default. Return the extracted SQL metric results, or task details once
+the status is no longer `pending` or `running`. Failed task statuses and `false`
+SQL result statuses are preserved; empty responses return an empty list.
+Set `poll_interval_seconds` to change the delay and `timeout_seconds` to change the
+default 300-second deadline, or use `timeout_seconds=None` to disable it.
+Invalid timing values raise `InvalidPostBody`; reaching the deadline raises
+`TimeoutError`. The deadline is checked between HTTP requests and does not
+interrupt an in-flight request.
 
 ### get_data_product_metrics_extraction_result_with_source
 
@@ -466,10 +479,10 @@ get_upstream_tables_from_bi_object(
 
 Resolve upstream tables for a BI dashboard or LookML model folder.
 
-### create_data_product_from_bi_source
+### create_data_product_from_bi_datasource
 
 ```
-create_data_product_from_bi_source(
+create_data_product_from_bi_datasource(
     self,
     datasource_id: int,
     create_product: bool = True
@@ -477,7 +490,13 @@ create_data_product_from_bi_source(
 ```
 
 Create a data product from a BI datasource, or return a preview spec when `create_product=False`.
-The result contains the API payload, including the YAML string for a specification preview.
+The result contains the API payload, including the original YAML string for a specification
+preview. Preview YAML is returned without modification, preserving extension fields and formatting.
+
+### create_data_product_from_bi_source
+
+Compatibility wrapper for `create_data_product_from_bi_datasource`. It accepts the same
+`datasource_id` and `create_product` arguments and returns the same `JobDetails` result.
 
 ## Examples
 

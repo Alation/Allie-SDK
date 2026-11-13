@@ -4,7 +4,6 @@ import logging
 from math import isfinite
 from time import monotonic, sleep
 from typing import NoReturn
-import yaml
 
 import requests
 
@@ -36,7 +35,6 @@ from ..models.alation_ai_data_product_model import (
 )
 from ..models.authentication_model import AuthHeaderType
 from ..models.job_model import JobDetails
-from ..models.data_product_model import DataProductSpec
 
 LOGGER = logging.getLogger("allie_sdk_logger")
 
@@ -281,15 +279,20 @@ class AlationAIDataProduct(RequestHandler):
     def initiate_revise_data_product_workflow(
         self,
         data_product_id: str,
-        revise_request: AlationAIReviseDataProductRequest = None,
+        revise_request: AlationAIReviseDataProductRequest,
     ) -> JobDetails:
         """Start a new "Suggest Fixes" workflow for a data product.
 
+        Prerequisites:
+        - The data product must have evaluations configured for this to work.
+        - Data Product Admin permissions on the data product required.
+
+        Note: The data product does not have to be listed on the marketplace.
+
         Args:
             data_product_id (str): Identifier of the data product to revise.
-            revise_request (AlationAIReviseDataProductRequest, optional): Additional
-                revise workflow options. If omitted, default request settings are
-                used.
+            revise_request (AlationAIReviseDataProductRequest): Additional
+                revise workflow options. `message` is required.
 
         Returns:
             JobDetails: Operation status with an AlationAIReviseDataProductResponse
@@ -566,39 +569,78 @@ class AlationAIDataProduct(RequestHandler):
         mapped_response = self._map_request_success_to_job_details(response_data=task)
         return JobDetails.from_api_response(mapped_response)
 
-    def get_data_product_metrics_extraction_result(self, task_id: str) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]:
-        """Retrieve the current state or final result of a metrics extraction task.
+    def get_data_product_metrics_extraction_result(
+        self,
+        task_id: str,
+        poll_interval_seconds: float = 3,
+        timeout_seconds: float | None = 300,
+    ) -> AlationAIAsyncTask | list[AlationAISqlMetricResult]:
+        """Poll a metrics extraction task until it is no longer pending or running.
 
         Args:
             task_id (str): Identifier of the metrics extraction task.
+            poll_interval_seconds (float): Seconds between polling attempts. Must
+                be finite and greater than or equal to zero. Defaults to 3.
+            timeout_seconds (float | None): Maximum polling time in seconds.
+                Defaults to 300. Must be finite and greater than zero, or None to
+                disable the timeout. Checked between HTTP requests; an in-flight
+                request is not interrupted.
 
         Returns:
-            AlationAIAsyncTask | list[AlationAISqlMetricResult]: The in-progress task
-            details when the job is still running, or the extracted metric results
-            when the job has completed. Returns an empty list when the API response is
-            empty.
+            AlationAIAsyncTask | list[AlationAISqlMetricResult]: Task details once
+            the status is no longer pending or running, or the extracted metric
+            results. Failed task statuses and false SQL result statuses are
+            preserved. Returns an empty list when the API response is empty.
 
         Raises:
-            InvalidPostBody: If the task ID is missing.
+            InvalidPostBody: If the task ID, poll interval, or timeout is invalid.
             requests.exceptions.HTTPError: If the API returns a non-success status
                 code.
+            TimeoutError: If the polling deadline is reached without a final result.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/get_metrics
         """
 
         self._validate_identifier(task_id, "task_id")
+        if not isfinite(poll_interval_seconds) or poll_interval_seconds < 0:
+            error_message = "'poll_interval_seconds' must be finite and greater than or equal to 0 for the Data Product request."
+            LOGGER.error(error_message)
+            raise InvalidPostBody(error_message)
+        if timeout_seconds is not None and (not isfinite(timeout_seconds) or timeout_seconds <= 0):
+            error_message = "'timeout_seconds' must be finite and greater than 0, or None, for the Data Product request."
+            LOGGER.error(error_message)
+            raise InvalidPostBody(error_message)
 
-        LOGGER.info("Fetching metric extraction task %s.", task_id)
-        response = self.get(
-            url=f"/ai/api/v1/data_product/get_metrics/{task_id}",
-            pagination=False,
-        )
+        deadline = monotonic() + timeout_seconds if timeout_seconds is not None else None
+        attempt = 1
+        while True:
+            if deadline is not None and monotonic() >= deadline:
+                error_message = f"Metric extraction task '{task_id}' did not complete within {timeout_seconds} seconds."
+                LOGGER.error(error_message)
+                raise TimeoutError(error_message)
 
-        if isinstance(response, dict):
-            return AlationAIAsyncTask.from_api_response(response)
-        if response:
-            return [AlationAISqlMetricResult.from_api_response(item) for item in response]
-        return []
+            LOGGER.info(f"Fetching metric extraction task {task_id} (attempt {attempt}).")
+            response = self.get(
+                url=f"/ai/api/v1/data_product/get_metrics/{task_id}",
+                pagination=False,
+            )
+
+            if isinstance(response, dict):
+                task = AlationAIAsyncTask.from_api_response(response)
+                task_status = task.status.lower() if isinstance(task.status, str) else task.status
+                if task_status not in ("pending", "running"):
+                    return task
+            elif response:
+                return [AlationAISqlMetricResult.from_api_response(item) for item in response]
+            else:
+                return []
+
+            sleep_seconds = poll_interval_seconds
+            if deadline is not None:
+                sleep_seconds = max(0, min(poll_interval_seconds, deadline - monotonic()))
+            LOGGER.info(f"Metric extraction task {task_id} is {task_status}. Polling again in {sleep_seconds} second(s).")
+            sleep(sleep_seconds)
+            attempt += 1
 
     def get_data_product_metrics_extraction_result_with_source(self, task_id: str) -> AlationAIAsyncTask | list[AlationAIMetricResultWithSource]:
         """Retrieve metrics extraction results including source metadata.
@@ -672,7 +714,7 @@ class AlationAIDataProduct(RequestHandler):
             return AlationAIGetUpstreamTablesFromBiObjectResponse.from_api_response(response)
         return AlationAIGetUpstreamTablesFromBiObjectResponse()
 
-    def create_data_product_from_bi_source(
+    def create_data_product_from_bi_datasource(
         self,
         datasource_id: int,
         create_product: bool = True,
@@ -681,13 +723,16 @@ class AlationAIDataProduct(RequestHandler):
         Supported: Power BI, Tableau, or Looker datasource.
 
         Args:
-            datasource_id (int): Identifier of the BI datasource to analyze.
+            datasource_id (int): Identifier of the BI datasource to analyze. Note: This is the specific BI datasource
+                object ID not the BI server object ID!
             create_product (bool): Whether to create the data product immediately. If
                 set to ``False``, the API returns a preview specification instead.
 
         Returns:
-            JobDetails: The status property conveys the job outcome. If create_product is set to True the generated
-            data product ID will be returned as part of JobDetails.result, otherwise, the Data Product definition.
+            JobDetails: Operation status with the generated data product ID in result
+                when create_product is True, or the original YAML specification
+                string when False. Preview YAML is preserved without modification,
+                including extension fields.
 
         Raises:
             InvalidPostBody: If the datasource ID is missing.
@@ -696,7 +741,6 @@ class AlationAIDataProduct(RequestHandler):
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/alation-ai-api/data-product/create_data_product_from_bi_datasource
         """
-
         if datasource_id is None:
             raise InvalidPostBody(
                 "'datasource_id' must be provided to create a data product from a BI datasource."
@@ -717,19 +761,9 @@ class AlationAIDataProduct(RequestHandler):
         )
 
         if response:
-
-            # if create_product is set to True the data product ID will be returned
-            if create_product:
-                dp = response
-            # otherwise the YAML strong for the generated data product
-            else:
-                # the response is a yaml string
-                response_yaml = yaml.safe_load(response)
-                # map to DataProductSpecDefinition
-                dp = DataProductSpec.from_api_response(response_yaml)
-
-
-            mapped_response = self._map_request_success_to_job_details(response_data=dp)
+            # Note: We don't map to the DataProductSpec data class here because the
+            # data product definition can contain custom properties (`x-`) that wouldn't be mapped.
+            mapped_response = self._map_request_success_to_job_details(response_data=response)
             return JobDetails.from_api_response(mapped_response)
 
         else:

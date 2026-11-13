@@ -11,6 +11,7 @@ from requests_mock import Mocker
 from allie_sdk.core.custom_exceptions import InvalidPostBody, UnsupportedPostBody
 from allie_sdk.methods.alation_ai_data_product import AlationAIDataProduct
 from allie_sdk.models.alation_ai_data_product_model import (
+    AlationAIAsyncTask,
     AlationAIDataProductTableColumnInfo,
     AlationAIDataProductTask,
     AlationAIDatasourceTables,
@@ -410,29 +411,53 @@ class TestAlationAIDataProduct:
         assert request.qs["dashboard_ids"] == ["1", "2"]
         assert request.qs["lookml_model_folder_ids"] == ["3"]
 
-    def test_get_data_product_metrics_extraction_result(self, requests_mock):
-        requests_mock.register_uri(
-            method="GET",
-            url="/ai/api/v1/data_product/get_metrics/task-3",
-            json=[
-                {
-                    "sql": "SELECT SUM(revenue) FROM sales.orders",
-                    "status": True,
-                    "metrics": [
-                        {
-                            "displayName": "Total Revenue",
-                            "description": "Total revenue across all orders",
-                            "expression": "SUM(orders.revenue)",
-                            "columns": ["orders.revenue"],
-                            "type": "numeric",
-                        }
-                    ],
-                }
-            ],
-            status_code=200,
+    @pytest.mark.parametrize("task_statuses", [[], ["pending", "pending", "running"], ["PENDING", "RUNNING"]])
+    @pytest.mark.parametrize("timeout_seconds", [300, None])
+    def test_get_data_product_metrics_extraction_result(
+        self,
+        requests_mock: Mocker,
+        task_statuses: list[str],
+        timeout_seconds: float | None,
+    ) -> None:
+        """Return mapped metrics after any pending and running task responses.
+
+        Args:
+            requests_mock (Mocker): Mock the sequence of API responses.
+            task_statuses (list[str]): In-progress statuses before the final result.
+            timeout_seconds (float | None): Polling timeout, or None to disable it.
+
+        Returns:
+            None: Assertions verify metrics, polling delays, and request count.
+        """
+        metric_response = [
+            {
+                "sql": "SELECT SUM(revenue) FROM sales.orders",
+                "status": True,
+                "metrics": [
+                    {
+                        "displayName": "Total Revenue",
+                        "description": "Total revenue across all orders",
+                        "expression": "SUM(orders.revenue)",
+                        "columns": ["orders.revenue"],
+                        "type": "numeric",
+                    }
+                ],
+            }
+        ]
+        requests_mock.get(
+            "/ai/api/v1/data_product/get_metrics/task-3",
+            response_list=[{"json": {"status": task_status}} for task_status in task_statuses]
+            + [{"json": metric_response}],
         )
 
-        result = self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result("task-3")
+        with (
+            patch("allie_sdk.methods.alation_ai_data_product.monotonic", return_value=100) as mocked_clock,
+            patch("allie_sdk.methods.alation_ai_data_product.sleep") as mocked_sleep,
+        ):
+            result = self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result(
+                "task-3",
+                timeout_seconds=timeout_seconds,
+            )
 
         assert result == [
             AlationAISqlMetricResult(
@@ -449,6 +474,144 @@ class TestAlationAIDataProduct:
                 ],
             )
         ]
+        assert requests_mock.call_count == len(task_statuses) + 1
+        assert mocked_sleep.call_count == len(task_statuses)
+        assert all(arguments.args == (3,) for arguments in mocked_sleep.call_args_list)
+        assert requests_mock.request_history[0].headers["Token"] == "test-token"
+        if timeout_seconds is None:
+            mocked_clock.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "response, expected_result",
+        [
+            ({"id": "task-3", "status": "completed"}, AlationAIAsyncTask(id="task-3", status="completed")),
+            ({"id": "task-3", "status": "failed"}, AlationAIAsyncTask(id="task-3", status="failed")),
+            ({"id": "task-3", "status": False}, AlationAIAsyncTask(id="task-3", status=False)),
+            ([], []),
+            (None, []),
+            (
+                [{"sql": "SELECT missing", "status": False, "error": "Invalid SQL", "metrics": []}],
+                [AlationAISqlMetricResult(sql="SELECT missing", status=False, error="Invalid SQL", metrics=[])],
+            ),
+        ],
+    )
+    def test_metrics_polling_returns_terminal_responses(
+        self,
+        requests_mock: Mocker,
+        response: dict[str, object] | list[object] | None,
+        expected_result: AlationAIAsyncTask | list[AlationAISqlMetricResult],
+    ) -> None:
+        """Stop polling and preserve terminal tasks, SQL errors, and empty results.
+
+        Args:
+            requests_mock (Mocker): Mock a pending task followed by a terminal response.
+            response (dict[str, object] | list[object] | None): Final API payload.
+            expected_result (AlationAIAsyncTask | list[AlationAISqlMetricResult]): Mapped result.
+
+        Returns:
+            None: Assertions verify the final result and that polling stops.
+        """
+        requests_mock.get(
+            "/ai/api/v1/data_product/get_metrics/task-3",
+            response_list=[{"json": {"status": "pending"}}, {"json": response}],
+        )
+
+        with patch("allie_sdk.methods.alation_ai_data_product.sleep") as mocked_sleep:
+            result = self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result(
+                "task-3",
+                poll_interval_seconds=0,
+            )
+
+        assert result == expected_result
+        assert requests_mock.call_count == 2
+        mocked_sleep.assert_called_once_with(0)
+
+    @pytest.mark.parametrize("task_status", ["pending", "running"])
+    def test_metrics_polling_times_out_and_caps_sleep(self, requests_mock: Mocker, task_status: str) -> None:
+        """Stop an unfinished extraction at the deadline and cap its polling delay.
+
+        Args:
+            requests_mock (Mocker): Mock an extraction that remains in progress.
+            task_status (str): In-progress status returned by the API.
+
+        Returns:
+            None: Assertions verify the timeout, delay, and absence of extra requests.
+        """
+        requests_mock.get("/ai/api/v1/data_product/get_metrics/task-3", json={"status": task_status})
+
+        with (
+            patch("allie_sdk.methods.alation_ai_data_product.monotonic", side_effect=[100, 100, 104, 105]),
+            patch("allie_sdk.methods.alation_ai_data_product.sleep") as mocked_sleep,
+        ):
+            with pytest.raises(TimeoutError, match=r"task-3.*5 seconds"):
+                self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result(
+                    "task-3",
+                    poll_interval_seconds=3,
+                    timeout_seconds=5,
+                )
+
+        mocked_sleep.assert_called_once_with(1)
+        assert requests_mock.call_count == 1
+
+    @pytest.mark.parametrize(
+        "parameter_name, invalid_value",
+        [
+            ("poll_interval_seconds", -1),
+            ("poll_interval_seconds", float("nan")),
+            ("poll_interval_seconds", float("inf")),
+            ("timeout_seconds", -1),
+            ("timeout_seconds", 0),
+            ("timeout_seconds", float("nan")),
+            ("timeout_seconds", float("inf")),
+        ],
+    )
+    def test_metrics_polling_rejects_invalid_timing(
+        self,
+        requests_mock: Mocker,
+        parameter_name: str,
+        invalid_value: float,
+    ) -> None:
+        """Reject invalid polling settings before sending any request.
+
+        Args:
+            requests_mock (Mocker): Record whether an HTTP request is attempted.
+            parameter_name (str): Polling option to validate.
+            invalid_value (float): Unsupported value for the option.
+
+        Returns:
+            None: Assertions verify a validation error without HTTP requests.
+        """
+        with pytest.raises(InvalidPostBody, match=parameter_name):
+            self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result(
+                "task-3",
+                **{parameter_name: invalid_value},
+            )
+
+        assert not requests_mock.called
+
+    @pytest.mark.parametrize("task_statuses", [[], ["pending", "running"]])
+    def test_metrics_polling_propagates_http_errors(self, requests_mock: Mocker, task_statuses: list[str]) -> None:
+        """Propagate HTTP errors from the first request or a later polling attempt.
+
+        Args:
+            requests_mock (Mocker): Mock in-progress responses followed by an HTTP error.
+            task_statuses (list[str]): In-progress statuses before the failed request.
+
+        Returns:
+            None: Assertions verify that the HTTP error stops polling.
+        """
+        requests_mock.get(
+            "/ai/api/v1/data_product/get_metrics/task-3",
+            response_list=[{"json": {"status": task_status}} for task_status in task_statuses]
+            + [{"status_code": 403, "json": {"detail": "Forbidden"}}],
+        )
+
+        with patch("allie_sdk.methods.alation_ai_data_product.sleep") as mocked_sleep:
+            with pytest.raises(requests.exceptions.HTTPError):
+                self.mock_alation_ai_data_product.get_data_product_metrics_extraction_result("task-3")
+
+        assert requests_mock.call_count == len(task_statuses) + 1
+        assert mocked_sleep.call_count == len(task_statuses)
 
     def test_get_data_product_metrics_extraction_result_with_source(self, requests_mock):
         requests_mock.register_uri(
@@ -547,23 +710,49 @@ class TestAlationAIDataProduct:
         assert request.qs["type"] == ["dashboard"]
         assert request.qs["id"] == ["99"]
 
-    def test_create_data_product_from_bi_source(self, requests_mock: Mocker) -> None:
-        """Return the BI specification preview inside successful job details.
+    @pytest.mark.parametrize("method_name", ["create_data_product_from_bi_datasource", "create_data_product_from_bi_source"])
+    @pytest.mark.parametrize("json_encoded", [False, True])
+    def test_create_data_product_from_bi_datasource(
+        self,
+        requests_mock: Mocker,
+        method_name: str,
+        json_encoded: bool,
+    ) -> None:
+        """Preserve preview YAML and extension fields through both public methods.
 
         Args:
             requests_mock (Mocker): Mock HTTP responses and record requests.
+            method_name (str): Current method name or its compatibility wrapper.
+            json_encoded (bool): Whether the server returns a JSON-encoded YAML string.
 
         Returns:
-            None: Assertions verify the nested YAML and request parameters.
+            None: Assertions verify unmodified YAML and the preview request parameters.
         """
+        specification_yaml = """# Generated BI specification
+schema: https://example.com/data-product-schema.json
+x-review-status: reviewed
+product:
+  productId: revenue-dashboard
+  version: "1.0"
+  contactEmail: owner@example.com
+  contactName: Owner
+  en:
+    name: Revenue Dashboard
+  x-business-owner: Finance
+  recordSets:
+    orders:
+      name: orders
+      x-custom-sql: SELECT * FROM sales.orders
+"""
+        response_arguments = {"json": specification_yaml} if json_encoded else {"text": specification_yaml}
         requests_mock.register_uri(
             method="POST",
             url="/ai/api/v1/data_product/create_from_bi_datasource",
-            text="version: 1\nname: Revenue Dashboard",
             status_code=200,
+            **response_arguments,
         )
 
-        result = self.mock_alation_ai_data_product.create_data_product_from_bi_source(
+        result = getattr(self.mock_alation_ai_data_product, method_name)(
             datasource_id=5,
             create_product=False,
         )
@@ -571,11 +760,41 @@ class TestAlationAIDataProduct:
         assert result == JobDetails(
             status="successful",
             msg="",
-            result="version: 1\nname: Revenue Dashboard",
+            result=specification_yaml,
         )
+        assert requests_mock.call_count == 1
         request = requests_mock.request_history[0]
         assert request.qs["datasource_id"] == ["5"]
         assert request.qs["create_product"] == ["false"]
+
+    @pytest.mark.parametrize("method_name", ["create_data_product_from_bi_datasource", "create_data_product_from_bi_source"])
+    def test_create_data_product_from_bi_datasource_returns_product_id(
+        self,
+        requests_mock: Mocker,
+        method_name: str,
+    ) -> None:
+        """Create a product by default through either public method name.
+
+        Args:
+            requests_mock (Mocker): Mock HTTP responses and record requests.
+            method_name (str): Current method name or its compatibility wrapper.
+
+        Returns:
+            None: Assertions verify the product ID and default creation parameters.
+        """
+        requests_mock.post(
+            "/ai/api/v1/data_product/create_from_bi_datasource",
+            json="revenue-dashboard",
+            status_code=200,
+        )
+
+        result = getattr(self.mock_alation_ai_data_product, method_name)(datasource_id=5)
+
+        assert result == JobDetails(status="successful", msg="", result="revenue-dashboard")
+        assert requests_mock.call_count == 1
+        request = requests_mock.request_history[0]
+        assert request.qs["datasource_id"] == ["5"]
+        assert request.qs["create_product"] == ["true"]
 
     @pytest.mark.parametrize("status_code", [200, 204])
     @pytest.mark.parametrize(
@@ -666,6 +885,11 @@ class TestAlationAIDataProduct:
             ),
             (
                 "create_data_product_from_bi_source",
+                (5,),
+                "/ai/api/v1/data_product/create_from_bi_datasource",
+            ),
+            (
+                "create_data_product_from_bi_datasource",
                 (5,),
                 "/ai/api/v1/data_product/create_from_bi_datasource",
             ),

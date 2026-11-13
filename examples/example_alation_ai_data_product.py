@@ -11,8 +11,8 @@ Prerequisites:
 - Your Alation credentials have access to the AI API data product endpoints.
 - Set DATA_PRODUCT_CREATION_TASK_ID to an existing asynchronous data product
   creation task ID to run the creation result polling example.
-- Relationship generation uses the BI datasource preview, or DATA_PRODUCT_SPEC_YAML
-  when the preview example is disabled.
+- Relationship generation uses the BI datasource preview. When that example is
+  disabled, set DATA_PRODUCT_SPEC to a YAML specification string.
 - BI metric and revision result examples use IDs returned by the corresponding
   start examples, or BI_METRICS_TASK_ID and DATA_PRODUCT_REVISION_RESULT_ID
   when those start examples are disabled.
@@ -26,16 +26,14 @@ polling waits for final YAML and raises TimeoutError after the configured timeou
 import configparser
 import logging
 import sys
-from dataclasses import asdict
-from yaml import safe_dump
 import allie_sdk as allie
 
 # ================================
 # Set Global Variables
 # ================================
 
-PUBLISHED_DATA_PRODUCT_ID = "customer-orders-redshift-provisioned"
-BI_DATASOURCE_ID = 1 # "ACME Bank Reporting"
+PUBLISHED_DATA_PRODUCT_ID = "ds-test"
+BI_DATASOURCE_ID = 56 # "FINAL_SALES_VIEW: /app/bi_datasource/56/ "
 BI_DASHBOARD_ID = 50 # "Advisor AUM Dashboard"
 LOOKML_MODEL_FOLDER_IDS: list[int] = []  # Optional additional BI assets to analyze.
 DATA_PRODUCT_CREATION_TASK_ID: str | None = None
@@ -43,7 +41,8 @@ DATA_PRODUCT_SPEC: str | None = None
 BI_METRICS_TASK_ID: str | None = None
 DATA_PRODUCT_REVISION_RESULT_ID: str | None = None
 SQL_STATEMENTS = [
-    "SELECT COUNT(*) AS cnt_customers FROM customersx",
+    # This can be any fake query - table names will not be validated
+    "SELECT COUNT(*) as cnt FROM SUPPLY_CHAIN.GLD_PRD_PER",
 ]
 
 # ================================
@@ -103,27 +102,37 @@ if example_switches.getboolean("RESOLVE_UPSTREAM_TABLES_FROM_BI_OBJECT"):
 # ================================
 
 if example_switches.getboolean("CREATE_OR_PREVIEW_DATA_PRODUCT_FROM_BI_DATASOURCE"):
-    bi_datasource_preview = alation.alation_ai_data_product.create_data_product_from_bi_source(
+    bi_datasource_preview = alation.alation_ai_data_product.create_data_product_from_bi_datasource(
         datasource_id=BI_DATASOURCE_ID,
         create_product=False,
     )
+    if bi_datasource_preview.status != "successful":
+        failure_details = bi_datasource_preview.msg or "No failure details were returned."
+        error_message = f"BI datasource preview failed for datasource {BI_DATASOURCE_ID}. {failure_details}"
+        logging.error(error_message)
+        raise RuntimeError(error_message)
+    if not isinstance(bi_datasource_preview.result, str) or not bi_datasource_preview.result.strip():
+        error_message = f"BI datasource preview for datasource {BI_DATASOURCE_ID} did not return a non-empty YAML specification string."
+        logging.error(error_message)
+        raise ValueError(error_message)
     DATA_PRODUCT_SPEC = bi_datasource_preview.result
-    logging.info(f"BI datasource preview:\n{bi_datasource_preview.result}")
+    logging.info(f"BI datasource preview:\n{DATA_PRODUCT_SPEC}")
 
 # ================================
 # GENERATE RELATIONSHIPS FROM THE YAML SPEC
 # ================================
 
 if example_switches.getboolean("GENERATE_RELATIONSHIPS"):
-    if not DATA_PRODUCT_SPEC:
-        error_message = "Enable CREATE_OR_PREVIEW_DATA_PRODUCT_FROM_BI_DATASOURCE"
+    if not isinstance(DATA_PRODUCT_SPEC, str) or not DATA_PRODUCT_SPEC.strip():
+        error_message = (
+            "Enable CREATE_OR_PREVIEW_DATA_PRODUCT_FROM_BI_DATASOURCE or set "
+            "DATA_PRODUCT_SPEC to a non-empty YAML specification string."
+        )
         logging.error(error_message)
         raise ValueError(error_message)
-    data_product_spec_dict = asdict(DATA_PRODUCT_SPEC)
-    data_product_spec_yaml = safe_dump(data_product_spec_dict)
     generated_relationships = alation.alation_ai_data_product.generate_relationships(
         allie.AlationAIGenerateRelationshipsRequest(
-            data_product_spec_yaml=data_product_spec_yaml,
+            data_product_spec_yaml=DATA_PRODUCT_SPEC,
         )
     )
     logging.info(f"Generated {len(generated_relationships.result.relationships)} relationship(s)")
@@ -181,10 +190,10 @@ if example_switches.getboolean("EXTRACT_METRICS_FROM_SAMPLE_QUERIES"):
 if example_switches.getboolean("EXTRACT_METRICS_FROM_DOWNSTREAM_BI_ASSETS"):
     bi_metrics_task = alation.alation_ai_data_product.extract_data_product_metrics_from_bi(
         data_product_id=PUBLISHED_DATA_PRODUCT_ID,
-        query_params=allie.AlationAIExtractMetricsFromBIParams(
-            dashboard_ids=[BI_DASHBOARD_ID],
-            lookml_model_folder_ids=LOOKML_MODEL_FOLDER_IDS,
-        ),
+        # query_params=allie.AlationAIExtractMetricsFromBIParams(
+        #     dashboard_ids=[BI_DASHBOARD_ID],
+        #     lookml_model_folder_ids=LOOKML_MODEL_FOLDER_IDS,
+        # ),
     )
     BI_METRICS_TASK_ID = bi_metrics_task.result.task_id
     logging.info(f"Started BI metric extraction task {bi_metrics_task.result.task_id}")

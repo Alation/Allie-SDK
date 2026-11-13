@@ -55,8 +55,7 @@ requires = ["uv_build>=0.9.10,<0.10.0"]
 build-backend = "uv_build"
 
 [tool.uv]
-# do not run implicit builds (e.g. when calling uv sync)
-package = false
+package = true
 
 [tool.uv.build-backend]
 module-name = "allie_sdk"

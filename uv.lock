@@ -9,7 +9,7 @@ resolution-markers = [
 [[package]]
 name = "allie-sdk"
 version = "2.2.3"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "python-dateutil" },
     { name = "python-json-logger" },
