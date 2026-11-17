@@ -3,6 +3,10 @@
 import inspect
 from dataclasses import dataclass, fields
 from datetime import datetime
+from typing import Any, TypeVar
+
+BaseClassType = TypeVar("BaseClassType", bound="BaseClass")
+
 
 # Base data class with method that we want to use across all other data classes
 @dataclass
@@ -14,7 +18,16 @@ class BaseClass:
     # this would result in an error.
     # By using this method you can handle this exception gracefully.
     @classmethod
-    def from_api_response(cls, body_params: dict):
+    def from_api_response(cls: type[BaseClassType], body_params: dict[str, Any]) -> BaseClassType:
+        """Create an instance from API response fields accepted by the class.
+
+        Args:
+            cls: Model class to instantiate.
+            body_params: API response fields, including any unrecognized fields.
+
+        Returns:
+            An instance of the calling class, ignoring unrecognized fields.
+        """
         return cls(**{
             k: v for k, v in body_params.items()
             if k in inspect.signature(cls).parameters

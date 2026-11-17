@@ -130,10 +130,10 @@ class RequestHandler(object):
     def get(
             self,
             url: str,
-            query_params: dict = None,
+            query_params: dict | None = None,
             pagination: bool = True,
             body: any = None,
-            headers: dict = None,
+            headers: dict | None = None,
     ) -> any:
         """API Get Request.
 
@@ -333,8 +333,14 @@ class RequestHandler(object):
 
         return response_data
 
-    def post(self, url: str, body: any, query_params: dict = None, headers: dict = None,
-             files: dict = None) -> dict | list:
+    def post(
+            self,
+            url: str,
+            body: any,
+            query_params: dict | None = None,
+            headers: dict | None = None,
+             files: dict | None = None
+    ) -> dict | list:
         """API Post Request.
 
         Args:

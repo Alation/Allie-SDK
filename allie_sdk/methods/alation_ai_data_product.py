@@ -208,7 +208,10 @@ class AlationAIDataProduct(RequestHandler):
                     raise ValueError(error_message)
 
                 LOGGER.info("Data product task %s completed and returned YAML.", task_id)
-                return job_result.data
+                data = job_result.data
+                if not isinstance(data, str):
+                    raise TypeError(f"Expected str, got {type(data).__name__}")
+                return data
 
             if task_status == "failed":
                 self._raise_failed_data_product_job_result(task_id, job_result)
@@ -272,8 +275,15 @@ class AlationAIDataProduct(RequestHandler):
             body=payload,
         )
 
-        relationships = AlationAIGenerateRelationshipsResponse.from_api_response(response) if response else AlationAIGenerateRelationshipsResponse()
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            relationships = (
+                AlationAIGenerateRelationshipsResponse.from_api_response(response)
+            )
+
         mapped_response = self._map_request_success_to_job_details(response_data=relationships)
+
         return JobDetails.from_api_response(mapped_response)
 
     def initiate_revise_data_product_workflow(
@@ -324,13 +334,16 @@ class AlationAIDataProduct(RequestHandler):
             body=payload,
         )
 
-        revise_result = AlationAIReviseDataProductResponse.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            revise_result = AlationAIReviseDataProductResponse.from_api_response(response)
         mapped_response = self._map_request_success_to_job_details(response_data=revise_result)
         return JobDetails.from_api_response(mapped_response)
 
     def get_data_product_revision_jobs(
         self,
-        query_params: AlationAIReviseDataProductJobsParams = None,
+        query_params: AlationAIReviseDataProductJobsParams | None = None,
     ) -> AlationAIReviseDataProductResultsPage:
         """Retrieve revise data product jobs.
 
@@ -489,7 +502,10 @@ class AlationAIDataProduct(RequestHandler):
             body=sql_statements,
         )
 
-        task = AlationAIDataProductTask.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            task = AlationAIDataProductTask.from_api_response(response)
         mapped_response = self._map_request_success_to_job_details(response_data=task)
         return JobDetails.from_api_response(mapped_response)
 
@@ -527,14 +543,18 @@ class AlationAIDataProduct(RequestHandler):
             body=None,
         )
 
-        task = AlationAIDataProductTask.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            task = AlationAIDataProductTask.from_api_response(response)
+
         mapped_response = self._map_request_success_to_job_details(response_data=task)
         return JobDetails.from_api_response(mapped_response)
 
     def extract_data_product_metrics_from_bi(
         self,
         data_product_id: str,
-        query_params: AlationAIExtractMetricsFromBIParams = None,
+        query_params: AlationAIExtractMetricsFromBIParams | None = None,
     ) -> JobDetails:
         """Start extracting metrics from downstream BI assets.
 
@@ -567,7 +587,10 @@ class AlationAIDataProduct(RequestHandler):
             query_params=params,
         )
 
-        task = AlationAIDataProductTask.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            task = AlationAIDataProductTask.from_api_response(response)
         mapped_response = self._map_request_success_to_job_details(response_data=task)
         return JobDetails.from_api_response(mapped_response)
 
