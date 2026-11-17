@@ -93,20 +93,71 @@ Use `DataMarketplaceSpec` when creating or updating a marketplace.
 get_data_products(query_params: DataProductParams = None) -> list[DataProduct]
 create_data_product(data_product_spec: DataProductSpec | dict | str) -> DataProduct
 update_data_product(data_product_spec: DataProductSpec | dict | str) -> DataProduct
-get_data_product(product_id: str) -> DataProduct
+get_data_product(
+    data_product_id: str,
+    output_format: Literal["dataproduct", "yaml", "json"] = "dataproduct",
+) -> DataProduct | str | dict[str, Any]
 delete_data_product(product_id: str) -> JobDetails
+```
+
+`get_data_product` returns a `DataProduct` by default. Set `output_format="yaml"`
+to return its specification as a string. The SDK preserves the API's `spec_yaml`
+text, including comments and formatting. If that field is absent or blank, it
+converts `spec_json` to YAML, preserving extension fields. Set `output_format="json"`
+to return the API's `spec_json` as a dictionary, including custom `x-` properties
+and other extension fields. JSON output requires a non-empty `spec_json` dictionary.
+A missing specification or an unsupported output format raises `ValueError`.
+
+```python
+data_product = alation.data_product.get_data_product(
+    data_product_id="finance:last_quarter_sales",
+)
+data_product_yaml = alation.data_product.get_data_product(
+    data_product_id="finance:last_quarter_sales",
+    output_format="yaml",
+)
+print(data_product_yaml)
+data_product_json = alation.data_product.get_data_product(
+    data_product_id="finance:last_quarter_sales",
+    output_format="json",
+)
+print(data_product_json["product"]["productId"])
 ```
 
 ### Versions
 
 ```python
-get_data_product_version(product_id: str, version_id: str) -> DataProduct
+get_data_product_version(
+    product_id: str,
+    version_id: str,
+    output_format: Literal["dataproduct", "yaml", "json"] = "dataproduct",
+) -> DataProduct | str | dict[str, Any]
 update_data_product_version_status(
     product_id: str,
     version_id: str,
     data_product_version: DataProductVersionStatusUpdate,
 ) -> JobDetails
 delete_data_product_version(product_id: str, version_id: str) -> JobDetails
+```
+
+`get_data_product_version` supports the same output formats as `get_data_product`.
+It returns a `DataProduct` by default, a specification string with
+`output_format="yaml"`, or the raw `spec_json` dictionary with `output_format="json"`.
+YAML output preserves the API text or falls back to converting `spec_json`.
+Both specification formats preserve custom `x-` properties and other extension fields.
+Missing specifications and unsupported output formats raise `ValueError`.
+
+```python
+version_yaml = alation.data_product.get_data_product_version(
+    product_id="finance:last_quarter_sales",
+    version_id="1.0.0",
+    output_format="yaml",
+)
+version_json = alation.data_product.get_data_product_version(
+    product_id="finance:last_quarter_sales",
+    version_id="1.0.0",
+    output_format="json",
+)
 ```
 
 `update_data_product_version_status` returns `JobDetails` with the updated

@@ -130,6 +130,7 @@ dmypy.json
 
 # Custom
 .idea/*
+PyCharmHome/
 *.DS_STORE
 
 # Claude Code

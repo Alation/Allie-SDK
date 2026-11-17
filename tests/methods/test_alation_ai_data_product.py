@@ -710,19 +710,16 @@ class TestAlationAIDataProduct:
         assert request.qs["type"] == ["dashboard"]
         assert request.qs["id"] == ["99"]
 
-    @pytest.mark.parametrize("method_name", ["create_data_product_from_bi_datasource", "create_data_product_from_bi_source"])
     @pytest.mark.parametrize("json_encoded", [False, True])
     def test_create_data_product_from_bi_datasource(
         self,
         requests_mock: Mocker,
-        method_name: str,
         json_encoded: bool,
     ) -> None:
-        """Preserve preview YAML and extension fields through both public methods.
+        """Preserve preview YAML and extension fields from a BI datasource.
 
         Args:
             requests_mock (Mocker): Mock HTTP responses and record requests.
-            method_name (str): Current method name or its compatibility wrapper.
             json_encoded (bool): Whether the server returns a JSON-encoded YAML string.
 
         Returns:
@@ -752,7 +749,7 @@ product:
             **response_arguments,
         )
 
-        result = getattr(self.mock_alation_ai_data_product, method_name)(
+        result = self.mock_alation_ai_data_product.create_data_product_from_bi_datasource(
             datasource_id=5,
             create_product=False,
         )
@@ -767,17 +764,14 @@ product:
         assert request.qs["datasource_id"] == ["5"]
         assert request.qs["create_product"] == ["false"]
 
-    @pytest.mark.parametrize("method_name", ["create_data_product_from_bi_datasource", "create_data_product_from_bi_source"])
     def test_create_data_product_from_bi_datasource_returns_product_id(
         self,
         requests_mock: Mocker,
-        method_name: str,
     ) -> None:
-        """Create a product by default through either public method name.
+        """Create a product from a BI datasource by default.
 
         Args:
             requests_mock (Mocker): Mock HTTP responses and record requests.
-            method_name (str): Current method name or its compatibility wrapper.
 
         Returns:
             None: Assertions verify the product ID and default creation parameters.
@@ -788,7 +782,7 @@ product:
             status_code=200,
         )
 
-        result = getattr(self.mock_alation_ai_data_product, method_name)(datasource_id=5)
+        result = self.mock_alation_ai_data_product.create_data_product_from_bi_datasource(datasource_id=5)
 
         assert result == JobDetails(status="successful", msg="", result="revenue-dashboard")
         assert requests_mock.call_count == 1
@@ -860,7 +854,7 @@ product:
             ),
             (
                 "initiate_revise_data_product_workflow",
-                ("dp-1",),
+                ("dp-1", AlationAIReviseDataProductRequest(message="Improve the metric descriptions.")),
                 "/ai/api/v1/data_product/dp-1/revise_data_product",
             ),
             (
@@ -884,8 +878,8 @@ product:
                 "/ai/api/v1/data_product/dp-1/extract_metrics_from_bi",
             ),
             (
-                "create_data_product_from_bi_source",
-                (5,),
+                "create_data_product_from_bi_datasource",
+                (5, False),
                 "/ai/api/v1/data_product/create_from_bi_datasource",
             ),
             (
@@ -961,7 +955,7 @@ product:
         "method_name, remaining_arguments",
         [
             ("get_data_product_creation_result", ()),
-            ("initiate_revise_data_product_workflow", ()),
+            ("initiate_revise_data_product_workflow", (AlationAIReviseDataProductRequest(message="Improve the metric descriptions."),)),
             ("get_data_product_revision_result", ()),
             ("validate_sql", (["SELECT 1"],)),
             ("extract_metrics_from_sql_statements", (["SELECT 1"],)),

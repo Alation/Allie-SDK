@@ -1,9 +1,10 @@
 """Alation Data Products API methods."""
 import json
 import logging
-from typing import Any
+from typing import Any, Literal, overload
 
 import requests
+import yaml
 
 from ..core.custom_exceptions import (
     InvalidPostBody,
@@ -69,6 +70,70 @@ class AlationDataProduct(RequestHandler):
         """
         if value is None or value == "":
             raise InvalidPostBody(f"'{field_name}' must be provided for the Data Products request.")
+
+    @staticmethod
+    def _validate_output_format(output_format: Literal["dataproduct", "yaml", "json"]) -> None:
+        """Validate the output format before retrieving a data product.
+
+        Args:
+            output_format (Literal["dataproduct", "yaml", "json"]): Requested output format.
+
+        Returns:
+            None: Returns without a value when the output format is supported.
+
+        Raises:
+            ValueError: If the output format is unsupported.
+        """
+        if output_format not in ("dataproduct", "yaml", "json"):
+            message = "'output_format' must be 'dataproduct', 'yaml', or 'json'."
+            LOGGER.error(message)
+            raise ValueError(message)
+
+    @staticmethod
+    def _format_data_product_response(
+        response: dict[str, Any],
+        data_product_id: str,
+        output_format: Literal["dataproduct", "yaml", "json"],
+    ) -> DataProduct | str | dict[str, Any]:
+        """Format a retrieved data product or version using its raw specification.
+
+        Args:
+            response (dict[str, Any]): Response body returned by the Data Products API.
+            data_product_id (str): Product identifier to include in logs and errors.
+            output_format (Literal["dataproduct", "yaml", "json"]): Validated output format.
+
+        Returns:
+            DataProduct | str | dict[str, Any]: Product model, unchanged YAML text,
+            YAML converted from JSON, or the unchanged JSON specification dictionary.
+
+        Raises:
+            ValueError: If the requested specification is unavailable or empty.
+        """
+        if output_format == "dataproduct":
+            return DataProduct.from_api_response(response)
+
+        if output_format == "json":
+            specification_json = response.get("spec_json") if isinstance(response, dict) else None
+            if isinstance(specification_json, dict) and specification_json:
+                return specification_json
+
+            message = f"Data product '{data_product_id}' did not include a non-empty 'spec_json' specification."
+            LOGGER.error(message)
+            raise ValueError(message)
+
+        if isinstance(response, dict):
+            specification_yaml = response.get("spec_yaml")
+            if isinstance(specification_yaml, str) and specification_yaml.strip():
+                return specification_yaml
+
+            specification_json = response.get("spec_json")
+            if isinstance(specification_json, dict) and specification_json:
+                LOGGER.debug(f"Converting JSON specification for data product '{data_product_id}' to YAML.")
+                return yaml.safe_dump(specification_json, sort_keys=False, allow_unicode=True)
+
+        message = f"Data product '{data_product_id}' did not include a non-empty 'spec_yaml' or 'spec_json' specification."
+        LOGGER.error(message)
+        raise ValueError(message)
 
     @staticmethod
     def _prepare_spec_payload(
@@ -278,24 +343,78 @@ class AlationDataProduct(RequestHandler):
         else:
             return None
 
-    def get_data_product(self, data_product_id: str) -> DataProduct:
+    @overload
+    def get_data_product(self, data_product_id: str, output_format: Literal["dataproduct"] = "dataproduct") -> DataProduct:
+        """Retrieve a data product as a model.
+
+        Args:
+            data_product_id (str): Non-empty identifier of the product to retrieve.
+            output_format (Literal["dataproduct"]): Model output, the default.
+
+        Returns:
+            DataProduct: Product details returned by the API.
+        """
+
+    @overload
+    def get_data_product(self, data_product_id: str, output_format: Literal["yaml"]) -> str:
+        """Retrieve a data product specification as YAML.
+
+        Args:
+            data_product_id (str): Non-empty identifier of the product to retrieve.
+            output_format (Literal["yaml"]): YAML specification output.
+
+        Returns:
+            str: Product specification as YAML.
+        """
+
+    @overload
+    def get_data_product(self, data_product_id: str, output_format: Literal["json"]) -> dict[str, Any]:
+        """Retrieve a data product specification as a JSON dictionary.
+
+        Args:
+            data_product_id (str): Non-empty identifier of the product to retrieve.
+            output_format (Literal["json"]): JSON specification output.
+
+        Returns:
+            dict[str, Any]: Original JSON specification, including extension fields.
+        """
+
+    def get_data_product(
+        self,
+        data_product_id: str,
+        output_format: Literal["dataproduct", "yaml", "json"] = "dataproduct",
+    ) -> DataProduct | str | dict[str, Any]:
         """Retrieve a data product by its product identifier.
 
         Args:
             data_product_id (str): Non-empty identifier of the product to retrieve.
+            output_format (Literal["dataproduct", "yaml", "json"], optional): Return
+                a DataProduct model (the default), its specification as YAML, or
+                its JSON specification as a dictionary. Use YAML or JSON output
+                when your data product contains custom x-properties.
 
         Returns:
-            DataProduct: Product details, including identifiers, status, and any
-            specifications or marketplace associations supplied by the API.
+            DataProduct | str | dict[str, Any]: Product details by default. With
+            "yaml", returns the API's non-empty spec_yaml unchanged, or serializes
+            spec_json to YAML when spec_yaml is unavailable. With "json", returns
+            the API's non-empty spec_json dictionary unchanged. Extension fields
+            are preserved in both YAML and JSON output.
+
+        Raises:
+            InvalidPostBody: If the product identifier is missing.
+            ValueError: If output_format is unsupported, YAML is requested with
+                no non-empty YAML or JSON specification, or JSON is requested with
+                no non-empty spec_json dictionary.
         """
         self._validate_identifier(data_product_id, "product_id")
+        self._validate_output_format(output_format)
 
-        LOGGER.info("Fetching data product '%s'.", data_product_id)
+        LOGGER.info(f"Fetching data product '{data_product_id}' as {output_format}.")
         response = self.get(
             url=f"/dps/integration/data-products/v1/data-product/{data_product_id}/",
             pagination=False,
         )
-        return DataProduct.from_api_response(response)
+        return self._format_data_product_response(response, data_product_id, output_format)
 
     def delete_data_product(self, product_id: str) -> JobDetails:
         """Delete a data product by its product identifier.
@@ -316,28 +435,86 @@ class AlationDataProduct(RequestHandler):
         )
         return JobDetails.from_api_response(response)
 
-    def get_data_product_version(self, product_id: str, version_id: str) -> DataProduct:
+    @overload
+    def get_data_product_version(self, product_id: str, version_id: str, output_format: Literal["dataproduct"] = "dataproduct") -> DataProduct:
+        """Retrieve a data product version as a model.
+
+        Args:
+            product_id (str): Non-empty identifier of the data product.
+            version_id (str): Non-empty identifier of the version to retrieve.
+            output_format (Literal["dataproduct"]): Model output, the default.
+
+        Returns:
+            DataProduct: Product details for the requested version.
+        """
+
+    @overload
+    def get_data_product_version(self, product_id: str, version_id: str, output_format: Literal["yaml"]) -> str:
+        """Retrieve a data product version's specification as YAML.
+
+        Args:
+            product_id (str): Non-empty identifier of the data product.
+            version_id (str): Non-empty identifier of the version to retrieve.
+            output_format (Literal["yaml"]): YAML specification output.
+
+        Returns:
+            str: Specification of the requested version as YAML.
+        """
+
+    @overload
+    def get_data_product_version(self, product_id: str, version_id: str, output_format: Literal["json"]) -> dict[str, Any]:
+        """Retrieve a data product version's specification as a JSON dictionary.
+
+        Args:
+            product_id (str): Non-empty identifier of the data product.
+            version_id (str): Non-empty identifier of the version to retrieve.
+            output_format (Literal["json"]): JSON specification output.
+
+        Returns:
+            dict[str, Any]: Original JSON specification, including extension fields.
+        """
+
+    def get_data_product_version(
+        self,
+        product_id: str,
+        version_id: str,
+        output_format: Literal["dataproduct", "yaml", "json"] = "dataproduct",
+    ) -> DataProduct | str | dict[str, Any]:
         """Retrieve the details and specification of a particular product version.
 
         Args:
             product_id (str): Non-empty identifier of the data product.
             version_id (str): Non-empty identifier of the version to retrieve.
+            output_format (Literal["dataproduct", "yaml", "json"], optional): Return
+                a DataProduct model (the default), its specification as YAML, or
+                its JSON specification as a dictionary. Use YAML or JSON output
+                when your data product contains custom x-properties.
 
         Returns:
-            DataProduct: Product details for the requested version, including its
-            status and any specification supplied by the API.
+            DataProduct | str | dict[str, Any]: Product details for the requested
+            version by default. With "yaml", returns the API's non-empty spec_yaml
+            unchanged, or serializes spec_json to YAML when spec_yaml is unavailable.
+            With "json", returns the API's non-empty spec_json dictionary unchanged.
+            Extension fields are preserved in both YAML and JSON output.
+
+        Raises:
+            InvalidPostBody: If the product or version identifier is missing.
+            ValueError: If output_format is unsupported, YAML is requested with
+                no non-empty YAML or JSON specification, or JSON is requested with
+                no non-empty spec_json dictionary.
 
         Official documentation: https://documentation.alation.com/api-reference/alation-cloud-service-latest/data-products-api/data-products/get_data_product_version
         """
         self._validate_identifier(product_id, "product_id")
         self._validate_identifier(version_id, "version_id")
+        self._validate_output_format(output_format)
 
-        LOGGER.info("Fetching data product '%s' version '%s'.", product_id, version_id)
+        LOGGER.info(f"Fetching data product '{product_id}' version '{version_id}' as {output_format}.")
         response = self.get(
             url=f"/dps/integration/data-products/v1/data-product/{product_id}/version/{version_id}/",
             pagination=False,
         )
-        return DataProduct.from_api_response(response)
+        return self._format_data_product_response(response, product_id, output_format)
 
     def update_data_product_version_status(
         self,

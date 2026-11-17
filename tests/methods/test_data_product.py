@@ -1,12 +1,15 @@
 """Tests for the Data Products API methods."""
 
 import json
+from typing import Literal
 
 import pytest
 import requests
+import yaml
 from requests_mock import Mocker
 
 import allie_sdk as allie
+from allie_sdk.core.custom_exceptions import InvalidPostBody
 from allie_sdk.methods.data_product import AlationDataProduct
 from allie_sdk.models.data_product_model import (
     DataMarketplace,
@@ -91,7 +94,15 @@ class TestDataProductMethods:
             host="https://test.com",
         )
 
-    def test_get_data_products(self, requests_mock):
+    def test_get_data_products(self, requests_mock: Mocker) -> None:
+        """List products using the default Token header and requested filters.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify product details, authentication, and query parameters.
+        """
         requests_mock.register_uri(
             method="GET",
             url="/dps/integration/data-products/v1/data-product/",
@@ -121,27 +132,401 @@ class TestDataProductMethods:
 
         assert result[0].product_id == "finance:last_quarter_sales"
         request = requests_mock.request_history[0]
-        assert request.headers["Authorization"] == "Bearer test-token"
+        assert request.headers["Token"] == "test-token"
+        assert "Authorization" not in request.headers
         assert request.qs["limit"] == ["50"]
         assert request.qs["skip"] == ["5"]
         assert request.qs["product_ids"] == ["finance:last_quarter_sales"]
         assert request.qs["group_by_product"][0].lower() == "true"
 
-    def test_create_data_product_from_model(self, requests_mock):
-        requests_mock.register_uri(
-            method="POST",
-            url="/dps/integration/data-products/v1/data-product/",
+    @pytest.mark.parametrize("explicit_format", [False, True])
+    def test_get_data_product_returns_model(self, requests_mock: Mocker, explicit_format: bool) -> None:
+        """Keep the default and explicit model output compatible with existing callers.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            explicit_format (bool): Whether to explicitly request model output.
+
+        Returns:
+            None: Assertions verify typed product details and an unchanged request.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
             json={
                 "product_id": "finance:last_quarter_sales",
                 "version_id": "1.0.0",
                 "status": "draft",
+                "spec_json": build_data_product_spec().generate_api_payload(),
             },
+        )
+
+        if explicit_format:
+            result = self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format="dataproduct")
+        else:
+            result = self.mock_data_product.get_data_product("finance:last_quarter_sales")
+
+        assert isinstance(result, DataProduct)
+        assert result.product_id == "finance:last_quarter_sales"
+        assert result.version_id == "1.0.0"
+        assert result.status == "draft"
+        assert isinstance(result.spec_json, DataProductSpec)
+        assert result.spec_json.product.en.name == "Last Quarter Sales"
+        assert requests_mock.call_count == 1
+        assert requests_mock.last_request.qs == {}
+
+    def test_get_data_product_preserves_yaml(self, requests_mock: Mocker) -> None:
+        """Return the original YAML specification without remapping its content.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify YAML comments, formatting, and extensions survive.
+        """
+        specification_yaml = """# Sales specification
+product:
+  productId: 'finance:last_quarter_sales'
+  version: "1.0.0"
+  x-custom:
+    label: "Ventes réalisées"
+"""
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
+            json={
+                "product_id": "finance:last_quarter_sales",
+                "spec_json": build_data_product_spec().generate_api_payload(),
+                "spec_yaml": specification_yaml,
+            },
+        )
+
+        result = self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format="yaml")
+
+        assert result == specification_yaml
+        assert requests_mock.call_count == 1
+        assert requests_mock.last_request.qs == {}
+
+    @pytest.mark.parametrize("specification_yaml", [None, "", " \n"])
+    def test_get_data_product_converts_json_to_yaml(self, requests_mock: Mocker, specification_yaml: str | None) -> None:
+        """Serialize the raw JSON specification when the API supplies no usable YAML.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            specification_yaml (str | None): Empty YAML field returned by the API.
+
+        Returns:
+            None: Assertions verify specification values and extension fields survive.
+        """
+        specification_json = build_data_product_spec().generate_api_payload()
+        specification_json["x-custom"] = {"enabled": True, "values": [None, 42, "001"]}
+        specification_json["product"]["x-description"] = "Ventes réalisées"
+        response_body = {"product_id": "finance:last_quarter_sales", "spec_json": specification_json}
+        if specification_yaml is not None:
+            response_body["spec_yaml"] = specification_yaml
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
+            json=response_body,
+        )
+
+        result = self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format="yaml")
+
+        assert isinstance(result, str)
+        assert yaml.safe_load(result) == specification_json
+        assert "Ventes réalisées" in result
+
+    @pytest.mark.parametrize("include_yaml", [False, True])
+    def test_get_data_product_preserves_json(self, requests_mock: Mocker, include_yaml: bool) -> None:
+        """Return the raw JSON specification with all custom fields and values.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            include_yaml (bool): Whether the API also returns a YAML specification.
+
+        Returns:
+            None: Assertions verify JSON output preserves extensions and value types.
+        """
+        specification_json = build_data_product_spec().generate_api_payload()
+        specification_json["x-custom"] = {"enabled": True, "values": [None, 42, "001"]}
+        specification_json["product"]["x-description"] = "Ventes réalisées"
+        response_body = {"product_id": "finance:last_quarter_sales", "spec_json": specification_json}
+        if include_yaml:
+            response_body["spec_yaml"] = "product:\n  productId: different-product\n"
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
+            json=response_body,
+        )
+
+        result = self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format="json")
+
+        assert isinstance(result, dict)
+        assert result == specification_json
+        assert json.loads(json.dumps(result)) == specification_json
+        assert requests_mock.call_count == 1
+        assert requests_mock.last_request.qs == {}
+
+    @pytest.mark.parametrize(
+        "response_body",
+        [{}, {"spec_json": None}, {"spec_json": {}}, {"spec_json": []}, {"spec_yaml": "product: {}\n"}, []],
+    )
+    def test_get_data_product_json_requires_specification(self, requests_mock: Mocker, response_body: dict[str, object] | list[object]) -> None:
+        """Reject JSON output when the API returns no non-empty JSON specification.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            response_body (dict[str, object] | list[object]): Response lacking a JSON specification.
+
+        Returns:
+            None: An assertion verifies a clear missing specification error.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
+            json=response_body,
+        )
+
+        with pytest.raises(ValueError, match="did not include a non-empty 'spec_json'"):
+            self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format="json")
+
+    @pytest.mark.parametrize("output_format", [None, "xml", ""])
+    def test_get_data_product_rejects_invalid_output_format(self, requests_mock: Mocker, output_format: str | None) -> None:
+        """Reject unsupported output formats before making an HTTP request.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            output_format (str | None): Unsupported output format to reject.
+
+        Returns:
+            None: Assertions verify a clear error and no network request.
+        """
+        with pytest.raises(ValueError, match="'output_format' must be 'dataproduct', 'yaml', or 'json'"):
+            self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format=output_format)
+
+        assert not requests_mock.called
+
+    @pytest.mark.parametrize(
+        "response_body",
+        [{}, {"spec_yaml": None}, {"spec_yaml": " \n", "spec_json": {}}, {"spec_yaml": 42, "spec_json": []}, []],
+    )
+    def test_get_data_product_yaml_requires_specification(self, requests_mock: Mocker, response_body: dict[str, object] | list[object]) -> None:
+        """Raise when YAML output has no valid source specification.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            response_body (dict[str, object] | list[object]): Response lacking a usable specification.
+
+        Returns:
+            None: An assertion verifies an explicit missing specification error.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
+            json=response_body,
+        )
+
+        with pytest.raises(ValueError, match="did not include a non-empty 'spec_yaml' or 'spec_json'"):
+            self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format="yaml")
+
+    @pytest.mark.parametrize("output_format", ["dataproduct", "yaml", "json"])
+    def test_get_data_product_propagates_http_errors(self, requests_mock: Mocker, output_format: str) -> None:
+        """Preserve HTTP failures for model, YAML, and JSON output.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            output_format (str): Output format requested for the missing product.
+
+        Returns:
+            None: Assertions verify the API error propagates with its status code.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/",
+            json={"message": "Product not found."},
+            status_code=404,
+        )
+
+        with pytest.raises(requests.HTTPError) as error:
+            self.mock_data_product.get_data_product("finance:last_quarter_sales", output_format=output_format)
+
+        assert error.value.response.status_code == 404
+
+    @pytest.mark.parametrize("output_format", [None, "dataproduct", "yaml", "json"])
+    def test_get_data_product_version_output_formats(
+        self, requests_mock: Mocker, output_format: Literal["dataproduct", "yaml", "json"] | None
+    ) -> None:
+        """Return the requested version in each format while preserving raw specifications.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            output_format (Literal["dataproduct", "yaml", "json"] | None): Requested format,
+                or None to exercise the default call without an output argument.
+
+        Returns:
+            None: Assertions verify version selection, model details, and raw specifications.
+        """
+        specification_json = build_data_product_spec().generate_api_payload()
+        specification_json["product"]["version"] = "2.0.0"
+        specification_json["product"]["x-description"] = "Ventes réalisées"
+        specification_json["x-custom"] = {"enabled": True, "values": [None, 42, "001"]}
+        specification_yaml = "# Version specification\nproduct:\n  version: '2.0.0'\n  x-custom: true\n"
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/version/2.0.0/",
+            json={
+                "product_id": "finance:last_quarter_sales",
+                "version_id": "2.0.0",
+                "status": "ready",
+                "spec_json": specification_json,
+                "spec_yaml": specification_yaml,
+            },
+        )
+
+        result: DataProduct | str | dict[str, object]
+        if output_format is None:
+            result = self.mock_data_product.get_data_product_version("finance:last_quarter_sales", "2.0.0")
+        else:
+            result = self.mock_data_product.get_data_product_version("finance:last_quarter_sales", "2.0.0", output_format=output_format)
+
+        if output_format == "yaml":
+            assert result == specification_yaml
+        elif output_format == "json":
+            assert isinstance(result, dict)
+            assert result == specification_json
+        else:
+            assert isinstance(result, DataProduct)
+            assert result.product_id == "finance:last_quarter_sales"
+            assert result.version_id == "2.0.0"
+            assert result.status == "ready"
+            assert isinstance(result.spec_json, DataProductSpec)
+            assert result.spec_json.product.version == "2.0.0"
+        assert requests_mock.call_count == 1
+        assert requests_mock.last_request.qs == {}
+
+    @pytest.mark.parametrize("specification_yaml", [None, "", " \n"])
+    def test_get_data_product_version_converts_json_to_yaml(self, requests_mock: Mocker, specification_yaml: str | None) -> None:
+        """Convert the requested version's raw JSON specification when YAML is absent.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            specification_yaml (str | None): Missing or blank YAML returned by the API.
+
+        Returns:
+            None: Assertions verify JSON values and extension fields survive conversion.
+        """
+        specification_json = build_data_product_spec().generate_api_payload()
+        specification_json["product"]["x-description"] = "Ventes réalisées"
+        specification_json["x-custom"] = {"enabled": True, "values": [None, 42, "001"]}
+        response_body: dict[str, object] = {"spec_json": specification_json}
+        if specification_yaml is not None:
+            response_body["spec_yaml"] = specification_yaml
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/version/1.0.0/",
+            json=response_body,
+        )
+
+        result = self.mock_data_product.get_data_product_version("finance:last_quarter_sales", "1.0.0", output_format="yaml")
+
+        assert yaml.safe_load(result) == specification_json
+        assert "Ventes réalisées" in result
+
+    @pytest.mark.parametrize("output_format", [None, "xml", ""])
+    def test_get_data_product_version_rejects_invalid_output_format(self, requests_mock: Mocker, output_format: str | None) -> None:
+        """Reject unsupported version output formats before requesting the product.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            output_format (str | None): Unsupported output format to reject.
+
+        Returns:
+            None: Assertions verify an explicit error and no network request.
+        """
+        with pytest.raises(ValueError, match="'output_format' must be 'dataproduct', 'yaml', or 'json'"):
+            self.mock_data_product.get_data_product_version("finance:last_quarter_sales", "1.0.0", output_format=output_format)
+
+        assert not requests_mock.called
+
+    @pytest.mark.parametrize("output_format", ["yaml", "json"])
+    def test_get_data_product_version_requires_specification(self, requests_mock: Mocker, output_format: Literal["yaml", "json"]) -> None:
+        """Raise when a version response lacks the requested specification.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            output_format (Literal["yaml", "json"]): Specification format to request.
+
+        Returns:
+            None: An assertion verifies a clear missing specification error.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/version/1.0.0/",
+            json={"product_id": "finance:last_quarter_sales", "version_id": "1.0.0"},
+        )
+
+        with pytest.raises(ValueError, match="did not include a non-empty"):
+            self.mock_data_product.get_data_product_version("finance:last_quarter_sales", "1.0.0", output_format=output_format)
+
+    @pytest.mark.parametrize("output_format", ["dataproduct", "yaml", "json"])
+    def test_get_data_product_version_propagates_http_errors(self, requests_mock: Mocker, output_format: Literal["dataproduct", "yaml", "json"]) -> None:
+        """Preserve HTTP failures for all version output formats.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            output_format (Literal["dataproduct", "yaml", "json"]): Requested output format.
+
+        Returns:
+            None: Assertions verify the HTTP status propagates to the caller.
+        """
+        requests_mock.get(
+            "/dps/integration/data-products/v1/data-product/finance:last_quarter_sales/version/1.0.0/",
+            json={"message": "Version not found."},
+            status_code=404,
+        )
+
+        with pytest.raises(requests.HTTPError) as error:
+            self.mock_data_product.get_data_product_version("finance:last_quarter_sales", "1.0.0", output_format=output_format)
+
+        assert error.value.response.status_code == 404
+
+    @pytest.mark.parametrize(
+        ("product_id", "version_id", "missing_field"),
+        [(None, "1.0.0", "product_id"), ("", "1.0.0", "product_id"), ("sales", None, "version_id"), ("sales", "", "version_id")],
+    )
+    def test_get_data_product_version_requires_identifiers(
+        self, requests_mock: Mocker, product_id: str | None, version_id: str | None, missing_field: str
+    ) -> None:
+        """Keep identifier validation when requesting a version's specification.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            product_id (str | None): Product identifier supplied by the caller.
+            version_id (str | None): Version identifier supplied by the caller.
+            missing_field (str): Identifier expected in the validation error.
+
+        Returns:
+            None: Assertions verify missing identifiers fail before a network request.
+        """
+        with pytest.raises(InvalidPostBody, match=f"'{missing_field}' must be provided"):
+            self.mock_data_product.get_data_product_version(product_id, version_id, output_format="yaml")
+
+        assert not requests_mock.called
+
+    def test_create_data_product_from_model(self, requests_mock: Mocker) -> None:
+        """Create a product from a typed specification and preserve its response in a job.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the successful job, response payload, and sent specification.
+        """
+        response_body = {
+            "product_id": "finance:last_quarter_sales",
+            "version_id": "1.0.0",
+            "status": "draft",
+        }
+        requests_mock.register_uri(
+            method="POST",
+            url="/dps/integration/data-products/v1/data-product/",
+            json=response_body,
             status_code=201,
         )
 
         result = self.mock_data_product.create_data_product(build_data_product_spec())
 
-        assert result.product_id == "finance:last_quarter_sales"
+        assert result == JobDetails(status="successful", msg="", result=response_body)
         request = requests_mock.request_history[0]
         payload = json.loads(request.text)
         assert payload["product"]["productId"] == "finance:last_quarter_sales"
@@ -317,7 +702,8 @@ class TestDataProductMethods:
         assert marketplaces[1].products == []
         assert requests_mock.call_count == 1
         request = requests_mock.request_history[0]
-        assert request.headers["Authorization"] == "Bearer test-token"
+        assert request.headers["Token"] == "test-token"
+        assert "Authorization" not in request.headers
         if query_params is not None and query_params.offset is not None:
             assert request.qs == {"skip": ["0"]}
         else:
@@ -749,19 +1135,29 @@ class TestDataProductMethods:
         with pytest.raises(ValueError, match="publication responses must be an object or empty"):
             getattr(self.mock_data_product, method_name)("acme-market-2", "last-quarter-sales")
 
-    def test_check_and_search_data_products(self, requests_mock):
+    def test_check_and_search_data_products(self, requests_mock: Mocker) -> None:
+        """Parse the standards evaluation envelope and search for matching products.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+
+        Returns:
+            None: Assertions verify the evaluation outcome, search matches, and search payload.
+        """
         requests_mock.register_uri(
             method="POST",
             url="/dps/integration/data-products/v1/data-product-check/",
-            json=[
-                {
-                    "key": "product.contactEmail",
-                    "check": "Has contact email",
-                    "type": "static",
-                    "passed": True,
-                    "explanation": "Found contact email.",
-                }
-            ],
+            json={
+                "evaluation": json.dumps([
+                    {
+                        "key": "product.contactEmail",
+                        "check": "Has contact email",
+                        "type": "static",
+                        "passed": True,
+                        "explanation": "Found contact email.",
+                    }
+                ])
+            },
             status_code=200,
         )
         requests_mock.register_uri(
@@ -858,7 +1254,8 @@ class TestDataProductMethods:
         assert response.results[1].suggestion == "Consider annual sales for a longer time range."
         assert requests_mock.call_count == 1
         request = requests_mock.request_history[0]
-        assert request.headers["Authorization"] == "Bearer test-token"
+        assert request.headers["Token"] == "test-token"
+        assert "Authorization" not in request.headers
         assert json.loads(request.text) == {"user_query": "Which products contain sales data?"}
 
     def test_search_data_products_in_marketplace_without_matches(self, requests_mock: Mocker) -> None:

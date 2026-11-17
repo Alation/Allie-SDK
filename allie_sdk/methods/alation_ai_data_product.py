@@ -499,6 +499,8 @@ class AlationAIDataProduct(RequestHandler):
     ) -> JobDetails:
         """Start extracting metrics from a data product's sample queries.
 
+        Note: Sample queries are queries ingested via QLI.
+
         Args:
             data_product_id (str): Identifier of the data product to analyze.
 

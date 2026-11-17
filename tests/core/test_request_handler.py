@@ -1,16 +1,74 @@
+"""Tests for shared REST requests and success response mapping."""
+
 import pytest
 import requests
 from requests import HTTPError
+from requests_mock import Mocker
 
 from allie_sdk.core.request_handler import RequestHandler
+from allie_sdk.models.authentication_model import AuthHeaderType
+
 
 class TestRequestHandler:
 
-    def setup_method(self):
+    def setup_method(self) -> None:
+        """Configure a request handler for tests expecting bearer authentication.
+
+        Args:
+            None.
+
+        Returns:
+            None: Initializes the session, host, access token, and request handler.
+        """
         self.session = requests.Session()
-        self.host = 'https://test.alation.com'
-        self.access_token = 'test_token'
-        self.handler = RequestHandler(self.session, self.host, self.access_token)
+        self.host = "https://test.alation.com"
+        self.access_token = "test_token"
+        self.handler = RequestHandler(self.session, self.host, self.access_token, auth_header_type="Authorization")
+
+    @pytest.mark.parametrize("http_method", ["GET", "POST", "PUT", "PATCH", "DELETE"])
+    @pytest.mark.parametrize(
+        ("auth_header_type", "expected_auth_headers"),
+        [
+            pytest.param(None, {"Token": "test_token"}, id="default-token"),
+            pytest.param("Token", {"Token": "test_token"}, id="explicit-token"),
+            pytest.param("Authorization", {"Authorization": "Bearer test_token"}, id="bearer"),
+        ],
+    )
+    def test_authentication_headers(
+        self,
+        requests_mock: Mocker,
+        http_method: str,
+        auth_header_type: AuthHeaderType | None,
+        expected_auth_headers: dict[str, str],
+    ) -> None:
+        """Verify each HTTP method sends only the selected authentication header.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            http_method (str): HTTP method whose authentication header is checked.
+            auth_header_type (AuthHeaderType | None): Explicit authentication mode,
+                or None to exercise the constructor's default.
+            expected_auth_headers (dict[str, str]): Authentication headers expected
+                on the outgoing request, excluding unrelated HTTP headers.
+
+        Returns:
+            None: Asserts the request uses the expected header name and token format.
+        """
+        if auth_header_type is None:
+            handler = RequestHandler(self.session, self.host, self.access_token)
+        else:
+            handler = RequestHandler(self.session, self.host, self.access_token, auth_header_type=auth_header_type)
+        requests_mock.register_uri(http_method, f"{self.host}/test/authentication", json={"id": 1})
+
+        request_method = getattr(handler, http_method.lower())
+        request_method("/test/authentication", body={"name": "Test"})
+
+        actual_auth_headers = {
+            header_name: requests_mock.last_request.headers[header_name]
+            for header_name in ("Token", "Authorization")
+            if header_name in requests_mock.last_request.headers
+        }
+        assert actual_auth_headers == expected_auth_headers
 
     
     def test_delete(self, requests_mock):

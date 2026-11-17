@@ -122,6 +122,18 @@ if example_switches.getboolean("FETCH_A_SINGLE_DATA_PRODUCT"):
     data_product = alation.data_product.get_data_product(data_product_id=DATA_PRODUCT_ID)
     logging.info(f"Fetched data product {data_product.product_id} version {data_product.version_id} with status {data_product.status}.")
 
+    data_product_yaml = alation.data_product.get_data_product(
+        data_product_id=DATA_PRODUCT_ID,
+        output_format="yaml",
+    )
+    logging.info(f"Data product specification as YAML:\n{data_product_yaml}")
+
+    data_product_json = alation.data_product.get_data_product(
+        data_product_id=DATA_PRODUCT_ID,
+        output_format="json",
+    )
+    logging.info(f"Data product specification as JSON:\n{json.dumps(data_product_json, indent=2, ensure_ascii=False)}")
+
 # ================================
 # LIST DATA PRODUCTS
 # ================================
@@ -154,6 +166,20 @@ if example_switches.getboolean("FETCH_DATA_PRODUCT_VERSION"):
         version_id=DATA_PRODUCT_VERSION,
     )
     logging.info(f"Fetched version {data_product_version.version_id} with status {data_product_version.status}.")
+
+    data_product_version_yaml = alation.data_product.get_data_product_version(
+        product_id=DATA_PRODUCT_ID,
+        version_id=DATA_PRODUCT_VERSION,
+        output_format="yaml",
+    )
+    logging.info(f"Data product version specification as YAML:\n{data_product_version_yaml}")
+
+    data_product_version_json = alation.data_product.get_data_product_version(
+        product_id=DATA_PRODUCT_ID,
+        version_id=DATA_PRODUCT_VERSION,
+        output_format="json",
+    )
+    logging.info(f"Data product version specification as JSON:\n{json.dumps(data_product_version_json, indent=2, ensure_ascii=False)}")
 
 # ================================
 # UPDATE DATA PRODUCT VERSION STATUS

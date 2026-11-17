@@ -19,8 +19,7 @@ Before you can contribute to the Allie SDK project, you need to have the followi
 Install package and dev dependencies:
 
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+uv sync
 ```
 
 Run the test suite using:
