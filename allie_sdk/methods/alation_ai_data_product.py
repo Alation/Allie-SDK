@@ -275,6 +275,10 @@ class AlationAIDataProduct(RequestHandler):
             body=payload,
         )
 
+        if response == "":
+            LOGGER.debug("No content returned when generating data product relationships.")
+            response = {}
+
         if not isinstance(response, dict):
             raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
         else:
