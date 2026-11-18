@@ -1119,11 +1119,11 @@ class DataProductCheck(BaseClass):
 class DataProductCheckResultItem(BaseClass):
     """Single standards check result."""
 
-    key: str = field(default=None)
-    check: str = field(default=None)
-    type: str = field(default=None)
-    passed: bool = field(default=None)
-    explanation: str = field(default=None)
+    key: str | None = field(default=None)
+    check: str | None = field(default=None)
+    type: str | None = field(default=None)
+    passed: bool | None = field(default=None)
+    explanation: str | None = field(default=None)
 
 
 @dataclass(kw_only=True)

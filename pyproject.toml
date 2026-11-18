@@ -40,11 +40,6 @@ dev = [
     "ruff>=0.14.3",
 ]
 
-[tool.pyrefly.errors]
-unannotated-return = "error"
-no-any-return = "error"
-implicit-any-parameter = "error"
-
 [project.urls]
 Homepage = "https://github.com/Alation/Allie-SDK"
 Issues = "https://github.com/Alation/Allie-SDK/issues"
@@ -91,4 +86,10 @@ disallow_untyped_defs = true
 
 [tool.pyrefly]
 python-version = "3.11.0"
+project-includes = ["allie_sdk", "tests"]
 preset = "legacy"
+
+[tool.pyrefly.errors]
+unannotated-return = "error"
+no-any-return = "error"
+implicit-any-parameter = "error"

@@ -34,7 +34,7 @@ class BaseClass:
         })
 
     @staticmethod
-    def convert_timestamp(s_date: str) -> datetime:
+    def convert_timestamp(s_date: str) -> datetime | None:
         tz_formats = ['%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%S.%f%z']
 
         for pattern in tz_formats:

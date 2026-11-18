@@ -1148,7 +1148,7 @@ product:
             method="POST",
             url="/dps/integration/data-products/v1/data-product-check/",
             json={
-                "evaluation": json.dumps([
+                "evaluations": [
                     {
                         "key": "product.contactEmail",
                         "check": "Has contact email",
@@ -1156,7 +1156,7 @@ product:
                         "passed": True,
                         "explanation": "Found contact email.",
                     }
-                ])
+                ]
             },
             status_code=200,
         )

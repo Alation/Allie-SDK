@@ -2,6 +2,8 @@
 
 import json
 import logging
+from typing import Any, TypeAlias
+
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -9,6 +11,8 @@ from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
 from ..models.job_model import *
 from ..models.authentication_model import AuthHeaderType
+
+RequestBody: TypeAlias = dict[str, Any] | list[Any] | str | bytes
 
 API_LOGGER = logging.getLogger("allie_sdk_logger")
 RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
@@ -23,7 +27,7 @@ class RequestHandler(object):
             self,
             session: requests.Session,
             host: str,
-            access_token: str = None,
+            access_token: str | None = None,
             page_size: int = 1000,
             auth_header_type:AuthHeaderType = "Token"
     ):
@@ -59,8 +63,8 @@ class RequestHandler(object):
     def delete(
         self,
         url: str,
-        body: any = None,
-        query_params: dict = None,
+        body: RequestBody | None = None,
+        query_params: dict | None = None,
         is_async: bool = False
 
     ) -> dict | list:
@@ -68,7 +72,7 @@ class RequestHandler(object):
 
         Args:
             url (str): DELETE API Call URL.
-            body (any): DELETE API Body.
+            body (RequestBody | None): Optional DELETE API body. Defaults to None.
             is_async (bool): If True, return raw response for async handling.
             query_params (dict): DELETE API Call Query Parameters.
 
@@ -132,16 +136,16 @@ class RequestHandler(object):
             url: str,
             query_params: dict | None = None,
             pagination: bool = True,
-            body: any = None,
+            body: RequestBody | None = None,
             headers: dict | None = None,
-    ) -> any:
+    ) -> Any:
         """API Get Request.
 
         Args:
             url (str): GET API Call URL.
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Fetch all API results that meet the Query Parameters.
-            body (any): Optional GET Request Body.
+            body (RequestBody | None): Optional GET request body. Defaults to None.
             headers (dict): Optional GET API Call Headers.
 
         Returns:
@@ -188,10 +192,10 @@ class RequestHandler(object):
     def get_nested_results(
             self,
             url: str,
-            query_params: dict = None,
+            query_params: dict | None = None,
             pagination: bool = True,
-            body: any = None,
-            headers: dict = None,
+            body: RequestBody | None = None,
+            headers: dict | None = None,
     ) -> list:
         """API GET request for paginated responses wrapped in a results envelope.
 
@@ -211,7 +215,7 @@ class RequestHandler(object):
             url (str): GET API Call URL.
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Follow the ``next`` URL until every result is fetched.
-            body (any): Optional GET Request Body.
+            body (RequestBody | None): Optional GET request body. Defaults to None.
             headers (dict): Optional GET API Call Headers.
 
         Returns:
@@ -274,12 +278,18 @@ class RequestHandler(object):
 
         return returned_items
 
-    def patch(self, url: str, body: any, query_params: dict = None, headers: dict = None) -> dict:
+    def patch(
+            self,
+            url: str,
+            body: RequestBody | None,
+            query_params: dict | None = None,
+            headers: dict | None = None
+    ) -> dict:
         """API Patch Request.
 
         Args:
             url (str): PATCH API Call URL.
-            body (any): PATCH API Body.
+            body (RequestBody | None): PATCH API body, or None to send no body.
             query_params (dict): PATCH API Call Query Parameters.
             headers (dict): POST API Call Headers.
 
@@ -336,7 +346,7 @@ class RequestHandler(object):
     def post(
             self,
             url: str,
-            body: any,
+            body: RequestBody | None,
             query_params: dict | None = None,
             headers: dict | None = None,
              files: dict | None = None
@@ -345,7 +355,7 @@ class RequestHandler(object):
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -383,16 +393,16 @@ class RequestHandler(object):
     def post_paginated(
         self,
         url: str,
-        body: any,
-        query_params: dict = None,
-        headers: dict = None,
-        files: dict = None,
+        body: RequestBody | None,
+        query_params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
     ) -> dict | list:
         """API Post Request with pagination support via ``X-Next-Page``.
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -463,8 +473,15 @@ class RequestHandler(object):
 
         return returned_items
     
-    def post_oauth(self, url: str, body: any, query_params: dict = None, headers: dict = None,
-             files: dict = None, auth: HTTPBasicAuth = None) -> dict | list:
+    def post_oauth(
+            self,
+            url: str,
+            body: RequestBody | None,
+            query_params: dict | None = None,
+            headers: dict | None = None,
+            files: dict | None = None,
+            auth: HTTPBasicAuth = None
+    ) -> dict | list:
         """API Post Request for calling OAuth specific endpoint to generate a JWT token.
 
         This function is needed because the OAuth end point accepts content type of 'application/x-www-form-urlencoded' instead of 'application/json' 
@@ -475,7 +492,7 @@ class RequestHandler(object):
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -533,16 +550,16 @@ class RequestHandler(object):
     def put(
         self,
         url: str,
-        body: any,
-        query_params: dict = None,
-        headers: dict = None,
-        files: dict = None,
+        body: RequestBody | None,
+        query_params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
     ) -> dict | list:
         """API Put Request.
 
         Args:
             url (str): PUT API Call URL.
-            body (any): PUT API Body.
+            body (RequestBody | None): PUT API body, or None to send no body.
             query_params (dict): PUT API Call Query Parameters.
 
         Returns:
@@ -612,14 +629,18 @@ class RequestHandler(object):
         return response_data
 
     def _api_single_get(
-            self, url: str, params: dict = None, body: any = None, headers: dict = None
+            self,
+            url: str,
+            params: dict | None = None,
+            body: RequestBody | None = None,
+            headers: dict | None = None
     ) -> requests.Response:
         """Run a Single REST API Get Call. Helper function for paginated results.
 
         Args:
             url (str): GET API Call URL.
             params (dict): GET API Call Query Parameters.
-            body (any): Optional GET Request Body.
+            body (RequestBody | None): Optional GET request body. Defaults to None.
             headers (dict): Optional GET API Call Headers.
 
         Returns:
@@ -677,16 +698,16 @@ class RequestHandler(object):
     def _api_single_post(
         self,
         url: str,
-        body: any,
-        params: dict = None,
-        headers: dict = None,
-        files: dict = None,
+        body: RequestBody | None,
+        params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
     ) -> requests.Response:
         """Run a Single REST API Post Call.
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -746,7 +767,7 @@ class RequestHandler(object):
         return api_response
 
     @staticmethod
-    def _log_success(details: dict, message: str):
+    def _log_success(details: dict, message: str) -> None:
         """Log the REST API Success Message.
 
         Args:
@@ -757,7 +778,7 @@ class RequestHandler(object):
         API_LOGGER.debug(message, extra=details)
 
     @staticmethod
-    def _log_error(response_data: dict, details: dict, message: str):
+    def _log_error(response_data: dict, details: dict, message: str) -> None:
         """Log the REST API Error Message.
 
         Args:
@@ -820,7 +841,7 @@ class RequestHandler(object):
 
 
     @staticmethod
-    def _map_request_error_to_job_details(response_data) -> dict:
+    def _map_request_error_to_job_details(response_data:Any) -> dict:
 
         if isinstance(response_data, dict):
             msg = response_data.get("title", None)

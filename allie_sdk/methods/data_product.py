@@ -334,7 +334,10 @@ class AlationDataProduct(RequestHandler):
         )
 
         if response:
-            response_message = response.get("message")
+            if not isinstance(response, dict):
+                raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+            else:
+                response_message = response.get("message")
             mapped_response = self._map_request_success_to_job_details(
                 msg = response_message
             )
@@ -433,7 +436,11 @@ class AlationDataProduct(RequestHandler):
         response = self.delete(
             url=f"/dps/integration/data-products/v1/data-product/{product_id}/",
         )
-        return JobDetails.from_api_response(response)
+
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            return JobDetails.from_api_response(body_params = response)
 
     @overload
     def get_data_product_version(self, product_id: str, version_id: str, output_format: Literal["dataproduct"] = "dataproduct") -> DataProduct:
@@ -548,7 +555,11 @@ class AlationDataProduct(RequestHandler):
             url=f"/dps/integration/data-products/v1/data-product/{product_id}/version/{version_id}/",
             body=payload,
         )
-        updated_product = DataProduct.from_api_response(response)
+
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            updated_product = DataProduct.from_api_response(response)
         mapped_response = self._map_request_success_to_job_details(response_data=updated_product)
         return JobDetails.from_api_response(mapped_response)
 
@@ -572,7 +583,10 @@ class AlationDataProduct(RequestHandler):
         response = self.delete(
             url=f"/dps/integration/data-products/v1/data-product/{product_id}/version/{version_id}/",
         )
-        return JobDetails.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            return JobDetails.from_api_response(response)
 
     def get_data_marketplaces(
         self,
@@ -667,6 +681,8 @@ class AlationDataProduct(RequestHandler):
             headers=headers,
         )
         if response:
+            if not isinstance(response, dict):
+                raise TypeError(f"Response must be a dictionary, got {type(response).__name__}")
             mapped_response = self._map_request_success_to_job_details(msg=response.get("message"))
             return JobDetails.from_api_response(mapped_response)
         return None
@@ -702,7 +718,11 @@ class AlationDataProduct(RequestHandler):
             body=payload,
             headers=headers,
         )
-        updated_marketplace = DataMarketplace.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            updated_marketplace = DataMarketplace.from_api_response(response)
+
         mapped_response = self._map_request_success_to_job_details(response_data=updated_marketplace)
         return JobDetails.from_api_response(mapped_response)
 
@@ -755,7 +775,10 @@ class AlationDataProduct(RequestHandler):
         response = self.delete(
             url=f"/dps/integration/data-products/v1/marketplace/{marketplace_id}/",
         )
-        return JobDetails.from_api_response(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            return JobDetails.from_api_response(response)
 
     def get_published_data_products(
         self,
@@ -932,7 +955,10 @@ class AlationDataProduct(RequestHandler):
         response = self.delete(
             url=f"/dps/integration/data-products/v1/marketplace/{marketplace_id}/data-product/{product_id}/",
         )
-        return self._parse_publication_job(response)
+        if not isinstance(response, dict):
+            raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+        else:
+            return self._parse_publication_job(response)
 
     def check_data_product(self, data_product_check: DataProductCheck) -> list[DataProductCheckResultItem]:
         """Evaluate a data product specification against supplied standards.
@@ -962,12 +988,15 @@ class AlationDataProduct(RequestHandler):
         )
 
         if response:
-            evaluation = response.get("evaluation")
-            if isinstance(evaluation, str):
-                evaluation_converted = json.loads(evaluation)
-                result = [DataProductCheckResultItem.from_api_response(item) for item in evaluation_converted]
-            elif isinstance(response, list):
-                result = [DataProductCheckResultItem.from_api_response(item) for item in evaluation]
+            if not isinstance(response, dict):
+                raise TypeError(f"Expected a dictionary, got {type(response).__name__}")
+            else:
+                # Note: Do not use `evaluation` since this got deprecated
+                evaluations = response.get("evaluations")
+                if not isinstance(evaluations, list):
+                    raise ValueError(f"Expected 'evaluations' to be a list, got {type(evaluations).__name__}")
+                else:
+                    result = [DataProductCheckResultItem.from_api_response(item) for item in evaluations]
 
             return result
         return []
@@ -1122,6 +1151,8 @@ class AlationDataProduct(RequestHandler):
             url="/dps/integration/data-products/v1/data-products/permissions/",
             body=payload,
         )
+        if not isinstance(response, dict):
+            raise TypeError("Expected response to be a dict, received {}".format(type(response)))
         return JobDetails.from_api_response(response)
 
     def get_user_permissions(self) -> list[DataProductPermission]:
