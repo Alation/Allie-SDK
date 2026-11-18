@@ -19,8 +19,7 @@ Before you can contribute to the Allie SDK project, you need to have the followi
 Install package and dev dependencies:
 
 ```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+uv sync
 ```
 
 Run the test suite using:
@@ -44,6 +43,23 @@ If you are writing a method for an Alation API async endpoint, make sure you ret
 
 > **Note**: An Alation endpoint is considered *async* if it returns a job ID or job name.
 
+
+### Use Pyrefly for type checking
+
+Either via the command line. Example of a selective check:
+
+```
+uvx pyrefly check --summarize-errors allie_sdk/methods/alation_ai_data_product.py
+```
+
+Or configure your IDE to use pyrefly for type checking:
+
+| IDE | Setup |
+|---|---|
+| **PyCharm** | Open **Settings → Python → Type Engine** and select **Pyrefly**, or click the **Types: Built-in** status bar widget and choose **Install and Use Pyrefly**. |
+| **VS Code** | Install the **Pyrefly** extension and open a Python file. It discovers your project configuration automatically. |
+
+These steps are documented by [JetBrains](https://www.jetbrains.com/help/pycharm/python-type-engine.html) and [Pyrefly](https://pyrefly.org/en/docs/IDE/). [PyCharm Documentation](https://www.jetbrains.com/help/pycharm/python-type-engine.html?utm_source=chatgpt.com)
 
 ## Add tests
 

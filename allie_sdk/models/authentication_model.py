@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-
+from typing import Literal
 from ..core.data_structures import BaseClass
 
+AuthHeaderType = Literal["Authorization", "Token"]
 
 @dataclass
 class OAuthCredentials(BaseClass):

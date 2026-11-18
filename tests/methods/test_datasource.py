@@ -376,5 +376,5 @@ class TestDatasource:
             , result = {}
         )
 
-        assert expected_response == response
+        assert response == expected_response
 

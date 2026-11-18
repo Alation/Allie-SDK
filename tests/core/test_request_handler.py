@@ -1,16 +1,74 @@
+"""Tests for shared REST requests and success response mapping."""
+
 import pytest
 import requests
 from requests import HTTPError
+from requests_mock import Mocker
 
 from allie_sdk.core.request_handler import RequestHandler
+from allie_sdk.models.authentication_model import AuthHeaderType
+
 
 class TestRequestHandler:
 
-    def setup_method(self):
+    def setup_method(self) -> None:
+        """Configure a request handler for tests expecting bearer authentication.
+
+        Args:
+            None.
+
+        Returns:
+            None: Initializes the session, host, access token, and request handler.
+        """
         self.session = requests.Session()
-        self.host = 'https://test.alation.com'
-        self.access_token = 'test_token'
-        self.handler = RequestHandler(self.session, self.host, self.access_token)
+        self.host = "https://test.alation.com"
+        self.access_token = "test_token"
+        self.handler = RequestHandler(self.session, self.host, self.access_token, auth_header_type="Authorization")
+
+    @pytest.mark.parametrize("http_method", ["GET", "POST", "PUT", "PATCH", "DELETE"])
+    @pytest.mark.parametrize(
+        ("auth_header_type", "expected_auth_headers"),
+        [
+            pytest.param(None, {"Token": "test_token"}, id="default-token"),
+            pytest.param("Token", {"Token": "test_token"}, id="explicit-token"),
+            pytest.param("Authorization", {"Authorization": "Bearer test_token"}, id="bearer"),
+        ],
+    )
+    def test_authentication_headers(
+        self,
+        requests_mock: Mocker,
+        http_method: str,
+        auth_header_type: AuthHeaderType | None,
+        expected_auth_headers: dict[str, str],
+    ) -> None:
+        """Verify each HTTP method sends only the selected authentication header.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            http_method (str): HTTP method whose authentication header is checked.
+            auth_header_type (AuthHeaderType | None): Explicit authentication mode,
+                or None to exercise the constructor's default.
+            expected_auth_headers (dict[str, str]): Authentication headers expected
+                on the outgoing request, excluding unrelated HTTP headers.
+
+        Returns:
+            None: Asserts the request uses the expected header name and token format.
+        """
+        if auth_header_type is None:
+            handler = RequestHandler(self.session, self.host, self.access_token)
+        else:
+            handler = RequestHandler(self.session, self.host, self.access_token, auth_header_type=auth_header_type)
+        requests_mock.register_uri(http_method, f"{self.host}/test/authentication", json={"id": 1})
+
+        request_method = getattr(handler, http_method.lower())
+        request_method("/test/authentication", body={"name": "Test"})
+
+        actual_auth_headers = {
+            header_name: requests_mock.last_request.headers[header_name]
+            for header_name in ("Token", "Authorization")
+            if header_name in requests_mock.last_request.headers
+        }
+        assert actual_auth_headers == expected_auth_headers
 
     
     def test_delete(self, requests_mock):
@@ -19,7 +77,7 @@ class TestRequestHandler:
         assert result == {'msg': '',
          'result': {'message': 'Deleted successfully'},
          'status': 'successful'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_delete_error(self, requests_mock):
@@ -33,7 +91,7 @@ class TestRequestHandler:
         requests_mock.get('https://test.alation.com/test/get', json=[{'id': 1, 'name': 'Test'}])
         result = self.handler.get('/test/get')
         assert result == [{'id': 1, 'name': 'Test'}]
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_get_empty_response(self, requests_mock):
@@ -67,12 +125,58 @@ class TestRequestHandler:
             self.handler.get('/test/get')
         assert context.value.response.status_code == 500
 
+    def test_get_nested_results(self, requests_mock):
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get',
+            json={
+                'count': 2,
+                'next': '/test/nested-get?limit=1&offset=1',
+                'previous': None,
+                'results': [{'id': 1, 'name': 'Test 1'}],
+            },
+        )
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get?limit=1&offset=1',
+            json={
+                'count': 2,
+                'next': None,
+                'previous': '/test/nested-get?limit=1&offset=0',
+                'results': [{'id': 2, 'name': 'Test 2'}],
+            },
+        )
+
+        result = self.handler.get_nested_results('/test/nested-get')
+
+        assert result == [{'id': 1, 'name': 'Test 1'}, {'id': 2, 'name': 'Test 2'}]
+        assert requests_mock.call_count == 2
+
+    def test_get_nested_results_error(self, requests_mock):
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get',
+            json={
+                'count': 2,
+                'next': '/test/nested-get?limit=1&offset=1',
+                'previous': None,
+                'results': [{'id': 1, 'name': 'Test 1'}],
+            },
+        )
+        requests_mock.get(
+            'https://test.alation.com/test/nested-get?limit=1&offset=1',
+            json={'error': 'Server error'},
+            status_code=500,
+        )
+
+        with pytest.raises(HTTPError) as context:
+            self.handler.get_nested_results('/test/nested-get')
+
+        assert context.value.response.status_code == 500
+
     
     def test_patch(self, requests_mock):
         requests_mock.patch('https://test.alation.com/test/patch', json={'id': 1, 'name': 'Updated Test'})
         result = self.handler.patch('/test/patch', {'name': 'Updated Test'})
         assert result == {'id': 1, 'name': 'Updated Test'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_patch_error(self, requests_mock):
@@ -86,7 +190,7 @@ class TestRequestHandler:
         requests_mock.post('https://test.alation.com/test/post', json={'id': 2, 'name': 'New Test'})
         result = self.handler.post('/test/post', {'name': 'New Test'})
         assert result == {'id': 2, 'name': 'New Test'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     def test_post_paginated(self, requests_mock):
         requests_mock.post(
@@ -135,7 +239,7 @@ class TestRequestHandler:
         requests_mock.put('https://test.alation.com/test/put', json={'id': 3, 'name': 'Put Test'})
         result = self.handler.put('/test/put', {'name': 'Put Test'})
         assert result == {'id': 3, 'name': 'Put Test'}
-        assert requests_mock.last_request.headers['Token'] == 'test_token'
+        assert requests_mock.last_request.headers['Authorization'] == 'Bearer test_token'
 
     
     def test_put_error(self, requests_mock):
@@ -143,3 +247,77 @@ class TestRequestHandler:
         with pytest.raises(HTTPError) as context:
             self.handler.put('/test/put', {'name': 'Put Test'})
         assert context.value.response.status_code == 404
+
+
+class TestRequestSuccessMapping:
+    @pytest.mark.parametrize("use_keyword_argument", [False, True], ids=["positional", "keyword"])
+    @pytest.mark.parametrize(
+        "response_data",
+        [
+            pytest.param({"id": 1}, id="dictionary"),
+            pytest.param([{"id": 1}], id="list"),
+            pytest.param("Completed", id="text"),
+            pytest.param(None, id="none"),
+            pytest.param({}, id="empty-dictionary"),
+            pytest.param([], id="empty-list"),
+            pytest.param("", id="empty-text"),
+        ],
+    )
+    def test_response_remains_in_result(self, response_data: object, use_keyword_argument: bool) -> None:
+        """Preserve response payloads and the default empty success message.
+
+        Args:
+            response_data (object): API response payload to preserve.
+            use_keyword_argument (bool): Whether to pass the payload by name.
+
+        Returns:
+            None: Asserts the success mapping retains the existing contract.
+        """
+        if use_keyword_argument:
+            result = RequestHandler._map_request_success_to_job_details(response_data=response_data)
+        else:
+            result = RequestHandler._map_request_success_to_job_details(response_data)
+
+        assert result == {"status": "successful", "msg": "", "result": response_data}
+
+    def test_success_without_response(self) -> None:
+        """Support successful endpoints that return no response content.
+
+        Args:
+            None.
+
+        Returns:
+            None: Asserts an omitted payload maps to a successful empty result.
+        """
+        result = RequestHandler._map_request_success_to_job_details()
+
+        assert result == {"status": "successful", "msg": "", "result": None}
+
+    @pytest.mark.parametrize("message", ["Data product updated", None])
+    def test_success_with_message_only(self, message: str | None) -> None:
+        """Preserve explicit messages when no response payload is supplied.
+
+        Args:
+            message (str | None): Message supplied by the API, including None.
+
+        Returns:
+            None: Asserts message-only calls retain the supplied message.
+        """
+        result = RequestHandler._map_request_success_to_job_details(msg=message)
+
+        assert result == {"status": "successful", "msg": message, "result": None}
+
+    def test_success_with_response_and_message(self) -> None:
+        """Keep the response payload and explicit success message separate.
+
+        Args:
+            None.
+
+        Returns:
+            None: Asserts a positional payload supports a keyword message.
+        """
+        response_data = {"product_id": "finance:sales"}
+
+        result = RequestHandler._map_request_success_to_job_details(response_data, msg="Data product updated")
+
+        assert result == {"status": "successful", "msg": "Data product updated", "result": response_data}

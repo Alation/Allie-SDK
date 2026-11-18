@@ -3,6 +3,10 @@
 import inspect
 from dataclasses import dataclass, fields
 from datetime import datetime
+from typing import Any, TypeVar
+
+BaseClassType = TypeVar("BaseClassType", bound="BaseClass")
+
 
 # Base data class with method that we want to use across all other data classes
 @dataclass
@@ -12,16 +16,25 @@ class BaseClass:
     # that include properties that we are not expecting
     # Normally if response doesn't match the data class definition a 100%
     # this would result in an error.
-    # By using method you can handle this exception gracefully. 
+    # By using this method you can handle this exception gracefully.
     @classmethod
-    def from_api_response(cls, body_params: dict):
+    def from_api_response(cls: type[BaseClassType], body_params: dict[str, Any]) -> BaseClassType:
+        """Create an instance from API response fields accepted by the class.
+
+        Args:
+            cls: Model class to instantiate.
+            body_params: API response fields, including any unrecognized fields.
+
+        Returns:
+            An instance of the calling class, ignoring unrecognized fields.
+        """
         return cls(**{
             k: v for k, v in body_params.items()
             if k in inspect.signature(cls).parameters
         })
 
     @staticmethod
-    def convert_timestamp(s_date: str) -> datetime:
+    def convert_timestamp(s_date: str) -> datetime | None:
         tz_formats = ['%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%S.%f%z']
 
         for pattern in tz_formats:

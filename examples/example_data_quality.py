@@ -3,7 +3,7 @@ Example of creating, listing, updating and deleting data quality rules.
 
 Prerequisites:
 
-- You adjusted the "config.ini" file with your settings.
+- Adjust the "config.ini" file with your settings.
 - Set the variables in the "Set Global Variables" section below.
 
 """

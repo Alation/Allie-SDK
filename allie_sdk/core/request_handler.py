@@ -2,23 +2,35 @@
 
 import json
 import logging
+from typing import Any, TypeAlias
+
 import requests
 from requests.auth import HTTPBasicAuth
 
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
 from ..models.job_model import *
+from ..models.authentication_model import AuthHeaderType
+
+RequestBody: TypeAlias = dict[str, Any] | list[Any] | str | bytes
 
 API_LOGGER = logging.getLogger("allie_sdk_logger")
 RETRY_STATUS_CODES = [429, 500, 502, 503, 504]
 SUCCESS_CODES = [200, 201, 202, 204]
 
 
+
 class RequestHandler(object):
     """Route all Alation API Calls through same core request functions."""
 
-    def __init__(self, session: requests.Session, host: str, access_token: str = None,
-                 page_size: int = 1000):
+    def __init__(
+            self,
+            session: requests.Session,
+            host: str,
+            access_token: str | None = None,
+            page_size: int = 1000,
+            auth_header_type:AuthHeaderType = "Token"
+    ):
         """Creates an instance of the RequestHandler object.
 
         Args:
@@ -26,6 +38,8 @@ class RequestHandler(object):
             host (str): Alation URL.
             access_token (str): Alation REST API Access Token.
             page_size (int): Page size of REST API Get Calls.
+            auth_header_type (auth_header_type): Define whether "Authorization" or "Token" should be used in the header.
+                Defaults to "Token". (Introduced Nov 2026 since the AI API endpoint requires the "Authorization" header)
 
         """
         self.s = session
@@ -39,13 +53,18 @@ class RequestHandler(object):
         self.headers = {"Content-Type": "application/json; charset=utf-8"}
         self.access_token = access_token
         if access_token:
-            self.headers['Token'] = access_token
+            if auth_header_type == "Token":
+                self.headers['Token'] = access_token
+            elif auth_header_type == "Authorization":
+                self.headers["Authorization"] = f"Bearer {access_token}"
+            else:
+                raise ValueError("Invalid Authorization header type")
 
     def delete(
         self,
         url: str,
-        body: any = None,
-        query_params: dict = None,
+        body: RequestBody | None = None,
+        query_params: dict | None = None,
         is_async: bool = False
 
     ) -> dict | list:
@@ -53,7 +72,7 @@ class RequestHandler(object):
 
         Args:
             url (str): DELETE API Call URL.
-            body (any): DELETE API Body.
+            body (RequestBody | None): Optional DELETE API body. Defaults to None.
             is_async (bool): If True, return raw response for async handling.
             query_params (dict): DELETE API Call Query Parameters.
 
@@ -115,17 +134,19 @@ class RequestHandler(object):
     def get(
             self,
             url: str,
-            query_params: dict = None,
+            query_params: dict | None = None,
             pagination: bool = True,
-            body: any = None,
-    ) -> any:
+            body: RequestBody | None = None,
+            headers: dict | None = None,
+    ) -> Any:
         """API Get Request.
 
         Args:
             url (str): GET API Call URL.
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Fetch all API results that meet the Query Parameters.
-            body (any): Optional GET Request Body.
+            body (RequestBody | None): Optional GET request body. Defaults to None.
+            headers (dict): Optional GET API Call Headers.
 
         Returns:
             any: API Response Body in JSON.
@@ -140,7 +161,7 @@ class RequestHandler(object):
             query_params['limit'] = self.page_size
 
         api_response = self._api_single_get(
-            self.host + url, params=query_params, body=body
+            self.host + url, params=query_params, body=body, headers=headers
         )
         # Check status and raise error if needed
         if api_response.status_code not in SUCCESS_CODES:
@@ -157,7 +178,7 @@ class RequestHandler(object):
         if pagination:
             while 'X-Next-Page' in api_response.headers:
                 next_url = api_response.headers.get('X-Next-Page')
-                api_response = self._api_single_get(self.host + next_url)
+                api_response = self._api_single_get(self.host + next_url, headers=headers)
                 
                 # Check status of paginated request and raise error if needed
                 if api_response.status_code not in SUCCESS_CODES:
@@ -168,12 +189,107 @@ class RequestHandler(object):
 
         return returned_items
 
-    def patch(self, url: str, body: any, query_params: dict = None, headers: dict = None) -> dict:
+    def get_nested_results(
+            self,
+            url: str,
+            query_params: dict | None = None,
+            pagination: bool = True,
+            body: RequestBody | None = None,
+            headers: dict | None = None,
+    ) -> list:
+        """API GET request for paginated responses wrapped in a results envelope.
+
+        This supports response bodies shaped like::
+
+            {
+                "count": 2,
+                "next": "/path/?limit=1&offset=1",
+                "previous": None,
+                "results": [...]
+            }
+
+        This is DRF-style pagination with `next` and `results`, not the header-based list pagination.
+        DRF = Django REST Framework.
+
+        Args:
+            url (str): GET API Call URL.
+            query_params (dict): GET API Call Query Parameters.
+            pagination (bool): Follow the ``next`` URL until every result is fetched.
+            body (RequestBody | None): Optional GET request body. Defaults to None.
+            headers (dict): Optional GET API Call Headers.
+
+        Returns:
+            list: Flattened list of items from the ``results`` property.
+
+        Raises:
+            requests.HTTPError: If the API returns a non-success status code.
+            ValueError: If the API response does not contain a ``results`` list.
+        """
+        returned_items = []
+        if query_params is None:
+            query_params = {}
+        else:
+            query_params = query_params.copy()
+
+        if pagination and "limit" not in query_params:
+            query_params["limit"] = self.page_size
+
+        api_response = self._api_single_get(
+            self.host + url, params=query_params, body=body, headers=headers
+        )
+        if api_response.status_code not in SUCCESS_CODES:
+            api_response.raise_for_status()
+
+        try:
+            response_data = api_response.json()
+        except requests.exceptions.JSONDecodeError:
+            try:
+                response_data = api_response.content.decode("utf-8")
+            except UnicodeDecodeError:
+                response_data = api_response.content
+
+        if not isinstance(response_data, dict) or not isinstance(response_data.get("results"), list):
+            raise ValueError("Nested GET requests must return a dictionary containing a 'results' list.")
+
+        returned_items.extend(response_data["results"])
+
+        next_url = response_data.get("next") if pagination else None
+        while next_url:
+            parsed_next_url = urlparse(next_url)
+            request_url = next_url if parsed_next_url.scheme else self.host + next_url
+            api_response = self._api_single_get(request_url, body=body, headers=headers)
+
+            if api_response.status_code not in SUCCESS_CODES:
+                api_response.raise_for_status()
+
+            try:
+                response_data = api_response.json()
+            except requests.exceptions.JSONDecodeError:
+                try:
+                    response_data = api_response.content.decode("utf-8")
+                except UnicodeDecodeError:
+                    response_data = api_response.content
+
+            if not isinstance(response_data, dict) or not isinstance(response_data.get("results"), list):
+                raise ValueError("Nested GET requests must return a dictionary containing a 'results' list.")
+
+            returned_items.extend(response_data["results"])
+            next_url = response_data.get("next")
+
+        return returned_items
+
+    def patch(
+            self,
+            url: str,
+            body: RequestBody | None,
+            query_params: dict | None = None,
+            headers: dict | None = None
+    ) -> dict:
         """API Patch Request.
 
         Args:
             url (str): PATCH API Call URL.
-            body (any): PATCH API Body.
+            body (RequestBody | None): PATCH API body, or None to send no body.
             query_params (dict): PATCH API Call Query Parameters.
             headers (dict): POST API Call Headers.
 
@@ -227,13 +343,19 @@ class RequestHandler(object):
 
         return response_data
 
-    def post(self, url: str, body: any, query_params: dict = None, headers: dict = None,
-             files: dict = None) -> dict | list:
+    def post(
+            self,
+            url: str,
+            body: RequestBody | None,
+            query_params: dict | None = None,
+            headers: dict | None = None,
+             files: dict | None = None
+    ) -> dict | list:
         """API Post Request.
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -271,16 +393,16 @@ class RequestHandler(object):
     def post_paginated(
         self,
         url: str,
-        body: any,
-        query_params: dict = None,
-        headers: dict = None,
-        files: dict = None,
+        body: RequestBody | None,
+        query_params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
     ) -> dict | list:
         """API Post Request with pagination support via ``X-Next-Page``.
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -351,8 +473,15 @@ class RequestHandler(object):
 
         return returned_items
     
-    def post_oauth(self, url: str, body: any, query_params: dict = None, headers: dict = None,
-             files: dict = None, auth: HTTPBasicAuth = None) -> dict | list:
+    def post_oauth(
+            self,
+            url: str,
+            body: RequestBody | None,
+            query_params: dict | None = None,
+            headers: dict | None = None,
+            files: dict | None = None,
+            auth: HTTPBasicAuth = None
+    ) -> dict | list:
         """API Post Request for calling OAuth specific endpoint to generate a JWT token.
 
         This function is needed because the OAuth end point accepts content type of 'application/x-www-form-urlencoded' instead of 'application/json' 
@@ -363,7 +492,7 @@ class RequestHandler(object):
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -421,16 +550,16 @@ class RequestHandler(object):
     def put(
         self,
         url: str,
-        body: any,
-        query_params: dict = None,
-        headers: dict = None,
-        files: dict = None,
+        body: RequestBody | None,
+        query_params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
     ) -> dict | list:
         """API Put Request.
 
         Args:
             url (str): PUT API Call URL.
-            body (any): PUT API Body.
+            body (RequestBody | None): PUT API body, or None to send no body.
             query_params (dict): PUT API Call Query Parameters.
 
         Returns:
@@ -500,14 +629,19 @@ class RequestHandler(object):
         return response_data
 
     def _api_single_get(
-            self, url: str, params: dict = None, body: any = None
+            self,
+            url: str,
+            params: dict | None = None,
+            body: RequestBody | None = None,
+            headers: dict | None = None
     ) -> requests.Response:
         """Run a Single REST API Get Call. Helper function for paginated results.
 
         Args:
             url (str): GET API Call URL.
             params (dict): GET API Call Query Parameters.
-            body (any): Optional GET Request Body.
+            body (RequestBody | None): Optional GET request body. Defaults to None.
+            headers (dict): Optional GET API Call Headers.
 
         Returns:
             requests.Response: API GET Response.
@@ -519,11 +653,14 @@ class RequestHandler(object):
         if body is not None:
             body = json.dumps(body, default=str)
 
-            # Always call GET; requests can handle None for params/body
+        if headers is None:
+            headers = self.headers
+
+        # Always call GET; requests can handle None for params/body
         api_response = self.s.get(
             url,
             params=params,
-            headers=self.headers,
+            headers=headers,
             data=body
         )
 
@@ -561,16 +698,16 @@ class RequestHandler(object):
     def _api_single_post(
         self,
         url: str,
-        body: any,
-        params: dict = None,
-        headers: dict = None,
-        files: dict = None,
+        body: RequestBody | None,
+        params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
     ) -> requests.Response:
         """Run a Single REST API Post Call.
 
         Args:
             url (str): POST API Call URL.
-            body (any): POST API Body.
+            body (RequestBody | None): POST API body, or None to send no body.
             params (dict): POST API Call Query Parameters.
             headers (dict): POST API Call Headers.
             files: (dict) POST API Call upload files
@@ -630,7 +767,7 @@ class RequestHandler(object):
         return api_response
 
     @staticmethod
-    def _log_success(details: dict, message: str):
+    def _log_success(details: dict, message: str) -> None:
         """Log the REST API Success Message.
 
         Args:
@@ -641,7 +778,7 @@ class RequestHandler(object):
         API_LOGGER.debug(message, extra=details)
 
     @staticmethod
-    def _log_error(response_data: dict, details: dict, message: str):
+    def _log_error(response_data: dict, details: dict, message: str) -> None:
         """Log the REST API Error Message.
 
         Args:
@@ -704,7 +841,7 @@ class RequestHandler(object):
 
 
     @staticmethod
-    def _map_request_error_to_job_details(response_data) -> dict:
+    def _map_request_error_to_job_details(response_data:Any) -> dict:
 
         if isinstance(response_data, dict):
             msg = response_data.get("title", None)
@@ -720,13 +857,22 @@ class RequestHandler(object):
         return error_data
 
     @staticmethod
-    def _map_request_success_to_job_details(response_data=None) -> dict:
-        # some API endpoints don't return any response content (e.g. for business policies)
-        # hence we made the reponse_data argument optional here
-        success_data = dict(
-            status = "successful"
-            , msg = ""
-            , result = response_data
-        )
+    def _map_request_success_to_job_details(
+        response_data: object = None,
+        *,
+        msg: str | None = "",
+    ) -> dict[str, object]:
+        """Map a successful API response to the JobDetails structure.
 
-        return success_data
+        Args:
+            response_data (object): API response payload stored in result. Defaults
+                to None for endpoints that return no response content. May be
+                passed positionally or by keyword for backward compatibility.
+            msg (str | None): Optional success message, supplied by keyword.
+                Defaults to an empty string; explicit None values are preserved.
+
+        Returns:
+            dict[str, object]: Successful status, message, and original payload.
+        """
+        API_LOGGER.debug("Mapping successful API response to job details.")
+        return {"status": "successful", "msg": msg, "result": response_data}

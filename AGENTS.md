@@ -23,8 +23,11 @@ pip install -r requirements-dev.txt
 
 # Code Style
 
+- Every function and method must have a docstring. The docstring must explain the purpose of the function / method and have a listing of all input arguments and return objects.
+- Use human-readable variable and function names, do not abbreviate names.
 - use Python type hints
 - use double quotes instead of single quotes were possible
+- use f-strings not old-fashioned string variable substitutions
 
 # Code Standards
 

@@ -1,0 +1,224 @@
+"""Tests for the Alation AI Data Product data models."""
+
+from datetime import datetime
+
+import pytest
+
+from allie_sdk.core.custom_exceptions import InvalidPostBody
+from allie_sdk.models.alation_ai_data_product_model import *
+
+
+class TestAlationAIDataProductModel:
+    def test_table_column_info_generate_api_payload(self):
+        table_column_info = AlationAIDataProductTableColumnInfo(
+            table_id=1,
+            column_ids=[11, 12],
+        )
+
+        assert table_column_info.generate_api_payload() == {
+            "table_id": 1,
+            "column_ids": [11, 12],
+        }
+
+    def test_table_column_info_requires_fields(self):
+        with pytest.raises(InvalidPostBody):
+            AlationAIDataProductTableColumnInfo(table_id=None, column_ids=[11]).generate_api_payload()
+
+        with pytest.raises(InvalidPostBody):
+            AlationAIDataProductTableColumnInfo(table_id=1, column_ids=[]).generate_api_payload()
+
+    def test_generate_relationships_request_generates_payload(self):
+        generate_request = AlationAIGenerateRelationshipsRequest(data_product_spec_yaml="version: 1")
+
+        assert generate_request.generate_api_post_payload() == {
+            "spec_yaml": "version: 1",
+        }
+
+    def test_generate_relationships_request_requires_spec_yaml(self):
+        with pytest.raises(InvalidPostBody):
+            AlationAIGenerateRelationshipsRequest(data_product_spec_yaml=None).generate_api_post_payload()
+
+    def test_data_product_job_result_maps_fields(self):
+        api_response = {
+            "status": "completed",
+            "data": "version: 1\nname: Sales Metrics",
+            "error": None,
+        }
+
+        result = AlationAIDataProductJobResult.from_api_response(api_response)
+
+        assert result == AlationAIDataProductJobResult(
+            status="completed",
+            data="version: 1\nname: Sales Metrics",
+            error=None,
+        )
+
+    def test_generate_relationships_response_maps_nested_relationships(self):
+        api_response = {
+            "relationships": [
+                {
+                    "name": "orders_to_customers",
+                    "left_table": "orders",
+                    "right_table": "customers",
+                    "expression": "orders.customer_id = customers.id",
+                    "sql_dialect": "postgres",
+                    "cardinality": "many_to_one",
+                    "left_nullable": False,
+                    "right_nullable": False,
+                    "notes": "Generated from primary key inference.",
+                }
+            ]
+        }
+
+        result = AlationAIGenerateRelationshipsResponse.from_api_response(api_response)
+
+        assert result == AlationAIGenerateRelationshipsResponse(
+            relationships=[
+                AlationAIGeneratedRelationship(
+                    name="orders_to_customers",
+                    left_table="orders",
+                    right_table="customers",
+                    expression="orders.customer_id = customers.id",
+                    sql_dialect="postgres",
+                    cardinality="many_to_one",
+                    left_nullable=False,
+                    right_nullable=False,
+                    notes="Generated from primary key inference.",
+                )
+            ]
+        )
+
+    def test_data_product_to_update_requires_existing_yaml(self):
+        with pytest.raises(InvalidPostBody):
+            AlationAIDataProductToUpdate(existing_data_product=None).generate_api_put_payload()
+
+    def test_revise_data_product_jobs_params_include_zero_and_lists(self):
+        params = AlationAIReviseDataProductJobsParams(
+            status=["RUNNING", "COMPLETED"],
+            data_product_id="dp-1",
+            limit=50,
+            offset=0,
+        )
+
+        assert params.generate_params_dict() == {
+            "status": ["RUNNING", "COMPLETED"],
+            "data_product_id": "dp-1",
+            "limit": 50,
+            "offset": 0,
+        }
+
+    def test_revise_data_product_results_page_maps_nested_objects(self):
+        api_response = {
+            "data": [
+                {
+                    "result_id": "result-1",
+                    "chat_id": "chat-1",
+                    "data_product_id": "dp-1",
+                    "status": "RUNNING",
+                    "created_at": "2026-06-10T12:00:00.000000Z",
+                    "updated_at": "2026-06-10T12:05:00.000000Z",
+                }
+            ],
+            "total": 1,
+        }
+
+        result_page = AlationAIReviseDataProductResultsPage.from_api_response(api_response)
+
+        assert result_page == AlationAIReviseDataProductResultsPage(
+            data=[
+                AlationAIReviseDataProductResultSummary(
+                    result_id="result-1",
+                    chat_id="chat-1",
+                    data_product_id="dp-1",
+                    status="RUNNING",
+                    created_at=datetime(2026, 6, 10, 12, 0, 0),
+                    updated_at=datetime(2026, 6, 10, 12, 5, 0),
+                )
+            ],
+            total=1,
+        )
+
+    def test_sql_metric_result_maps_nested_metrics(self):
+        api_response = {
+            "sql": "SELECT SUM(revenue) FROM sales.orders",
+            "status": True,
+            "metrics": [
+                {
+                    "displayName": "Total Revenue",
+                    "description": "Total revenue across all orders",
+                    "expression": "SUM(orders.revenue)",
+                    "columns": ["orders.revenue"],
+                    "errors": None,
+                    "type": "numeric",
+                }
+            ],
+        }
+
+        result = AlationAISqlMetricResult.from_api_response(api_response)
+
+        assert result == AlationAISqlMetricResult(
+            sql="SELECT SUM(revenue) FROM sales.orders",
+            status=True,
+            metrics=[
+                AlationAIMetricWithErrors(
+                    displayName="Total Revenue",
+                    description="Total revenue across all orders",
+                    expression="SUM(orders.revenue)",
+                    columns=["orders.revenue"],
+                    errors=None,
+                    type="numeric",
+                )
+            ],
+        )
+
+    def test_metric_result_with_source_maps_nested_sources(self):
+        api_response = {
+            "status": True,
+            "metrics": [
+                {
+                    "displayName": "Total Revenue",
+                    "description": "Total revenue across all orders",
+                    "expression": "SUM(orders.revenue)",
+                    "sources": [
+                        {
+                            "source_type": "tableau",
+                            "source_name": "Revenue Dashboard",
+                            "original_expression": "SUM([Revenue])",
+                            "extracted_at": "2026-06-10T12:10:00.000000Z",
+                            "source_url": "https://example.com/report",
+                            "catalog_url": "/bi/1/",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        result = AlationAIMetricResultWithSource.from_api_response(api_response)
+
+        assert result == AlationAIMetricResultWithSource(
+            status=True,
+            metrics=[
+                AlationAIMetricWithSource(
+                    displayName="Total Revenue",
+                    description="Total revenue across all orders",
+                    expression="SUM(orders.revenue)",
+                    sources=[
+                        AlationAIMetricSource(
+                            source_type="tableau",
+                            source_name="Revenue Dashboard",
+                            original_expression="SUM([Revenue])",
+                            extracted_at=datetime(2026, 6, 10, 12, 10, 0),
+                            source_url="https://example.com/report",
+                            catalog_url="/bi/1/",
+                        )
+                    ],
+                )
+            ],
+        )
+
+    def test_get_tables_from_bi_params_requires_values(self):
+        with pytest.raises(InvalidPostBody):
+            AlationAIGetUpstreamTablesFromBiObjectParams(type=None, id=1).generate_params_dict()
+
+        with pytest.raises(InvalidPostBody):
+            AlationAIGetUpstreamTablesFromBiObjectParams(type="dashboard", id=None).generate_params_dict()
