@@ -63,38 +63,20 @@ class AlationCDMAuthentication(RequestHandler):
             LOGGER.error(error_message)
             raise ValueError(error_message)
 
-        # The CDE auth endpoint expects the Alation token under the lower-case "token"
-        # header key. It must NOT go through the standard request helpers, which inject
-        # the "Token" header used by every other Alation API.
-        request_url = self.host + CDE_AUTH_ENDPOINT
-        api_response = self.s.post(request_url, headers={"token": token_to_exchange})
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            "Method": "POST",
-            "URL": api_response.url,
-            "Response": api_response.status_code,
-        }
+        # Override default authentication and retain the bodyless exchange request.
+        api_response = self._request(
+            "POST", self.host + CDE_AUTH_ENDPOINT,
+            headers={"token": token_to_exchange, "Content-Type": None},
+        )
 
         if api_response.status_code not in SUCCESS_CODES:
-            try:
-                error_data = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                error_data = api_response.text
-            self._log_error(
-                error_data,
-                log_details,
-                message=f"Error exchanging the Alation token for a CDE token at: {log_url}",
-            )
+            self._log_response(api_response, "POST")
             api_response.raise_for_status()
 
         # The endpoint returns the CDE token as a plain string. Some deployments may
         # JSON-encode it (a quoted string), so handle both shapes robustly.
-        try:
-            parsed_response = api_response.json()
-            cde_token_value = parsed_response if isinstance(parsed_response, str) else None
-        except requests.exceptions.JSONDecodeError:
-            cde_token_value = api_response.text
+        parsed_response = self._parse_response(api_response)
+        cde_token_value = parsed_response if isinstance(parsed_response, str) else None
 
         if isinstance(cde_token_value, str):
             cde_token_value = cde_token_value.strip()
@@ -110,9 +92,6 @@ class AlationCDMAuthentication(RequestHandler):
             error_response._content = str.encode(error_message)
             raise requests.exceptions.HTTPError(error_message, response=error_response)
 
-        self._log_success(
-            log_details,
-            message=f"Successfully exchanged the Alation token for a CDE token at: {log_url}",
-        )
+        self._log_response(api_response, "POST")
 
         return CDEToken(token=cde_token_value)

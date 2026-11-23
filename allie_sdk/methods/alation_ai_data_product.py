@@ -33,7 +33,7 @@ from ..models.alation_ai_data_product_model import (
     AlationAISqlMetricResult,
     AlationAISqlWithValidation,
 )
-from ..models.authentication_model import AuthHeaderType
+from ..models.authentication_model import AuthHeaderType, AuthHeaderTypeInput
 from ..models.job_model import JobDetails
 
 LOGGER = logging.getLogger("allie_sdk_logger")
@@ -46,7 +46,7 @@ class AlationAIDataProduct(RequestHandler):
             access_token: str,
             session: requests.Session,
             host: str,
-            auth_header_type: AuthHeaderType,
+            auth_header_type: AuthHeaderTypeInput = AuthHeaderType.BEARER,
     ) -> None:
         """Create a data product API methods wrapper.
 
@@ -54,7 +54,9 @@ class AlationAIDataProduct(RequestHandler):
             access_token (str): Alation REST API access token.
             session (requests.Session): Shared requests session used for API calls.
             host (str): Base Alation host URL.
-            auth_header_type (AuthHeaderType): Authentication header used for API calls.
+            auth_header_type (AuthHeaderTypeInput): Authentication mode as an enum
+                member or the existing "Token"/"Authorization" string. Defaults
+                to AuthHeaderType.BEARER for AI API calls.
 
         Returns:
             None: Initializes the client's connection and authentication settings.

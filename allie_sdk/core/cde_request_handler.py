@@ -1,28 +1,27 @@
 """Shared base handler for all Alation Critical Data Manager (CDM / CDE) API calls.
 
-The CDE service authenticates differently from every other Alation API: instead of
-the ``Token`` header injected by :class:`RequestHandler`, every CDE call must carry a
-case-sensitive ``CDEToken`` header (and must NOT carry ``Token``). The CDE token is a
+The CDE service authenticates with a dedicated ``CDEToken`` header instead of the
+Alation ``Token`` or Bearer credentials. The CDE token is a
 short-lived (24h) token obtained by exchanging an Alation API token at the CDE auth
 endpoint.
 
-This handler reuses :class:`RequestHandler`'s session/retry wiring and static loggers,
-but performs its own HTTP calls so it can inject the ``CDEToken`` header. It also owns
-the CDE token cache and the "re-exchange once on 401/403" behaviour, and provides a
+This adapter uses :class:`RequestHandler` for HTTP dispatch, serialization, header
+merging, response decoding and logging. It owns the CDE token cache, the
+"re-exchange once on 401/403" behaviour and skip/limit pagination, and provides a
 CDE-specific job poller (the core :class:`~allie_sdk.methods.job.AlationJob` poller is
 NOT reusable — CDE has its own job API).
 
 See: https://developer.alation.com/dev/reference/cde-api-overview
 """
 
-import json
 import logging
 import time
 from time import sleep
+from typing import Any
 
 import requests
 
-from .request_handler import RequestHandler, SUCCESS_CODES
+from .request_handler import RequestBody, RequestHandler, SUCCESS_CODES
 
 LOGGER = logging.getLogger("allie_sdk_logger")
 
@@ -88,6 +87,10 @@ class CDERequestHandler(RequestHandler):
             str: The CDE token to place in the ``CDEToken`` header.
 
         """
+        if self._cdm_auth.access_token != self.access_token:
+            self._cdm_auth.access_token = self.access_token
+            self._cde_token = None
+            LOGGER.debug("Invalidated cached CDE credentials after an Alation token change.")
         if force or not self._cde_token:
             self._cde_token = self._cdm_auth.create_cde_token().token
         return self._cde_token
@@ -96,7 +99,7 @@ class CDERequestHandler(RequestHandler):
         """Build the request headers for a CDE call.
 
         Returns:
-            dict: Headers carrying the case-sensitive ``CDEToken`` (never ``Token``).
+            dict: Headers carrying ``CDEToken`` instead of Alation authentication.
 
         """
         return {
@@ -106,8 +109,8 @@ class CDERequestHandler(RequestHandler):
 
     # --- core request with single re-auth retry ----------------------------
 
-    def _cde_request(self, method: str, path: str, query_params: dict = None,
-                     body: any = None, _reauth: bool = True) -> requests.Response:
+    def _cde_request(self, method: str, path: str, query_params: dict | None = None,
+                     body: RequestBody | None = None, _reauth: bool = True) -> requests.Response:
         """Perform a single CDE HTTP request, injecting the ``CDEToken`` header.
 
         On a 401/403 the CDE token is re-exchanged exactly once and the request is
@@ -117,7 +120,7 @@ class CDERequestHandler(RequestHandler):
             method (str): HTTP method (GET/POST/PUT/DELETE).
             path (str): Request path (appended to the host).
             query_params (dict): Query string parameters.
-            body (any): Request body (dict/list are JSON-encoded).
+            body (RequestBody | None): Request body (dict/list are JSON-encoded).
             _reauth (bool): Internal flag; when True a 401/403 triggers one re-exchange.
 
         Returns:
@@ -127,47 +130,19 @@ class CDERequestHandler(RequestHandler):
             requests.HTTPError: If the CDE API returns a non-success status code.
 
         """
-        request_url = self.host + path
-        data = json.dumps(body, default=str) if isinstance(body, (dict, list)) else body
-
-        api_response = self.s.request(
-            method, request_url, params=query_params, data=data,
-            headers=self._cde_headers(),
+        api_response = self._request(
+            method, self.host + path, params=query_params, body=body, headers=self._cde_headers()
         )
-
-        # The CDE token may have expired (24h TTL) — re-exchange once and retry.
         if api_response.status_code in CDE_REAUTH_STATUS_CODES and _reauth:
             LOGGER.debug(
-                "CDE token rejected (%s); re-exchanging the CDE token and retrying once.",
-                api_response.status_code,
+                f"CDE token rejected ({api_response.status_code}); re-exchanging the CDE token and retrying once."
             )
             self._get_cde_token(force=True)
-            return self._cde_request(
-                method, path, query_params=query_params, body=body, _reauth=False
-            )
+            return self._cde_request(method, path, query_params=query_params, body=body, _reauth=False)
 
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            "Method": method,
-            "URL": api_response.url,
-            "Response": api_response.status_code,
-        }
-
+        self._log_response(api_response, method)
         if api_response.status_code not in SUCCESS_CODES:
-            try:
-                error_data = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                error_data = api_response.text
-            self._log_error(
-                error_data, log_details,
-                message=f"Error submitting the CDE {method} Request to: {log_url}",
-            )
             api_response.raise_for_status()
-
-        self._log_success(
-            log_details,
-            message=f"Successfully submitted the CDE {method} Request to: {log_url}",
-        )
         return api_response
 
     # --- verb wrappers ------------------------------------------------------
@@ -223,69 +198,53 @@ class CDERequestHandler(RequestHandler):
 
         return items
 
-    def _cde_post(self, path: str, body: any = None, query_params: dict = None) -> dict | list:
+    def _cde_post(self, path: str, body: RequestBody | None = None, query_params: dict | None = None) -> Any:
         """Perform a CDE POST request.
 
         Args:
             path (str): Request path.
-            body (any): Request body.
+            body (RequestBody | None): Request body.
             query_params (dict): Query string parameters.
 
         Returns:
-            dict | list: The parsed response body.
+            Any: Parsed JSON, text or bytes returned by the endpoint.
 
         """
         return self._parse_response(
             self._cde_request("POST", path, query_params=query_params, body=body)
         )
 
-    def _cde_put(self, path: str, body: any = None, query_params: dict = None) -> dict | list:
+    def _cde_put(self, path: str, body: RequestBody | None = None, query_params: dict | None = None) -> Any:
         """Perform a CDE PUT request.
 
         Args:
             path (str): Request path.
-            body (any): Request body.
+            body (RequestBody | None): Request body.
             query_params (dict): Query string parameters.
 
         Returns:
-            dict | list: The parsed response body.
+            Any: Parsed JSON, text or bytes returned by the endpoint.
 
         """
         return self._parse_response(
             self._cde_request("PUT", path, query_params=query_params, body=body)
         )
 
-    def _cde_delete(self, path: str, body: any = None, query_params: dict = None) -> None:
+    def _cde_delete(self, path: str, body: RequestBody | None = None, query_params: dict | None = None) -> None:
         """Perform a CDE DELETE request (expects a 204 No Content response).
 
         Args:
             path (str): Request path.
-            body (any): Request body.
+            body (RequestBody | None): Request body.
             query_params (dict): Query string parameters.
+
+        Returns:
+            None: The successful response body is discarded.
 
         """
         self._cde_request("DELETE", path, query_params=query_params, body=body)
 
     # --- response robustness helpers ---------------------------------------
-
-    @staticmethod
-    def _parse_response(api_response: requests.Response) -> any:
-        """Parse a CDE response body as JSON, falling back to decoded text.
-
-        Args:
-            api_response (requests.Response): The response to parse.
-
-        Returns:
-            any: Parsed JSON, or decoded text/bytes when the body is not JSON.
-
-        """
-        try:
-            return api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                return api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                return api_response.content
 
     @staticmethod
     def _unwrap_list(payload: any) -> list:

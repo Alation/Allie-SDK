@@ -1,6 +1,7 @@
 from .alation import Alation
 from .models import (
     AccessToken,
+    AuthHeaderType,
     BIFolder,
     BIFolderItem,
     BIFolderParams,

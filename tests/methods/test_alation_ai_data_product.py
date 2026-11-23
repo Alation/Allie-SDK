@@ -34,6 +34,7 @@ from allie_sdk.models.alation_ai_data_product_model import (
     AlationAISqlWithValidation,
 )
 from allie_sdk.models.job_model import JobDetails
+from allie_sdk.models.authentication_model import AuthHeaderType, AuthHeaderTypeInput
 
 
 class TestAlationAIDataProduct:
@@ -44,6 +45,44 @@ class TestAlationAIDataProduct:
             host="https://test.com",
             auth_header_type="Token",
         )
+
+    @pytest.mark.parametrize(
+        "auth_header_type", [None, "Token", "Authorization", AuthHeaderType.TOKEN, AuthHeaderType.BEARER],
+        ids=["default-bearer", "legacy-token", "legacy-bearer", "enum-token", "enum-bearer"],
+    )
+    def test_authentication_default_and_overrides(
+        self, requests_mock: Mocker, auth_header_type: AuthHeaderTypeInput | None
+    ) -> None:
+        """Default AI API calls to Bearer while allowing existing explicit modes.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            auth_header_type (AuthHeaderTypeInput | None): Explicit mode, or None
+                to omit the argument and exercise the endpoint's own default.
+
+        Returns:
+            None: Asserts actual AI API requests use only the selected authentication.
+        """
+        options = {} if auth_header_type is None else {"auth_header_type": auth_header_type}
+        handler = AlationAIDataProduct(
+            access_token="test-token", session=requests.Session(), host="https://test.com", **options
+        )
+        requests_mock.get(
+            "https://test.com/ai/api/v1/data_product/get_data_product_result/auth-test",
+            json={"status": "completed", "data": "version: 1\nname: Example", "error": None},
+        )
+
+        result = handler.get_data_product_creation_result("auth-test", poll_interval_seconds=0)
+
+        expected_mode = AuthHeaderType.TOKEN if auth_header_type == "Token" else AuthHeaderType.BEARER
+        expected_value = "test-token" if expected_mode is AuthHeaderType.TOKEN else "Bearer test-token"
+        assert handler.auth_header_type is expected_mode
+        assert {
+            name: requests_mock.last_request.headers[name]
+            for name in ("Token", "Authorization", "CDEToken")
+            if name in requests_mock.last_request.headers
+        } == {expected_mode.value: expected_value}
+        assert result == "version: 1\nname: Example"
 
     def test_get_data_product_task_polls_until_yaml(self, requests_mock):
         requests_mock.register_uri(

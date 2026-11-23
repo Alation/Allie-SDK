@@ -1,7 +1,8 @@
 """Alation REST API Authentication Methods."""
 
 import logging
-import base64
+from urllib.parse import urlencode
+
 import requests
 from requests.auth import HTTPBasicAuth
 
@@ -15,9 +16,15 @@ LOGGER = logging.getLogger('allie_sdk_logger')
 class AlationAuthentication(RequestHandler):
     """Alation REST API Authentication Methods."""
 
-    def __init__(self, refresh_token: str = None, user_id: int = None,
-                 session: requests.Session = None, host: str = None,
-                 client_id: str = None, client_secret: str = None):
+    def __init__(
+        self,
+        host: str,
+        refresh_token: str | None = None,
+        user_id: int | None = None,
+        session: requests.Session | None = None,
+        client_id: str | None = None,
+        client_secret: str | None = None
+    ):
         """Create an instance of the Authentication object.
 
         Args:
@@ -175,8 +182,11 @@ class AlationAuthentication(RequestHandler):
         mapped_revoke_response = self._map_request_success_to_job_details(revoke_response)
         return JobDetails.from_api_response(mapped_revoke_response)
 
-    def create_oauth_token(self, client_credentials: OAuthCredentials = None,
-                          use_basic_auth: bool = False) -> OAuthToken:
+    def create_oauth_token(
+        self,
+        client_credentials: OAuthCredentials | None = None,
+        use_basic_auth: bool = False,
+    ) -> OAuthToken:
         """Create an OAuth JWT access token using client_credentials grant type.
 
         Args:
@@ -202,27 +212,25 @@ class AlationAuthentication(RequestHandler):
         if not client_id or not client_secret:
             raise ValueError("Client ID and client secret are required for OAuth authentication")
         # Prepare headers
-        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-        token_body = {}
-        auth=None
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        token_body = {"grant_type": "client_credentials"}
+        auth = None
         if use_basic_auth:
             # Use Basic authentication header
             LOGGER.info("Using Basic Authentication header for OAuth token creation")
             auth = HTTPBasicAuth(client_id, client_secret)
-            token_body['grant_type'] = 'client_credentials'
         else:
             LOGGER.info("Using request body for client credentials in OAuth token creation")
             # Include credentials in request body
-            token_body = {'grant_type': 'client_credentials'}
-            token_body['client_id'] = client_id
-            token_body['client_secret'] = client_secret
+            token_body["client_id"] = client_id
+            token_body["client_secret"] = client_secret
         LOGGER.info("Creating OAuth token using client_credentials grant type")
-        # Make request with the token body dict
-        token_response = self.post_oauth(
-            url='/oauth/v2/token',
-            body=token_body,
+        # Encode form data explicitly so the shared POST handler sends it unchanged.
+        token_response = self.post(
+            url="/oauth/v2/token",
+            body=urlencode(token_body),
             headers=headers,
-            auth=auth
+            auth=auth,
         )
         # Check for OAuth-specific errors in the response
         if isinstance(token_response, dict):

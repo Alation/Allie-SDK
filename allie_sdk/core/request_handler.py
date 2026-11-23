@@ -5,12 +5,13 @@ import logging
 from typing import Any, TypeAlias
 
 import requests
-from requests.auth import HTTPBasicAuth
+from requests.auth import AuthBase
+from requests.structures import CaseInsensitiveDict
 
 from urllib.parse import urlparse
 from requests.adapters import HTTPAdapter, Retry
 from ..models.job_model import *
-from ..models.authentication_model import AuthHeaderType
+from ..models.authentication_model import AuthHeaderType, AuthHeaderTypeInput
 
 RequestBody: TypeAlias = dict[str, Any] | list[Any] | str | bytes
 
@@ -24,24 +25,41 @@ class RequestHandler(object):
     """Route all Alation API Calls through same core request functions."""
 
     def __init__(
-            self,
-            session: requests.Session,
-            host: str,
-            access_token: str | None = None,
-            page_size: int = 1000,
-            auth_header_type:AuthHeaderType = "Token"
-    ):
+        self,
+        session: requests.Session,
+        host: str,
+        access_token: str | None = None,
+        page_size: int = 1000,
+        auth_header_type: AuthHeaderTypeInput = AuthHeaderType.TOKEN,
+    ) -> None:
         """Creates an instance of the RequestHandler object.
 
         Args:
             session (requests.Session): Python requests common session.
             host (str): Alation URL.
-            access_token (str): Alation REST API Access Token.
+            access_token (str | None): Alation REST API Access Token. None or an
+                empty string sends no default authentication header.
             page_size (int): Page size of REST API Get Calls.
-            auth_header_type (auth_header_type): Define whether "Authorization" or "Token" should be used in the header.
-                Defaults to "Token". (Introduced Nov 2026 since the AI API endpoint requires the "Authorization" header)
+            auth_header_type (AuthHeaderTypeInput): Token or Bearer authentication.
+                Accepts enum members or the existing "Token" and "Authorization"
+                strings. Defaults to AuthHeaderType.TOKEN.
 
+        Returns:
+            None: Initializes the session, request defaults and validated authentication mode.
+
+        Raises:
+            ValueError: If the authentication mode is unsupported, even without a token.
         """
+        try:
+            self._auth_header_type = AuthHeaderType(auth_header_type)
+        except (TypeError, ValueError) as error:
+            error_message = (
+                f"Invalid auth_header_type {auth_header_type!r}. "
+                f"Expected one of: {', '.join(repr(mode.value) for mode in AuthHeaderType)}."
+            )
+            API_LOGGER.error(error_message)
+            raise ValueError(error_message) from error
+
         self.s = session
         self.host = host.rstrip('/')
         self.page_size = page_size
@@ -52,13 +70,51 @@ class RequestHandler(object):
 
         self.headers = {"Content-Type": "application/json; charset=utf-8"}
         self.access_token = access_token
-        if access_token:
-            if auth_header_type == "Token":
-                self.headers['Token'] = access_token
-            elif auth_header_type == "Authorization":
-                self.headers["Authorization"] = f"Bearer {access_token}"
-            else:
-                raise ValueError("Invalid Authorization header type")
+
+    @property
+    def auth_header_type(self) -> AuthHeaderType:
+        """Return the normalized authentication mode selected at construction.
+
+        Args:
+            None.
+
+        Returns:
+            AuthHeaderType: Validated Token or Bearer authentication mode.
+        """
+        return self._auth_header_type
+
+    @property
+    def access_token(self) -> str | None:
+        """Return the access token currently used for default authentication.
+
+        Args:
+            None.
+
+        Returns:
+            str | None: Current token, or None when no token is configured.
+        """
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, token: str | None) -> None:
+        """Synchronize default authentication headers when the access token changes.
+
+        Args:
+            token (str | None): Replacement token. None or an empty string removes
+                default authentication. Other request defaults are preserved.
+
+        Returns:
+            None: Stores the token and replaces the default authentication header.
+        """
+        self._access_token = token
+        request_headers = CaseInsensitiveDict(self.headers)
+        request_headers.pop("Token", None)
+        request_headers.pop("Authorization", None)
+        if token:
+            prefix = "Bearer " if self.auth_header_type is AuthHeaderType.BEARER else ""
+            request_headers[self.auth_header_type.value] = f"{prefix}{token}"
+        self.headers = dict(request_headers)
+        API_LOGGER.debug("Updated default authentication headers.")
 
     def delete(
         self,
@@ -66,7 +122,6 @@ class RequestHandler(object):
         body: RequestBody | None = None,
         query_params: dict | None = None,
         is_async: bool = False
-
     ) -> dict | list:
         """API Delete Request.
 
@@ -83,61 +138,22 @@ class RequestHandler(object):
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
         """
-        if query_params is None:
-            query_params = {}
-
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
-
-        api_response = self.s.delete(
-            self.host + url, data=body, params=query_params, headers=self.headers
-        )
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            'Method': 'DELETE'
-            , 'URL': api_response.url
-            , 'Response': api_response.status_code
-        }
-
+        api_response = self._request("DELETE", self.host + url, body=body, params=query_params)
+        self._log_response(api_response, "DELETE")
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(
-                response_data
-                , log_details
-                , message = f'Error submitting the DELETE Request to: {log_url}'
-            )
-            
-            # Raise HTTP error instead of returning error details
             api_response.raise_for_status()
-
-        self._log_success(
-            log_details
-            , message = f'Succesfully submitted the DELETE Request to: {log_url}'
-        )
-
+        response_data = self._parse_response(api_response)
         if is_async:
-            # return response data as is since we still need to extract the job id in async_handler.py
             return response_data
-        else:
-            # make sure result conforms to JobDetails structure
-            mapped_response_data = self._map_request_success_to_job_details(response_data)
-            return mapped_response_data
+        return self._map_request_success_to_job_details(response_data)
 
     def get(
-            self,
-            url: str,
-            query_params: dict | None = None,
-            pagination: bool = True,
-            body: RequestBody | None = None,
-            headers: dict | None = None,
+        self,
+        url: str,
+        query_params: dict | None = None,
+        pagination: bool = True,
+        body: RequestBody | None = None,
+        headers: dict | None = None,
     ) -> Any:
         """API Get Request.
 
@@ -167,13 +183,9 @@ class RequestHandler(object):
         if api_response.status_code not in SUCCESS_CODES:
             api_response.raise_for_status()
             
-        try:
-            returned_items = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                return api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                return api_response.content
+        returned_items = self._parse_response(api_response)
+        if isinstance(returned_items, (str, bytes)):
+            return returned_items
 
         if pagination:
             while 'X-Next-Page' in api_response.headers:
@@ -184,7 +196,7 @@ class RequestHandler(object):
                 if api_response.status_code not in SUCCESS_CODES:
                     api_response.raise_for_status()
                 
-                response_data = api_response.json()
+                response_data = self._parse_response(api_response)
                 returned_items.extend(response_data)
 
         return returned_items
@@ -216,7 +228,7 @@ class RequestHandler(object):
             query_params (dict): GET API Call Query Parameters.
             pagination (bool): Follow the ``next`` URL until every result is fetched.
             body (RequestBody | None): Optional GET request body. Defaults to None.
-            headers (dict): Optional GET API Call Headers.
+            headers (dict): Optional headers merged with defaults without mutation.
 
         Returns:
             list: Flattened list of items from the ``results`` property.
@@ -240,13 +252,7 @@ class RequestHandler(object):
         if api_response.status_code not in SUCCESS_CODES:
             api_response.raise_for_status()
 
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
+        response_data = self._parse_response(api_response)
 
         if not isinstance(response_data, dict) or not isinstance(response_data.get("results"), list):
             raise ValueError("Nested GET requests must return a dictionary containing a 'results' list.")
@@ -262,13 +268,7 @@ class RequestHandler(object):
             if api_response.status_code not in SUCCESS_CODES:
                 api_response.raise_for_status()
 
-            try:
-                response_data = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                try:
-                    response_data = api_response.content.decode("utf-8")
-                except UnicodeDecodeError:
-                    response_data = api_response.content
+            response_data = self._parse_response(api_response)
 
             if not isinstance(response_data, dict) or not isinstance(response_data.get("results"), list):
                 raise ValueError("Nested GET requests must return a dictionary containing a 'results' list.")
@@ -279,11 +279,11 @@ class RequestHandler(object):
         return returned_items
 
     def patch(
-            self,
-            url: str,
-            body: RequestBody | None,
-            query_params: dict | None = None,
-            headers: dict | None = None
+        self,
+        url: str,
+        body: RequestBody | None,
+        query_params: dict | None = None,
+        headers: dict | None = None
     ) -> dict:
         """API Patch Request.
 
@@ -291,7 +291,8 @@ class RequestHandler(object):
             url (str): PATCH API Call URL.
             body (RequestBody | None): PATCH API body, or None to send no body.
             query_params (dict): PATCH API Call Query Parameters.
-            headers (dict): POST API Call Headers.
+            headers (dict): Headers merged with defaults without mutation. Explicit
+                authentication headers replace the configured authentication.
 
         Returns:
             dict: API Response Body in JSON.
@@ -299,66 +300,35 @@ class RequestHandler(object):
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
         """
-        if query_params is None:
-            query_params = {}
-
-        if headers:
-            headers['Token'] = self.access_token
-        else:
-            headers = self.headers
-
-        if isinstance(body, dict) or isinstance(body, list):
-            body = json.dumps(body, default=str)
-
-        api_response = self.s.patch(self.host + url, data=body, params=query_params, headers=headers)
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            'Method': 'PATCH'
-            , 'URL': api_response.url
-            , 'Response': api_response.status_code
-        }
-
+        api_response = self._request("PATCH", self.host + url, body=body, params=query_params, headers=headers)
+        self._log_response(api_response, "PATCH")
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(
-                response_data
-                , log_details
-                , message = f'Error submitting the PATCH Request to: {log_url}'
-            )
-            
-            # Raise HTTP error instead of returning error details
             api_response.raise_for_status()
-
-        self._log_success(
-            log_details
-            , message = f'Successfully submitted the PATCH Request to: {log_url}')
-
-        return response_data
+        return self._parse_response(api_response)
 
     def post(
-            self,
-            url: str,
-            body: RequestBody | None,
-            query_params: dict | None = None,
-            headers: dict | None = None,
-             files: dict | None = None
+        self,
+        url: str,
+        body: RequestBody | None,
+        query_params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
+        *,
+        auth: AuthBase | None = None,
     ) -> dict | list:
         """API Post Request.
 
         Args:
             url (str): POST API Call URL.
-            body (RequestBody | None): POST API body, or None to send no body.
+            body (RequestBody | None): POST API body. Dictionaries and lists are
+                JSON-encoded; strings and bytes are sent unchanged. None sends no body.
             query_params (dict): POST API Call Query Parameters.
-            headers (dict): POST API Call Headers.
+            headers (dict): Per-request headers merged case-insensitively with
+                defaults without mutating either. Explicit authentication headers
+                replace the configured authentication for this request.
             files: (dict) POST API Call upload files
+            auth (AuthBase | None): Optional Requests authentication handler,
+                replacing default authentication for this request.
 
         Returns:
             dict | list: API Response Body.
@@ -375,15 +345,10 @@ class RequestHandler(object):
             params=query_params,
             headers=headers,
             files=files,
+            auth=auth,
         )
 
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
+        response_data = self._parse_response(api_response)
 
         if api_response.status_code not in SUCCESS_CODES:
             api_response.raise_for_status()
@@ -404,7 +369,9 @@ class RequestHandler(object):
             url (str): POST API Call URL.
             body (RequestBody | None): POST API body, or None to send no body.
             query_params (dict): POST API Call Query Parameters.
-            headers (dict): POST API Call Headers.
+            headers (dict): Per-request headers merged case-insensitively with
+                defaults without mutating either. Explicit authentication headers
+                replace the configured authentication for these requests.
             files: (dict) POST API Call upload files
 
         Returns:
@@ -428,13 +395,7 @@ class RequestHandler(object):
         if api_response.status_code not in SUCCESS_CODES:
             api_response.raise_for_status()
 
-        try:
-            returned_items = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                returned_items = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                returned_items = api_response.content
+        returned_items = self._parse_response(api_response)
 
         if not isinstance(returned_items, list):
             if "X-Next-Page" in api_response.headers:
@@ -458,13 +419,7 @@ class RequestHandler(object):
             if api_response.status_code not in SUCCESS_CODES:
                 api_response.raise_for_status()
 
-            try:
-                response_data = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                try:
-                    response_data = api_response.content.decode("utf-8")
-                except UnicodeDecodeError:
-                    response_data = api_response.content
+            response_data = self._parse_response(api_response)
 
             if not isinstance(response_data, list):
                 raise ValueError("Paginated POST requests must return list responses.")
@@ -472,80 +427,6 @@ class RequestHandler(object):
             returned_items.extend(response_data)
 
         return returned_items
-    
-    def post_oauth(
-            self,
-            url: str,
-            body: RequestBody | None,
-            query_params: dict | None = None,
-            headers: dict | None = None,
-            files: dict | None = None,
-            auth: HTTPBasicAuth = None
-    ) -> dict | list:
-        """API Post Request for calling OAuth specific endpoint to generate a JWT token.
-
-        This function is needed because the OAuth end point accepts content type of 'application/x-www-form-urlencoded' instead of 'application/json' 
-        and also requires client credentials to be sent in the body instead of the header. We convert the JSON body to a string in the 
-        post method in RequestHandler, so we need a separate method to handle the OAuth token generation request. Python requests library
-        considers a dict passed to the data parameter as form data and will encode it as 'application/x-www-form-urlencoded' automatically,
-        so we can just pass the dict body directly without converting it to a string.
-
-        Args:
-            url (str): POST API Call URL.
-            body (RequestBody | None): POST API body, or None to send no body.
-            query_params (dict): POST API Call Query Parameters.
-            headers (dict): POST API Call Headers.
-            files: (dict) POST API Call upload files
-            auth: (HTTPBasicAuth) Optional HTTPBasicAuth object for passing client credentials in the header instead of the body
-
-        Returns:
-            dict | list: API Response Body.
-
-        Raises:
-            requests.HTTPError: If the API returns a non-success status code.
-        """
-        if query_params is None:
-            query_params = {}
-
-        if headers:
-            if self.access_token:
-                headers['Token'] = self.access_token
-        else:
-            headers = self.headers
-
-        api_response = self.s.post(self.host + url, data=body, params=query_params, headers=headers, files=files, auth=auth)
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            'Method': 'POST'
-            , 'URL': api_response.url
-            , 'Response': api_response.status_code
-        }
-
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(
-                response_data
-                , log_details
-                , message = f'Error submitting the POST Request to: {log_url}'
-            )
-            
-            # Raise HTTP error instead of returning error details
-            api_response.raise_for_status()
-
-        self._log_success(
-            log_details
-            , message = f'Successfully submitted the POST Request to: {log_url}'
-        )
-
-        return response_data
 
     def put(
         self,
@@ -561,6 +442,9 @@ class RequestHandler(object):
             url (str): PUT API Call URL.
             body (RequestBody | None): PUT API body, or None to send no body.
             query_params (dict): PUT API Call Query Parameters.
+            headers (dict): Headers merged with defaults without mutation. Explicit
+                authentication headers replace the configured authentication.
+            files (dict): Optional multipart uploads.
 
         Returns:
             dict | list: API Response Body.
@@ -568,65 +452,13 @@ class RequestHandler(object):
         Raises:
             requests.HTTPError: If the API returns a non-success status code.
         """
-        if query_params is None:
-            query_params = {}
-
-        if headers:
-            headers['Token'] = self.access_token
-        else:
-            headers = self.headers.copy()
-
-        if files:
-            # Requests will determine the correct boundary and content type when not provided explicitly
-            headers = {
-                key: value for key, value in headers.items() if key.lower() != 'content-type'
-            }
-            request_body = body
-        else:
-            if isinstance(body, dict) or isinstance(body, list):
-                request_body = json.dumps(body, default=str)
-            else:
-                request_body = body
-
-        api_response = self.s.put(
-            self.host + url,
-            data=request_body,
-            params=query_params,
-            headers=headers,
-            files=files,
+        api_response = self._request(
+            "PUT", self.host + url, body=body, params=query_params, headers=headers, files=files
         )
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            'Method': 'PUT'
-            , 'URL': api_response.url
-            , 'Response': api_response.status_code
-        }
-
+        self._log_response(api_response, "PUT")
         if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(
-                response_data
-                , log_details
-                , message = f'Error submitting the PUT Request to: {log_url}'
-            )
-            
-            # Raise HTTP error instead of returning error details
             api_response.raise_for_status()
-
-        self._log_success(
-            log_details
-            , message = f'Successfully submitted the PUT Request to: {log_url}'
-        )
-
-        return response_data
+        return self._parse_response(api_response)
 
     def _api_single_get(
             self,
@@ -650,49 +482,10 @@ class RequestHandler(object):
             This is a helper method that doesn't raise exceptions directly.
             The calling method is responsible for checking status codes and raising exceptions.
         """
-        if body is not None:
-            body = json.dumps(body, default=str)
-
-        if headers is None:
-            headers = self.headers
-
-        # Always call GET; requests can handle None for params/body
-        api_response = self.s.get(
-            url,
-            params=params,
-            headers=headers,
-            data=body
-        )
-
-        try:
-            response_data = api_response.json()
-        except requests.exceptions.JSONDecodeError:
-            try:
-                response_data = api_response.content.decode("utf-8")
-            except UnicodeDecodeError:
-                response_data = api_response.content
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            'Method': 'GET'
-            , 'URL': api_response.url
-            , 'Response': api_response.status_code
-        }
-
-        if api_response.status_code not in SUCCESS_CODES:
-            self._log_error(
-                response_data
-                , log_details
-                , message = f'Error submitting the GET Request to: {log_url}'
-            )
-        else:
-            response_objects = len(response_data) if isinstance(response_data, list) else 1
-            log_details['Objects Returned'] = response_objects
-            self._log_success(
-                log_details
-                , message = f'Successfully submitted the GET Request to: {log_url}'
-            )
-
+        # Preserve the GET contract: every supplied body represents a JSON value.
+        request_body = json.dumps(body, default=str) if body is not None else None
+        api_response = self._request("GET", url, body=request_body, params=params, headers=headers)
+        self._log_response(api_response, "GET")
         return api_response
 
     def _api_single_post(
@@ -702,6 +495,8 @@ class RequestHandler(object):
         params: dict | None = None,
         headers: dict | None = None,
         files: dict | None = None,
+        *,
+        auth: AuthBase | None = None,
     ) -> requests.Response:
         """Run a Single REST API Post Call.
 
@@ -709,8 +504,12 @@ class RequestHandler(object):
             url (str): POST API Call URL.
             body (RequestBody | None): POST API body, or None to send no body.
             params (dict): POST API Call Query Parameters.
-            headers (dict): POST API Call Headers.
+            headers (dict): Per-request headers merged case-insensitively with
+                defaults without mutating either. Explicit authentication headers
+                replace the configured authentication for this request.
             files: (dict) POST API Call upload files
+            auth (AuthBase | None): Optional Requests authentication handler,
+                replacing default authentication for this request.
 
         Returns:
             requests.Response: API POST Response.
@@ -719,52 +518,99 @@ class RequestHandler(object):
             This is a helper method that doesn't raise exceptions directly.
             The calling method is responsible for checking status codes and raising exceptions.
         """
-        if headers:
-            headers["Token"] = self.access_token
-        else:
-            headers = self.headers
+        api_response = self._request(
+            "POST", url, body=body, params=params, headers=headers, files=files, auth=auth
+        )
+        self._log_response(api_response, "POST")
+        return api_response
 
-        if isinstance(body, dict) or isinstance(body, list):
+    def _request(
+        self,
+        method: str,
+        url: str,
+        body: RequestBody | None = None,
+        params: dict | None = None,
+        headers: dict | None = None,
+        files: dict | None = None,
+        *,
+        auth: AuthBase | None = None,
+    ) -> requests.Response:
+        """Send one HTTP request through the shared session without checking status.
+
+        Args:
+            method (str): HTTP verb.
+            url (str): Absolute request URL.
+            body (RequestBody | None): Dictionaries and lists are JSON-encoded unless
+                uploading files; other bodies are passed through unchanged.
+            params (dict | None): Query string parameters.
+            headers (dict | None): Case-insensitive overrides for default headers.
+                Explicit Token, Authorization or CDEToken replaces default authentication.
+                Neither the defaults nor the supplied headers are mutated.
+            files (dict | None): Multipart uploads. Requests supplies their content type.
+            auth (AuthBase | None): Requests authentication replacing default credentials.
+
+        Returns:
+            requests.Response: Raw response, allowing authentication adapters to retry
+            before logging and checking the final status.
+
+        Raises:
+            requests.RequestException: If preparing or sending the request fails.
+        """
+        request_headers = CaseInsensitiveDict(self.headers)
+        custom_headers = CaseInsensitiveDict(headers or {})
+        authentication_headers = ("Token", "Authorization", "CDEToken")
+        if auth is not None or any(name in custom_headers for name in authentication_headers):
+            for name in authentication_headers:
+                request_headers.pop(name, None)
+        request_headers.update(custom_headers)
+
+        if files:
+            request_headers.pop("Content-Type", None)
+        elif isinstance(body, (dict, list)):
             body = json.dumps(body, default=str)
 
-        api_response = self.s.post(
-            url,
-            data=body,
-            params=params,
-            headers=headers,
-            files=files,
+        return self.s.request(
+            method, url, data=body, params=params, headers=request_headers, files=files, auth=auth
         )
 
+    @staticmethod
+    def _parse_response(api_response: requests.Response) -> Any:
+        """Decode a response as JSON, UTF-8 text, or undecodable bytes.
+
+        Args:
+            api_response (requests.Response): Response to decode.
+
+        Returns:
+            Any: Parsed JSON, text (including an empty string), or binary content.
+        """
         try:
-            response_data = api_response.json()
+            return api_response.json()
         except requests.exceptions.JSONDecodeError:
             try:
-                response_data = api_response.content.decode("utf-8")
+                return api_response.content.decode("utf-8")
             except UnicodeDecodeError:
-                response_data = api_response.content
+                return api_response.content
 
+    def _log_response(self, api_response: requests.Response, method: str) -> None:
+        """Log a final HTTP response without raising or changing its return value.
+
+        Args:
+            api_response (requests.Response): Final response after any authentication retry.
+            method (str): HTTP verb used for the request.
+
+        Returns:
+            None: Writes a success or error log using the common response decoder.
+        """
+        response_data = self._parse_response(api_response)
         log_url = self._format_log_url(api_response.url)
-        log_details = {
-            "Method": "POST",
-            "URL": api_response.url,
-            "Response": api_response.status_code,
-        }
-
+        log_details = {"Method": method, "URL": api_response.url, "Response": api_response.status_code}
         if api_response.status_code not in SUCCESS_CODES:
             self._log_error(
-                response_data,
-                log_details,
-                message=f"Error submitting the POST Request to: {log_url}",
+                response_data, log_details, message=f"Error submitting the {method} Request to: {log_url}"
             )
         else:
-            response_objects = len(response_data) if isinstance(response_data, list) else 1
-            log_details["Objects Returned"] = response_objects
-            self._log_success(
-                log_details,
-                message=f"Successfully submitted the POST Request to: {log_url}",
-            )
-
-        return api_response
+            log_details["Objects Returned"] = len(response_data) if isinstance(response_data, list) else 1
+            self._log_success(log_details, message=f"Successfully submitted the {method} Request to: {log_url}")
 
     @staticmethod
     def _log_success(details: dict, message: str) -> None:
