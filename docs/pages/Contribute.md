@@ -25,7 +25,8 @@ uv sync
 Run the test suite using:
 
 ```bash
-python -m pytest
+uv run pytest tests
+# python -m pytest
 ```
 
 ## Get the source code and set up a branch
