@@ -6,8 +6,8 @@ short-lived (24h) token obtained by exchanging an Alation API token at the CDE a
 endpoint.
 
 This adapter uses :class:`RequestHandler` for HTTP dispatch, serialization, header
-merging, response decoding and logging. It owns the CDE token cache, the
-"re-exchange once on 401/403" behaviour and skip/limit pagination, and provides a
+merging, response decoding and logging. It delegates credentials to a token manager,
+owns the "re-exchange once on 401/403" behaviour and skip/limit pagination, and provides a
 CDE-specific job poller (the core :class:`~allie_sdk.methods.job.AlationJob` poller is
 NOT reusable — CDE has its own job API).
 
@@ -21,7 +21,8 @@ from typing import Any
 
 import requests
 
-from .request_handler import RequestBody, RequestHandler, SUCCESS_CODES
+from .cde_token_manager import CDETokenManager
+from .request_handler import SUCCESS_CODES, RequestBody, RequestHandler
 
 LOGGER = logging.getLogger("allie_sdk_logger")
 
@@ -49,8 +50,8 @@ class CDERequestHandler(RequestHandler):
     minted lazily on the first CDE call, cached, and re-exchanged once on a 401/403.
     """
 
-    def __init__(self, access_token: str = None, session: requests.Session = None,
-                 host: str = None):
+    def __init__(self, access_token: str | None = None, session: requests.Session | None = None,
+                 host: str | None = None, token_manager: CDETokenManager | None = None) -> None:
         """Create an instance of the CDE request handler.
 
         Args:
@@ -58,9 +59,22 @@ class CDERequestHandler(RequestHandler):
                 CDE token on first use.
             session (requests.Session): Python requests common session.
             host (str): Alation URL.
+            token_manager (CDETokenManager | None): Credential manager shared by CDE
+                clients. A standalone handler creates an isolated manager when omitted.
+                A supplied access_token must match the manager's credential.
 
+        Returns:
+            None: Initializes request handling without exchanging a CDE token.
+
+        Raises:
+            ValueError: If access_token conflicts with the supplied manager's credential.
         """
-        super().__init__(session=session, host=host, access_token=access_token)
+        if token_manager is not None and access_token is not None and access_token != token_manager.access_token:
+            error_message = "access_token must match the shared CDE token manager's credential."
+            LOGGER.error(error_message)
+            raise ValueError(error_message)
+        self._token_manager = token_manager if token_manager is not None else CDETokenManager(access_token)
+        super().__init__(session=session, host=host, access_token=self._token_manager.access_token)
         # Compose (rather than re-implement) the token-exchange mechanics, which are
         # already implemented and tested in AlationCDMAuthentication. Imported lazily to
         # avoid a circular import: this core module would otherwise pull in the whole
@@ -68,14 +82,38 @@ class CDERequestHandler(RequestHandler):
         from ..methods.cdm_authentication import AlationCDMAuthentication
 
         self._cdm_auth = AlationCDMAuthentication(
-            access_token=access_token, session=session, host=host
+            session=session, host=host, token_manager=self._token_manager
         )
-        self._cde_token: str | None = None
         # CDE endpoints cap `limit` at 100 (the inherited RequestHandler.page_size of
         # 1000 is rejected with HTTP 422), so CDE pagination uses its own page size.
         self.cde_page_size = CDE_MAX_PAGE_SIZE
 
     # --- token lifecycle ---------------------------------------------------
+
+    @property
+    def access_token(self) -> str | None:
+        """Return the Alation credential shared by all clients using this manager.
+
+        Args:
+            None.
+
+        Returns:
+            str | None: Current Alation access token.
+        """
+        return self._token_manager.access_token
+
+    @access_token.setter
+    def access_token(self, token: str | None) -> None:
+        """Update shared credentials and this handler's default headers.
+
+        Args:
+            token (str | None): Replacement Alation access token.
+
+        Returns:
+            None: Invalidates cached CDE credentials when the token changes.
+        """
+        self._token_manager.access_token = token
+        RequestHandler.access_token.fset(self, token)
 
     def _get_cde_token(self, force: bool = False) -> str:
         """Return the cached CDE token, minting one on first use (or when forced).
@@ -87,13 +125,7 @@ class CDERequestHandler(RequestHandler):
             str: The CDE token to place in the ``CDEToken`` header.
 
         """
-        if self._cdm_auth.access_token != self.access_token:
-            self._cdm_auth.access_token = self.access_token
-            self._cde_token = None
-            LOGGER.debug("Invalidated cached CDE credentials after an Alation token change.")
-        if force or not self._cde_token:
-            self._cde_token = self._cdm_auth.create_cde_token().token
-        return self._cde_token
+        return self._token_manager.get_token(self._cdm_auth.create_cde_token, force=force)
 
     def _cde_headers(self) -> dict:
         """Build the request headers for a CDE call.

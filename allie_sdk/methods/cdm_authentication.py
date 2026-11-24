@@ -1,9 +1,11 @@
 """Alation Critical Data Manager (CDM / CDE) API Authentication Methods."""
 
 import logging
+
 import requests
 
-from ..core.request_handler import RequestHandler, SUCCESS_CODES
+from ..core.cde_token_manager import CDETokenManager
+from ..core.request_handler import SUCCESS_CODES, RequestHandler
 from ..models.cdm_authentication_model import CDEToken
 
 LOGGER = logging.getLogger("allie_sdk_logger")
@@ -23,8 +25,8 @@ class AlationCDMAuthentication(RequestHandler):
     for all subsequent CDE API calls.
     """
 
-    def __init__(self, access_token: str = None, session: requests.Session = None,
-                 host: str = None):
+    def __init__(self, access_token: str | None = None, session: requests.Session | None = None,
+                 host: str | None = None, token_manager: CDETokenManager | None = None) -> None:
         """Create an instance of the CDM Authentication object.
 
         Args:
@@ -32,11 +34,49 @@ class AlationCDMAuthentication(RequestHandler):
                 CDE token. Can be overridden per-call in :meth:`create_cde_token`.
             session (requests.Session): Python requests common session.
             host (str): Alation URL.
+            token_manager (CDETokenManager | None): Shared credential cache. A standalone
+                client creates an isolated manager when omitted. A supplied access_token
+                must match the manager's credential.
 
+        Returns:
+            None: Initializes the exchange client and its credential manager.
+
+        Raises:
+            ValueError: If access_token conflicts with the supplied manager's credential.
         """
-        super().__init__(session=session, host=host, access_token=access_token)
+        if token_manager is not None and access_token is not None and access_token != token_manager.access_token:
+            error_message = "access_token must match the shared CDE token manager's credential."
+            LOGGER.error(error_message)
+            raise ValueError(error_message)
+        self._token_manager = token_manager if token_manager is not None else CDETokenManager(access_token)
+        super().__init__(session=session, host=host, access_token=self._token_manager.access_token)
 
-    def create_cde_token(self, alation_token: str = None) -> CDEToken:
+    @property
+    def access_token(self) -> str | None:
+        """Return the Alation credential from the shared manager.
+
+        Args:
+            None.
+
+        Returns:
+            str | None: Current Alation access token.
+        """
+        return self._token_manager.access_token
+
+    @access_token.setter
+    def access_token(self, token: str | None) -> None:
+        """Update shared credentials and this client's default headers.
+
+        Args:
+            token (str | None): Replacement Alation access token.
+
+        Returns:
+            None: Invalidates cached CDE credentials when the token changes.
+        """
+        self._token_manager.access_token = token
+        RequestHandler.access_token.fset(self, token)
+
+    def create_cde_token(self, alation_token: str | None = None) -> CDEToken:
         """Exchange an Alation API token for a CDE (Critical Data Manager) token.
 
         Calls ``POST /cde-service/integration/auth/`` passing the Alation API token in
@@ -49,6 +89,8 @@ class AlationCDMAuthentication(RequestHandler):
 
         Returns:
             CDEToken: The CDE token (valid for 24 hours from creation).
+                Exchanges for the configured Alation token also update the shared cache.
+                Exchanges for another token do not replace the configured credentials.
 
         Raises:
             ValueError: If no Alation token is available to exchange.
@@ -94,4 +136,5 @@ class AlationCDMAuthentication(RequestHandler):
 
         self._log_response(api_response, "POST")
 
+        self._token_manager.cache_token(token_to_exchange, cde_token_value)
         return CDEToken(token=cde_token_value)

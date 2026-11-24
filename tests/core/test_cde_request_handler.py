@@ -111,7 +111,7 @@ class TestCDERequestHandler:
 
         assert authentication.call_count == 1
         assert data_request.call_count == 1
-        assert self.handler._cde_token is None
+        assert self.handler.access_token == cleared_token
 
     def test_401_triggers_single_reexchange_then_succeeds(self, requests_mock):
         requests_mock.register_uri(

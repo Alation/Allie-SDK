@@ -26,6 +26,38 @@ Key points:
 
 See the Alation Developer Portal [CDE API Overview](https://developer.alation.com/dev/reference/cde-api-overview) for details.
 
+## Token lifecycle
+
+Each `Alation` instance owns one CDE token manager. Its CDM authentication client and
+CDE method clients share that manager's in-memory cache. Constructing `Alation` does
+not contact the CDE service; the first CDE request exchanges the configured Alation
+access token, and later CDE requests reuse the result.
+
+When a CDE request returns HTTP 401 or 403, the handler discards the cached token,
+exchanges again, and retries the request once. The refreshed token is shared by all
+CDE clients on that `Alation` instance. Exchange failures and failed retries raise
+errors. Refresh is triggered by the service's rejection; the SDK does not run a
+background refresh or schedule renewal based on token age.
+
+An explicit call to `alation.cdm_authentication.create_cde_token()` always performs
+a fresh exchange and updates the same cache. Passing `alation_token` equal to the
+configured access token also updates it. Passing a different token returns that
+identity's CDE token without replacing the configured credential or its cache.
+
+Assigning a different `alation.access_token` immediately invalidates the shared CDE
+cache; the next CDE call exchanges the replacement credential. Assigning the same
+value preserves the cache. Assigning `None` or an empty string clears the cache and
+prevents further CDE authentication until a credential is configured. With
+`disable_authentication=True`, set `alation.access_token` before making a CDE call.
+
+Tokens are kept in memory for the lifetime of the owning client. They are not saved
+to disk or shared across `Alation` instances. Standalone CDM clients keep their own
+isolated managers by default. Developers composing standalone clients can supply
+the same `allie_sdk.core.cde_token_manager.CDETokenManager` through the optional
+`token_manager` constructor argument. Such a manager must be used only for the same
+Alation host and identity; if `access_token` is also supplied, it must match the
+manager's configured credential.
+
 ## Models
 
 ### CDEToken
@@ -80,10 +112,13 @@ create_cde_token(alation_token: str = None) -> CDEToken
 Exchange an Alation API token for a CDE token. Calls
 `POST /cde-service/integration/auth/`, passing the Alation API token in the `token`
 request header, and returns the resulting CDE token (valid for 24 hours from creation).
+This always performs an exchange. A result for the configured Alation credential
+also replaces the shared CDE cache; a result for another credential is returned only
+to the caller.
 
 Args:
 * alation_token (str, optional): Alation API token to exchange. Defaults to the access
-  token the `Alation` object authenticated with. Use an Alation **access** token — while
+  token currently configured for the `Alation` object's CDE clients. Use an Alation **access** token — while
   the CDE docs mention refresh or access tokens, some `cde-service` deployments reject
   refresh tokens with `403 Access denied: Invalid Alation API token`.
 

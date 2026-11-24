@@ -1,9 +1,11 @@
 """Alation Critical Data Manager (CDM / CDE) — Critical Data Element Methods."""
 
 import logging
+
 import requests
 
-from ..core.cde_request_handler import CDERequestHandler, CDE_BASE
+from ..core.cde_request_handler import CDE_BASE, CDERequestHandler
+from ..core.cde_token_manager import CDETokenManager
 from ..core.custom_exceptions import validate_query_params
 from ..models.critical_data_element_model import (
     CriticalDataElement,
@@ -23,17 +25,25 @@ class AlationCDMCriticalDataElement(CDERequestHandler):
     minted lazily from the Alation access token on first use).
     """
 
-    def __init__(self, access_token: str = None, session: requests.Session = None,
-                 host: str = None):
+    def __init__(self, access_token: str | None = None, session: requests.Session | None = None,
+                 host: str | None = None, token_manager: CDETokenManager | None = None) -> None:
         """Create an instance of the Critical Data Element object.
 
         Args:
             access_token (str, optional): Alation REST API Access Token.
             session (requests.Session): Python requests common session.
             host (str): Alation URL.
+            token_manager (CDETokenManager | None): Shared credential manager supplied
+                by Alation. Omit for an isolated standalone client. A supplied access_token
+                must match the manager's credential.
 
+        Returns:
+            None: Initializes the Critical Data Element client.
+
+        Raises:
+            ValueError: If access_token conflicts with the supplied manager's credential.
         """
-        super().__init__(access_token=access_token, session=session, host=host)
+        super().__init__(access_token=access_token, session=session, host=host, token_manager=token_manager)
 
     def get_critical_data_elements(
         self, query_params: CriticalDataElementParams = None

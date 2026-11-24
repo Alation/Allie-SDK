@@ -4,20 +4,21 @@ import logging.config
 
 import requests
 
+from .core.cde_token_manager import CDETokenManager
 from .core.logs import LoggingConfigs
 from .methods import (
+    AlationAIDataProduct,
     AlationAuthentication,
-    AlationCDMAuthentication,
-    AlationCDMCriticalDataElement,
     AlationBISource,
     AlationBusinessPolicy,
+    AlationCDMAuthentication,
+    AlationCDMCriticalDataElement,
     AlationConnector,
     AlationCustomField,
     AlationCustomTemplate,
     AlationDataDictionary,
-    AlationAIDataProduct,
-    AlationDataProduct,
     AlationDataflow,
+    AlationDataProduct,
     AlationDataQuality,
     AlationDatasource,
     AlationDocument,
@@ -126,11 +127,12 @@ class Alation(object):
             )
 
         # Initialize Remaining Alation API Methods
+        self._cde_token_manager = CDETokenManager(self.access_token)
         self.cdm_authentication = AlationCDMAuthentication(
-            access_token=self.access_token, session=session, host=host
+            session=session, host=host, token_manager=self._cde_token_manager
         )
         self.cdm_critical_data_element = AlationCDMCriticalDataElement(
-            access_token=self.access_token, session=session, host=host
+            session=session, host=host, token_manager=self._cde_token_manager
         )
         self.bi_source = AlationBISource(
             access_token=self.access_token, session=session, host=host
@@ -212,21 +214,28 @@ class Alation(object):
         )
 
     @property
-    def access_token(self) -> str:
+    def access_token(self) -> str | None:
         """Return the Alation API Access Token.
 
+        Args:
+            None.
+
         Returns:
-            str: Alation API Access Token.
+            str | None: Alation API Access Token.
 
         """
         return self._access_token
 
     @access_token.setter
-    def access_token(self, token: str):
-        """Set the Alation API Access Token.
+    def access_token(self, token: str | None) -> None:
+        """Set the Alation API access token and invalidate shared CDE credentials.
 
         Args:
-            token (str): Alation API Access Token.
+            token (str | None): Alation API access token; empty values clear it.
 
+        Returns:
+            None: Stores the token and updates the CDE credential manager when initialized.
         """
         self._access_token = token
+        if hasattr(self, "_cde_token_manager"):
+            self._cde_token_manager.access_token = token
