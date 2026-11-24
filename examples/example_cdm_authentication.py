@@ -57,12 +57,17 @@ alation = allie.Alation(
 # ================================
 
 # By default the CDE token is created by exchanging the Alation access token that
-# the Alation object authenticated with.
+# the Alation object authenticated with. This explicit exchange also populates the
+# shared in-memory cache used by this Alation instance's CDE method clients.
 cde_token = alation.cdm_authentication.create_cde_token()
 
 # The CDE token is a plain string, passed in the `CDEToken` header for CDE API calls.
 # It is valid for 24 hours from creation; exchange again to obtain a fresh one.
-logging.info(f"CDE token created successfully: {cde_token.token[:20]}...")
+logging.info("CDE token created successfully and cached for subsequent CDE calls.")
+
+# No second exchange is needed: the CDE client reuses the token created above.
+critical_data_elements = alation.cdm_critical_data_element.get_critical_data_elements()
+logging.info(f"Found {len(critical_data_elements)} Critical Data Element(s).")
 
 # ================================
 # Exchange a specific Alation token for a CDE token
@@ -72,8 +77,10 @@ logging.info(f"CDE token created successfully: {cde_token.token[:20]}...")
 # object was created with. Use a valid Alation *access* token here: while the CDE docs
 # mention refresh or access tokens, some cde-service deployments reject refresh tokens
 # with "403 Access denied: Invalid Alation API token".
+# Passing the configured token again refreshes the shared cache. Passing a different
+# token returns that identity's CDE token without changing the configured cache.
 cde_token_explicit = alation.cdm_authentication.create_cde_token(
     alation_token=alation.access_token
 )
 
-logging.info(f"CDE token (explicit) created successfully: {cde_token_explicit.token[:20]}...")
+logging.info("CDE token created successfully using the explicit Alation credential.")

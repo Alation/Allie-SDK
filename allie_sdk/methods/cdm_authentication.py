@@ -1,9 +1,11 @@
 """Alation Critical Data Manager (CDM / CDE) API Authentication Methods."""
 
 import logging
+
 import requests
 
-from ..core.request_handler import RequestHandler, SUCCESS_CODES
+from ..core.cde_token_manager import CDETokenManager
+from ..core.request_handler import SUCCESS_CODES, RequestHandler
 from ..models.cdm_authentication_model import CDEToken
 
 LOGGER = logging.getLogger("allie_sdk_logger")
@@ -23,8 +25,8 @@ class AlationCDMAuthentication(RequestHandler):
     for all subsequent CDE API calls.
     """
 
-    def __init__(self, access_token: str = None, session: requests.Session = None,
-                 host: str = None):
+    def __init__(self, access_token: str | None = None, session: requests.Session | None = None,
+                 host: str | None = None, token_manager: CDETokenManager | None = None) -> None:
         """Create an instance of the CDM Authentication object.
 
         Args:
@@ -32,11 +34,49 @@ class AlationCDMAuthentication(RequestHandler):
                 CDE token. Can be overridden per-call in :meth:`create_cde_token`.
             session (requests.Session): Python requests common session.
             host (str): Alation URL.
+            token_manager (CDETokenManager | None): Shared credential cache. A standalone
+                client creates an isolated manager when omitted. A supplied access_token
+                must match the manager's credential.
 
+        Returns:
+            None: Initializes the exchange client and its credential manager.
+
+        Raises:
+            ValueError: If access_token conflicts with the supplied manager's credential.
         """
-        super().__init__(session=session, host=host, access_token=access_token)
+        if token_manager is not None and access_token is not None and access_token != token_manager.access_token:
+            error_message = "access_token must match the shared CDE token manager's credential."
+            LOGGER.error(error_message)
+            raise ValueError(error_message)
+        self._token_manager = token_manager if token_manager is not None else CDETokenManager(access_token)
+        super().__init__(session=session, host=host, access_token=self._token_manager.access_token)
 
-    def create_cde_token(self, alation_token: str = None) -> CDEToken:
+    @property
+    def access_token(self) -> str | None:
+        """Return the Alation credential from the shared manager.
+
+        Args:
+            None.
+
+        Returns:
+            str | None: Current Alation access token.
+        """
+        return self._token_manager.access_token
+
+    @access_token.setter
+    def access_token(self, token: str | None) -> None:
+        """Update shared credentials and this client's default headers.
+
+        Args:
+            token (str | None): Replacement Alation access token.
+
+        Returns:
+            None: Invalidates cached CDE credentials when the token changes.
+        """
+        self._token_manager.access_token = token
+        RequestHandler.access_token.fset(self, token)
+
+    def create_cde_token(self, alation_token: str | None = None) -> CDEToken:
         """Exchange an Alation API token for a CDE (Critical Data Manager) token.
 
         Calls ``POST /cde-service/integration/auth/`` passing the Alation API token in
@@ -49,6 +89,8 @@ class AlationCDMAuthentication(RequestHandler):
 
         Returns:
             CDEToken: The CDE token (valid for 24 hours from creation).
+                Exchanges for the configured Alation token also update the shared cache.
+                Exchanges for another token do not replace the configured credentials.
 
         Raises:
             ValueError: If no Alation token is available to exchange.
@@ -63,38 +105,20 @@ class AlationCDMAuthentication(RequestHandler):
             LOGGER.error(error_message)
             raise ValueError(error_message)
 
-        # The CDE auth endpoint expects the Alation token under the lower-case "token"
-        # header key. It must NOT go through the standard request helpers, which inject
-        # the "Token" header used by every other Alation API.
-        request_url = self.host + CDE_AUTH_ENDPOINT
-        api_response = self.s.post(request_url, headers={"token": token_to_exchange})
-
-        log_url = self._format_log_url(api_response.url)
-        log_details = {
-            "Method": "POST",
-            "URL": api_response.url,
-            "Response": api_response.status_code,
-        }
+        # Override default authentication and retain the bodyless exchange request.
+        api_response = self._request(
+            "POST", self.host + CDE_AUTH_ENDPOINT,
+            headers={"token": token_to_exchange, "Content-Type": None},
+        )
 
         if api_response.status_code not in SUCCESS_CODES:
-            try:
-                error_data = api_response.json()
-            except requests.exceptions.JSONDecodeError:
-                error_data = api_response.text
-            self._log_error(
-                error_data,
-                log_details,
-                message=f"Error exchanging the Alation token for a CDE token at: {log_url}",
-            )
+            self._log_response(api_response, "POST")
             api_response.raise_for_status()
 
         # The endpoint returns the CDE token as a plain string. Some deployments may
         # JSON-encode it (a quoted string), so handle both shapes robustly.
-        try:
-            parsed_response = api_response.json()
-            cde_token_value = parsed_response if isinstance(parsed_response, str) else None
-        except requests.exceptions.JSONDecodeError:
-            cde_token_value = api_response.text
+        parsed_response = self._parse_response(api_response)
+        cde_token_value = parsed_response if isinstance(parsed_response, str) else None
 
         if isinstance(cde_token_value, str):
             cde_token_value = cde_token_value.strip()
@@ -110,9 +134,7 @@ class AlationCDMAuthentication(RequestHandler):
             error_response._content = str.encode(error_message)
             raise requests.exceptions.HTTPError(error_message, response=error_response)
 
-        self._log_success(
-            log_details,
-            message=f"Successfully exchanged the Alation token for a CDE token at: {log_url}",
-        )
+        self._log_response(api_response, "POST")
 
+        self._token_manager.cache_token(token_to_exchange, cde_token_value)
         return CDEToken(token=cde_token_value)

@@ -4,7 +4,9 @@ Example for reading Alation Critical Data Elements (CDM / CDE).
 Critical Data Elements are served by the `cde-service`, which uses a dedicated
 authentication flow. The SDK handles that transparently: the CDE token is minted from
 your Alation access token on the first CDE call (and re-exchanged automatically when it
-expires), so you can call the `alation.cdm_critical_data_element` methods directly.
+is rejected with HTTP 401/403), so you can call the
+`alation.cdm_critical_data_element` methods directly. The token cache is shared by
+the CDE clients belonging to this Alation instance and is kept only in memory.
 
 See: https://developer.alation.com/dev/reference/cde-api-overview
 

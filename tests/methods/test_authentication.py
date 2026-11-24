@@ -1,5 +1,9 @@
 """Test the Alation REST API Authentication Methods."""
+import base64
+from urllib.parse import parse_qs
+
 import pytest
+from requests_mock import Mocker
 
 from allie_sdk.methods.authentication import *
 
@@ -196,8 +200,38 @@ class TestOAuthAuthentication:
         # Set access_token to None to prevent AttributeError in HTTP methods  
         self.oauth_auth_no_creds.access_token = None
 
-    def test_success_create_oauth_token(self, requests_mock):
-        """Test successful OAuth token creation using client_credentials."""
+    @pytest.mark.parametrize("use_basic_auth", [False, True], ids=["body-credentials", "basic-auth"])
+    @pytest.mark.parametrize(
+        ("client_id", "client_secret"),
+        [
+            pytest.param("test_client_id", "test_client_secret", id="plain-credentials"),
+            pytest.param("client+id &=/?%#", "secret+value&key=1 /?%#:", id="special-characters"),
+        ],
+    )
+    def test_success_create_oauth_token(
+        self,
+        requests_mock: Mocker,
+        use_basic_auth: bool,
+        client_id: str,
+        client_secret: str,
+    ) -> None:
+        """Verify OAuth form encoding and credential placement in both modes.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            use_basic_auth (bool): Whether credentials belong in the Basic header.
+            client_id (str): Client identifier, potentially containing reserved characters.
+            client_secret (str): Client secret, potentially containing reserved characters.
+
+        Returns:
+            None: Asserts the token response and the outgoing request match the selected mode.
+        """
+        authentication = AlationAuthentication(
+            host="https://test.com",
+            session=requests.Session(),
+            client_id=client_id,
+            client_secret=client_secret,
+        )
         oauth_success_response = {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test_payload.test_signature",
             "token_type": "Bearer",
@@ -207,14 +241,36 @@ class TestOAuthAuthentication:
         
         success_token = OAuthToken.from_api_response(oauth_success_response)
         requests_mock.register_uri('POST', '/oauth/v2/token', json=oauth_success_response)
-        test_token = self.oauth_auth.create_oauth_token()
+        test_token = authentication.create_oauth_token(use_basic_auth=use_basic_auth)
 
         assert success_token.access_token == test_token.access_token
         assert success_token.token_type == test_token.token_type
         assert success_token.expires_in == test_token.expires_in
 
-    def test_failed_create_oauth_token_invalid_client(self, requests_mock):
-        """Test OAuth token creation failure with invalid client credentials."""
+        outgoing_request = requests_mock.last_request
+        assert outgoing_request.headers["Content-Type"] == "application/x-www-form-urlencoded"
+        assert "Token" not in outgoing_request.headers
+        form_fields = parse_qs(outgoing_request.text, strict_parsing=True)
+        expected_form_fields = {"grant_type": ["client_credentials"]}
+        if use_basic_auth:
+            encoded_credentials = base64.b64encode(f"{client_id}:{client_secret}".encode("ascii")).decode("ascii")
+            assert outgoing_request.headers["Authorization"] == f"Basic {encoded_credentials}"
+        else:
+            expected_form_fields.update({"client_id": [client_id], "client_secret": [client_secret]})
+            assert "Authorization" not in outgoing_request.headers
+        assert form_fields == expected_form_fields
+
+    @pytest.mark.parametrize("use_basic_auth", [False, True], ids=["body-credentials", "basic-auth"])
+    def test_failed_create_oauth_token_invalid_client(self, requests_mock: Mocker, use_basic_auth: bool) -> None:
+        """Verify invalid credentials raise HTTPError in either OAuth mode.
+
+        Args:
+            requests_mock (Mocker): Fixture intercepting HTTP requests.
+            use_basic_auth (bool): Whether to authenticate using the Basic header.
+
+        Returns:
+            None: Asserts the HTTP authentication failure is preserved.
+        """
         failed_response = {
             "error": "invalid_client",
             "error_description": "Client authentication failed"
@@ -224,7 +280,7 @@ class TestOAuthAuthentication:
         
         # Expect HTTPError to be raised
         with pytest.raises(requests.exceptions.HTTPError) as context:
-            self.oauth_auth.create_oauth_token()
+            self.oauth_auth.create_oauth_token(use_basic_auth=use_basic_auth)
         
         assert context.value.response.status_code == 401
 
@@ -253,5 +309,10 @@ class TestOAuthAuthentication:
         test_token = self.oauth_auth_no_creds.create_oauth_token(client_credentials=credentials)
 
         assert test_token.access_token == oauth_success_response["access_token"]
+        assert parse_qs(requests_mock.last_request.text, strict_parsing=True) == {
+            "grant_type": ["client_credentials"],
+            "client_id": [credentials.client_id],
+            "client_secret": [credentials.client_secret],
+        }
 
 

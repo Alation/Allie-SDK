@@ -2,10 +2,20 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
+from enum import Enum
+from typing import Literal, TypeAlias
 from ..core.data_structures import BaseClass
 
-AuthHeaderType = Literal["Authorization", "Token"]
+
+class AuthHeaderType(str, Enum):
+    """Supported token authentication formats, with HTTP header names as values."""
+
+    TOKEN = "Token"
+    BEARER = "Authorization"
+
+
+AuthHeaderTypeInput: TypeAlias = AuthHeaderType | Literal["Token", "Authorization"]
+
 
 @dataclass
 class OAuthCredentials(BaseClass):
