@@ -14,18 +14,18 @@ This topic describes how to contribute to the Allie SDK project.
 ## Setup
 
 Before you can contribute to the Allie SDK project, you need to have the following installed:
- - Python 3.10+
+ - Python 3.12+
 
 Install package and dev dependencies:
 
 ```bash
-uv sync
+uv sync --locked --python 3.12
 ```
 
 Run the test suite using:
 
 ```bash
-python -m pytest
+uv run pytest
 ```
 
 ## Get the source code and set up a branch
