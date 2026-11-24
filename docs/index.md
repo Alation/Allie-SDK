@@ -15,7 +15,7 @@ Allie SDK is a Python library that Alation customers and partners can use to inc
 
 Before installing the Allie SDK, you must have:
 
-* Python. The Allie SDK supports python versions 3.10+.
+* Python 3.12 or newer. Allie SDK 3.0.0 and later require Python 3.12+. Python 3.10 and 3.11 users must install an older SDK version with `pip install "allie-sdk<3"`.
 * Git: Git is required to clone the Allie SDK repository and to contribute to it.
 
 ## Install Allie SDK

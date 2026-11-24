@@ -2,7 +2,7 @@
 
 Allie SDK is a Python library that Alation customers and partners can use to increase productivity when interacting with Alation’s [REST APIs](https://developer.alation.com/dev/reference/createtoken). By using the Allie SDK library, you can manage and change many Alation resources programmatically. You can use this library to create your own custom applications.
 
-This repository contains Python source code for the library and documentation showing how to use it. As of June 2024, Python versions 3.10 and up are supported.
+This repository contains Python source code for the library and documentation showing how to use it. Allie SDK 3.0.0 and later require Python 3.12 or newer. Python 3.10 and 3.11 users must use an Allie SDK version below 3.0.0.
 
 Documentation on how to use the SDK can be found at: 
 https://alation.github.io/Allie-SDK/
@@ -17,7 +17,7 @@ This is an **open source** project under the [APACHE 2.0 License](https://apache
 
 1. Download the repo.
 2. Install `uv` if you haven’t done so already (see also [here](https://github.com/astral-sh/uv)).
-3. Within the project root folder run: `uv sync`. This will create the virtual environment and install all the dependencies.
+3. Within the project root folder run: `uv sync --locked --python 3.12`. This will create the virtual environment and install all the dependencies. The repository's `.python-version` also selects Python 3.12 by default.
 
 ### Local Builds
 
